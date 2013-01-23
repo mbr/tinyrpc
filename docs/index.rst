@@ -1,22 +1,17 @@
-.. tinyrpc documentation master file, created by
-   sphinx-quickstart on Wed Jan 23 19:15:13 2013.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+tinyrpc: A modular RPC library
+==============================
 
-Welcome to tinyrpc's documentation!
-===================================
+``tinyrpc`` is a library for making and handling RPC calls in python. Its
+initial scope is handling jsonrpc_, although it aims to be very well-documented
+and modular to make it easy to add support for further protocols.
 
-Contents:
+A feature is support of multiple transports (or none at all) and providing
+clever syntactic sugar for writing dispatchers.
 
 .. toctree::
    :maxdepth: 2
 
+   structure
+   protocols
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+.. _jsonrpc: http://jsonrpc.org

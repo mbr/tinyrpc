@@ -5,7 +5,7 @@ Motivation
 ----------
 
 As of this writing (in Jan 2013) there are a few jsonrpc_ libraries already out
-there on PyPI_, most of them handling one specific use case (i.e. json via
+there on PyPI_, most of them handling one specific use case (e.g. json via
 WSGI, using Twisted, or TCP-sockets).
 
 None of the libraries, however, made it easy to reuse the jsonrpc_-parsing bits
@@ -19,35 +19,13 @@ custom implementation of handling jsonrpc_.
 interchangeable parts that allow easy addition of new transport methods, RPC
 protocols or dispatchers.
 
-Structure of tinyrpc
---------------------
+Documentation
+-------------
 
-``tinyrpc`` architectually considers three layers: Transport, Protocol and
-Dispatch.
+You'll quickly find that ``tinyrpc`` has more documentation and tests than core
+code, hence the name. See the documentation for more details, especially the
+Structure_-section to get a birds-eye view.
 
-The Transport-layer is responsible for receiving and sending messages. No
-assumptions are made about messages, except that they are of a fixed size.
-Messages are received and possibly passed on a Python strings.
-
-On the Protocol-layer messages are decoded into a format that is protocol
-independent, these can be passed on to a dispatcher.
-
-The Dispatch-layer performs the actual method calling and serializes the return
-value. These can be routed back through the Protocol- and Transport-layer to
-return the answer to the calling client.
-
-Each layer is useful "on its own" and can be used seperately. If you simply
-need to decode a jsonrpc_ message, without passing it on or sending it through
-a transport, the ``JSONRPCProtocol``-class is completely usable on its own.
-
-Protocols
----------
-
-Currently, only jsonrpc_ is supported[#]_.
-
-.. [#]: tinyrpc started out as a jsonrpc_ library because that was the
-   immediate need when it was written. Its structure should make it very
-   straight-forward to implement other RPC schemes though.
 .. _jsonrpc: http://www.jsonrpc.org/
 .. _PyPI: http://pypi.python.org
 .. _json: http://www.json.org/
