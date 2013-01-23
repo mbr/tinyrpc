@@ -7,6 +7,10 @@ import json
 
 
 class JSONRPCProtocol(RPCProtocol):
+    """JSONRPC protocol implementation.
+
+    Currently, only version 2.0 is supported."""
+
     JSON_RPC_VERSION = "2.0"
     _ALLOWED_REQUEST_KEYS = sorted(['id', 'jsonrpc', 'method', 'params'])
 

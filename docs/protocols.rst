@@ -28,7 +28,7 @@ optinal modules.
 JSON-RPC
 ~~~~~~~~
 
-jsonrpc_ is supported through the
-:py:class:`tinyrpc.protocols.jsonrpc.JSONRPCProtocol` class.
+.. autoclass:: tinyrpc.protocols.jsonrpc.JSONRPCProtocol
+   :members:
 
 .. _jsonrpc: http://jsonrpc.org
