@@ -2,9 +2,27 @@
 # -*- coding: utf-8 -*-
 
 class RPCProtocol(object):
-    def handle_request(request):
-        # do decoding
+    """Base class for all protocol implementations."""
+
+    def parse_request(data):
+        """Parses a request given as a string and returns it as a
+        :py:class:`CallSpec` structure."""
         pass
+
+    def parse_rv(data):
+        """Given a return value encoded in a string, restore the return
+        value."""
+
+    def serialize_request(callspec):
+        """Transforms a :py:class:`CallSpec` into a string to be passed on to
+        a transport."""
+        pass
+
+    def serialize_rv(rv):
+        """Serializes a return value into a message string, ready to be sent
+        back."""
+        pass
+
 
 class RPCDispatcher(object):
     def get_method(method_name, args=None, kwargs=None):
