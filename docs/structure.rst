@@ -20,25 +20,4 @@ need to decode a jsonrpc_ message, without passing it on or sending it through
 a transport, any :py:class:`~tinyrpc.RPCProtocol`-class is completely usable
 on its own.
 
-CallSpecs
----------
-
-A central data structure in this is the following :py:class:`CallSpec`
-structure:
-
-.. py:class:: CallSpec(method, args, kwargs)
-
-   Represents the intent to call a named method with a set of arguments.
-   Actually not a class, but a :py:func:`~collections.namedtuple` instance.
-
-   What is acceptable as an argument value type depends on the protocol used.
-   A good guess are usually primitive Python types like ``int``, ``float``,
-   ``unicode``, ``bool``, ``list`` and ``dict``, as most protocols can
-   serialize these.
-
-   :param method: The name of the method to be called.
-   :param args:   The arguments to be passed on to the method.
-   :param kwargs: The keyword arguments to be passed on to the method.
-
-
 .. _jsonrpc: http://jsonrpc.org

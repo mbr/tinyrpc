@@ -7,12 +7,19 @@ implementing all of its members:
 .. autoclass:: tinyrpc.RPCProtocol
    :members:
 
-Every protocol deals with three kinds of structure: ``data`` arguments are
-always byte strings that are sent via or received from a transport. A
-``callspec`` argument is a :py:class:`CallSpec` instance.
+These require implementations of the following classes as well:
 
-Return values (``rv``) can usually be any values that can also be argument
-values in a :py:class:`CallSpec`.
+.. autoclass:: tinyrpc.RPCRequest
+   :members:
+
+.. autoclass:: tinyrpc.RPCReply
+   :members:
+
+Every protocol deals with three kinds of structures: ``data`` arguments are
+always byte strings that are sent via or received from a transport.
+
+The other two are protocol-specific subclasses of
+:py:class:`~tinyrpc.RPCRequest` and :py:class:`~tinyrpc.RPCReply`.
 
 Supported protocols
 -------------------

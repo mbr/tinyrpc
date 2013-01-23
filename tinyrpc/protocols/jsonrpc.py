@@ -1,9 +1,50 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import RPCProtocol
+from .. import RPCProtocol, RPCRequest, RPCReply, InvalidRequestError,\
+               MethodNotFoundError, ServerError
 
 import json
+
+
+class JSONRPCInvalidJSONError(InvalidRequestError):
+    jsonrpc_error_code = -32700
+    message = 'Parse error'
+
+
+class JSONRPCInvalidRequestError(InvalidRequestError):
+    jsonrpc_error_code = -32600
+    message = 'Invalid Request'
+
+
+class JSONRPCMethodNotFoundError(MethodNotFoundError):
+    jsonrpc_error_code = -32601
+    message = 'Method not found'
+
+
+class JSONRPCInvalidParamsError(InvalidRequestError):
+    jsonrpc_error_code = -32602
+    message = 'Invalid params'
+
+
+class JSONRPCInternalError(InvalidRequestError):
+    jsonrpc_error_code = -32603
+    message = 'Internal error'
+
+
+class JSONRPCReply(RPCReply):
+    def serialize(self):
+        resp = {
+            'jsonrpc': JSON_RPC_VERSION,
+            'id': return_value.context
+        }
+
+        if not self.error:
+            resp['result'] = self.rv
+        else:
+            resp['error'] = str(self.error)
+
+        return json.dumps(resp)
 
 
 class JSONRPCProtocol(RPCProtocol):
@@ -15,53 +56,30 @@ class JSONRPCProtocol(RPCProtocol):
     _ALLOWED_REQUEST_KEYS = sorted(['id', 'jsonrpc', 'method', 'params'])
 
     def parse_request(data):
-        req = json.loads(data)
+        try:
+            req = json.loads(data)
+        except Exception as e:
+            raise JSONRPCInvalidJSONError
 
         for k in req.iterkeys():
             if not k in _ALLOWED_REQUEST_KEYS:
-                raise InvalidRequestError(
-                    '%s not a valid request key.' % k
-                )
+                raise JSONRPCInvalidRequestError
 
         if req['jsonrpc'] != JSON_RPC_VERSION:
-            raise InvalidRequestError(
-                'Only supports jsonrpc %s' % JSON_RPC_VERSION
-            )
+            raise JSONRPCInvalidRequestError
 
         if not isinstance(req['method'], basestring):
-            raise InvalidRequestError(
-                'method name must be a string: %s' % req['method']
-            )
+            raise JSONRPCMethodNotFoundError
+
+        request = JSONRPCRequest()
+        request.method = str(req['method'])
+        request._jsonrpc_id = req['id']
 
         if isinstance(req['params'], list):
-            return CallSpec(
-                str(req['method']),
-                req['params'],
-                None,
-            ), req['id']
-
-        if isinstance(req['params'], dict):
-            return CallSpec(
-                str(req['method']),
-                None,
-                req['params'],
-            ), req['id']
-
-        raise InvalidRequestError(
-            'params must be either array or object.'
-        )
-
-    def serialize_response(return_value):
-        resp = {
-            'jsonrpc': JSON_RPC_VERSION,
-            'id': return_value.context
-        }
-
-        if return_value.status == 'ok':
-            resp['result'] = return_value.value
-        elif return_value.status == 'error':
-            resp['error'] = return_value.value
+            request.args = req['params']
+        elif isinstance(req['params'], dict):
+            request.kwargs = req['params']
         else:
-            resp['error'] = str(return_value.value)
+            raise JSONRPCInvalidParamsError
 
-        return json.dumps(resp)
+        return request

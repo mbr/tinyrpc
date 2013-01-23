@@ -1,43 +1,97 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+class RPCRequest(object):
+    method = None
+    """The name of the method to be called."""
+    args = None
+    """The positional arguments of the method call."""
+    kwargs = None
+    """The keyword arguments of the method call."""
+
+    def reply(self, error, rv):
+        """Create a reply.
+
+        This creates and returns an instance of a protocol-specific subclass of
+        :py:class:`~tinyrpc.RPCReply`.
+
+        :param error: Passed on to new reply instance.
+        :param rv: Passed on to new reply instance.
+
+        :return: A reply or ``None`` to indicate this request does not expect a
+        reply.
+        """
+        raise RuntimeError('Not implemented')
+
+    def serialize(self):
+        """Returns a serialization of the request.
+
+        :return: A string to be passed on to a transport.
+        """
+        raise RuntimeError('Not implemented')
+
+
+class RPCReply(object):
+    error = None
+    """If not ``None``, an error has occured (i.e. an exception has been
+    thrown) and this attribute contains the exception."""
+
+    rv = None
+    """The function calls return value."""
+
+    def serialize(self):
+        """Returns a serialization of the reply.
+
+        :return: A string to be passed on to a transport.
+        """
+        raise RuntimeError('Not implemented')
+
+
 class RPCProtocol(object):
     """Base class for all protocol implementations."""
 
-    def parse_request(data):
-        """Parses a request given as a string and returns it as a
-        :py:class:`CallSpec` structure."""
-        pass
+    def create_error_reply(self, error):
+        """Transforms an exception that occured outside of the desired function
+        into a possible reply.
 
-    def parse_rv(data):
-        """Given a return value encoded in a string, restore the return
-        value."""
+        :error: An exception.
+        :return: ``None``, if no action should be taken, or a
+        :py:class:`tinyrpc.RPCReply` object.
+        """
+        raise RuntimeError('Not implemented')
 
-    def serialize_request(callspec):
-        """Transforms a :py:class:`CallSpec` into a string to be passed on to
-        a transport."""
-        pass
+    def create_request(self, method, args, kwargs):
+        raise RuntimeError('Not implemented')
 
-    def serialize_rv(rv):
-        """Serializes a return value into a message string, ready to be sent
-        back."""
-        pass
+    def parse_request(self, data):
+        """Parses a request given as a string and returns an
+        :py:class:`RPCRequest` instance.
+
+        :return: An instanced request.
+        """
+        raise RuntimeError('Not implemented')
+
+    def parse_reply(data):
+        """Parses a reply and returns an :py:class:`RPCReply` instance.
+
+        :return: An instanced reply.
+        """
+        raise RuntimeError('Not implemented')
 
 
-class RPCDispatcher(object):
-    def get_method(method_name, args=None, kwargs=None):
-        pass
-
-
-from collections import namedtuple
-
-
-def run_server(transport, protocol, dispatcher):
-    data_in, transport_ctx = transport.get_request()
-    function_call, protocol_ctx = protocol.parse_request(data_in)
-    return_value = dispatcher.call(function_call)
-    data_out = protocol.serialize_response(return_value, protocol_ctx)
-    transport.send_reply(data_out, transport_ctx)
+#class RPCDispatcher(object):
+#    def get_method(method_name, args=None, kwargs=None):
+#        pass
+#
+#
+#
+#
+#def run_server(transport, protocol, dispatcher):
+#    data_in, transport_ctx = transport.get_request()
+#    function_call, protocol_ctx = protocol.parse_request(data_in)
+#    return_value = dispatcher.call(function_call)
+#    data_out = protocol.serialize_response(return_value, protocol_ctx)
+#    transport.send_reply(data_out, transport_ctx)
 
 
 class RPCError(Exception):
@@ -49,6 +103,10 @@ class InvalidRequestError(RPCError):
 
 
 class MethodNotFoundError(RPCError):
+    pass
+
+
+class ServerError(RPCError):
     pass
 
 
@@ -74,7 +132,3 @@ class Dispatcher(object):
 
     def register_method(self, name, method):
         self.methods[name] = method
-
-
-CallSpec = namedtuple('CallSpec', ['method', 'args', 'kwargs'])
-ReturnValue = namedtuple('ReturnValue', ['value', 'error'])
