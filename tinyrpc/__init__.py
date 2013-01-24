@@ -21,13 +21,13 @@ class RPCRequest(object):
         """
         raise RuntimeError('Not implemented')
 
-    def respond(self, rv):
+    def respond(self, result):
         """Create a response.
 
         This creates and returns an instance of a protocol-specific subclass of
         :py:class:`~tinyrpc.RPCResponse`.
 
-        :param rv: Passed on to new response instance.
+        :param result: Passed on to new response instance.
 
         :return: A response or ``None`` to indicate this request does not expect a
         response.
@@ -66,7 +66,7 @@ class RPCErrorResponse(RPCResponse):
 class RPCSuccessResponse(RPCResponse):
     is_error = False
 
-    rv = None
+    result = None
     """The rpc call's return value."""
 
 

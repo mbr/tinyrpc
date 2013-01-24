@@ -102,7 +102,7 @@ def test_good_reply_samples(prot, data, id, result):
 
     assert reply._jsonrpc_id == id
     assert not reply.is_error
-    assert reply.rv == result
+    assert reply.result == result
 
 
 @pytest.mark.parametrize(('exc', 'code', 'message'), [

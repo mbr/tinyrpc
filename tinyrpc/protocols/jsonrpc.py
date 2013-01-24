@@ -44,7 +44,7 @@ class JSONRPCSuccessResponse(RPCSuccessResponse):
         return json.dumps({
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
             'id': self._jsonrpc_id,
-            'result': self.rv,
+            'result': self.result,
         })
 
 
@@ -96,13 +96,13 @@ class JSONRPCRequest(RPCRequest):
         response._jsonrpc_error_code = code
         return response
 
-    def respond(self, rv):
+    def respond(self, result):
         response = JSONRPCSuccessResponse()
 
         if not self._jsonrpc_id:
             return None
 
-        response.rv = rv
+        response.result = result
 
         return response
 
@@ -155,7 +155,7 @@ class JSONRPCProtocol(RPCProtocol):
             response._jsonrpc_error_code = error['code']
         else:
             response = JSONRPCSuccessResponse()
-            response.rv = rep.get('result', None)
+            response.result = rep.get('result', None)
 
         response._jsonrpc_id = rep['id']
 
