@@ -74,6 +74,25 @@ class RPCProtocol(object):
     """Base class for all protocol implementations."""
 
     def create_request(self, method, args, kwargs):
+        """Creates a new RPCRequest object.
+
+        :param method: The method name to invoke.
+        :param args: The positional arguments to call the method with.
+        :param kwargs: The keyword arguments to call the method with.
+        :return: A new :py:class:`~tinyrpc.RPCRequest` instance.
+        """
+        raise RuntimeError('Not implemented')
+
+    def create_error_response(self, error):
+        """Creates an error response independent of a request.
+
+        Usually, if an error occurs,
+        :py:func:`~tinyrpc.RPCResponse.error_respond` should be called.
+        If errors occur before an instance of :py:class:`~tinyrpc.RPCResponse`
+        can be instantiated, use this function to generate a reply
+        :param error: Exception or string.
+        :return: A `~tinyrpc.RPCErrorResponse` instance.
+        """
         raise RuntimeError('Not implemented')
 
     def parse_request(self, data):

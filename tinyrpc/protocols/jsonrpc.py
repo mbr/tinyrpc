@@ -60,30 +60,36 @@ class JSONRPCErrorResponse(RPCErrorResponse):
         })
 
 
+def _get_code_and_message(error):
+    assert isinstance(error, (Exception, basestring))
+    if isinstance(error, Exception):
+        if hasattr(error, 'jsonrpc_error_code'):
+            code = error.jsonrpc_error_code
+            msg = str(error)
+        elif isinstance(error, InvalidRequestError):
+            code = JSONRPCInvalidRequestError.jsonrpc_error_code
+            msg = JSONRPCInvalidRequestError.message
+        elif isinstance(error, MethodNotFoundError):
+            code = JSONRPCMethodNotFoundError.jsonrpc_error_code
+            msg = JSONRPCMethodNotFoundError.message
+        else:
+            code = JSONRPCInternalError.jsonrpc_error_code
+            msg = JSONRPCInternalError.message
+    else:
+        code = -32000
+        msg = error
+
+    return code, msg
+
+
 class JSONRPCRequest(RPCRequest):
     def error_respond(self, error):
         if not self._jsonrpc_id:
             return None
 
-        assert isinstance(error, (Exception, basestring))
         response = JSONRPCErrorResponse()
 
-        if isinstance(error, Exception):
-            if hasattr(error, 'jsonrpc_error_code'):
-                code = error.jsonrpc_error_code
-                msg = str(error)
-            elif isinstance(error, InvalidRequestError):
-                code = JSONRPCInvalidRequestError.jsonrpc_error_code
-                msg = JSONRPCInvalidRequestError.message
-            elif isinstance(error, MethodNotFoundError):
-                code = JSONRPCMethodNotFoundError.jsonrpc_error_code
-                msg = JSONRPCMethodNotFoundError.message
-            else:
-                code = JSONRPCInternalError.jsonrpc_error_code
-                msg = JSONRPCInternalError.message
-        else:
-            code = -32000
-            msg = error
+        code, msg = _get_code_and_message(error)
 
         response.error = msg
         response._jsonrpc_id = self._jsonrpc_id
@@ -109,6 +115,17 @@ class JSONRPCProtocol(RPCProtocol):
     JSON_RPC_VERSION = "2.0"
     _ALLOWED_REPLY_KEYS = sorted(['id', 'jsonrpc', 'error', 'result'])
     _ALLOWED_REQUEST_KEYS = sorted(['id', 'jsonrpc', 'method', 'params'])
+
+    def create_error_response(self, error):
+        code, message = _get_code_and_message(error)
+
+        response = JSONRPCErrorResponse()
+        code, msg = _get_code_and_message(error)
+
+        response.error = msg
+        response._jsonrpc_id = None
+        response._jsonrpc_error_code = code
+        return response
 
     def parse_reply(self, data):
         try:

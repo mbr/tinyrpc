@@ -194,4 +194,24 @@ def test_batch_good_examples(prot):
     assert results[5].kwargs == None
     assert results[5]._jsonrpc_id == "9"
 
-# FIXME: missing: response for invalid requests (with null id)
+@pytest.mark.parametrize(('exc', 'code', 'message'), [
+    (JSONRPCParseError, -32700, 'Parse error'),
+    (JSONRPCInvalidRequestError, -32600, 'Invalid Request'),
+    (JSONRPCMethodNotFoundError, -32601, 'Method not found'),
+    (JSONRPCInvalidParamsError, -32602, 'Invalid params'),
+    (JSONRPCInternalError, -32603, 'Internal error'),
+
+    # generic errors
+    (RPCError, -32603, 'Internal error'),
+    (Exception, -32603, 'Internal error'),
+    (InvalidRequestError, -32600, 'Invalid Request'),
+    (MethodNotFoundError, -32601, 'Method not found'),
+    (ServerError, -32603, 'Internal error'),
+])
+def test_proper_construction_of_independent_errors(prot, exc, code, message):
+    reply = prot.create_error_response(exc()).serialize()
+
+    err = json.loads(reply)
+
+    assert err['error']['code'] == code
+    assert err['error']['message'] == message
