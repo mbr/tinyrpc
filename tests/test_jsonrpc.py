@@ -215,3 +215,6 @@ def test_proper_construction_of_independent_errors(prot, exc, code, message):
 
     assert err['error']['code'] == code
     assert err['error']['message'] == message
+
+# FIXME: create_request test-cases
+# FIXME: support update-type requests

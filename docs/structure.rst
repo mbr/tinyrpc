@@ -8,8 +8,13 @@ The Transport-layer is responsible for receiving and sending messages. No
 assumptions are made about messages, except that they are of a fixed size.
 Messages are received and possibly passed on a Python strings.
 
+In an RPC context, messages coming in (containing requests) are simply called
+messages, a message sent in reply is called a reply. Replies are always
+serialized responses.
+
 On the Protocol-layer messages are decoded into a format that is protocol
-independent, these can be passed on to a dispatcher.
+independent, i.e. incoming messages are turned into requests or vice verse, while outgoing
+messages can be turned from responses into replies or the other way around.
 
 The Dispatch-layer performs the actual method calling and serializes the return
 value. These can be routed back through the Protocol- and Transport-layer to
