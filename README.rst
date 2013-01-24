@@ -24,7 +24,7 @@ Documentation
 
 You'll quickly find that ``tinyrpc`` has more documentation and tests than core
 code, hence the name. See the documentation for more details, especially the
-Structure_-section to get a birds-eye view.
+Structure-section to get a birds-eye view.
 
 .. _jsonrpc: http://www.jsonrpc.org/
 .. _PyPI: http://pypi.python.org
