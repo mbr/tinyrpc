@@ -47,6 +47,10 @@ class JSONRPCReply(RPCReply):
         return json.dumps(resp)
 
 
+class JSONRPCRequest(RPCRequest):
+    pass
+
+
 class JSONRPCProtocol(RPCProtocol):
     """JSONRPC protocol implementation.
 
@@ -55,17 +59,17 @@ class JSONRPCProtocol(RPCProtocol):
     JSON_RPC_VERSION = "2.0"
     _ALLOWED_REQUEST_KEYS = sorted(['id', 'jsonrpc', 'method', 'params'])
 
-    def parse_request(data):
+    def parse_request(self, data):
         try:
             req = json.loads(data)
         except Exception as e:
             raise JSONRPCInvalidJSONError
 
         for k in req.iterkeys():
-            if not k in _ALLOWED_REQUEST_KEYS:
+            if not k in self._ALLOWED_REQUEST_KEYS:
                 raise JSONRPCInvalidRequestError
 
-        if req['jsonrpc'] != JSON_RPC_VERSION:
+        if req['jsonrpc'] != self.JSON_RPC_VERSION:
             raise JSONRPCInvalidRequestError
 
         if not isinstance(req['method'], basestring):
