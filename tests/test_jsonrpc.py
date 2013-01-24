@@ -6,7 +6,7 @@ import json
 import pytest
 
 from tinyrpc import MethodNotFoundError, InvalidRequestError, ServerError, \
-                    RPCError
+                    RPCError, RPCSuccessResponse, RPCErrorResponse
 from tinyrpc.protocols.jsonrpc import JSONRPCParseError, \
                                       JSONRPCInvalidRequestError, \
                                       JSONRPCMethodNotFoundError, \
@@ -101,7 +101,7 @@ def test_good_reply_samples(prot, data, id, result):
     reply = prot.parse_reply(data)
 
     assert reply._jsonrpc_id == id
-    assert reply.error == None
+    assert not reply.is_error
     assert reply.rv == result
 
 
@@ -115,41 +115,45 @@ def test_good_reply_samples(prot, data, id, result):
     # generic errors
     (RPCError, -32603, 'Internal error'),
     (Exception, -32603, 'Internal error'),
-    (InvalidRequestError, -32600, 'Invalid request'),
+    (InvalidRequestError, -32600, 'Invalid Request'),
     (MethodNotFoundError, -32601, 'Method not found'),
     (ServerError, -32603, 'Internal error'),
 ])
 def test_proper_construction_of_error_codes(prot, exc, code, message):
-    reply = prot.create_error_message(exc)
+    request = prot.parse_request(
+        """{"jsonrpc": "2.0", "method": "sum", "params": [1,2,4],
+           "id": "1"}"""
+    )
+    reply = request.error_respond(exc()).serialize()
 
     err = json.loads(reply)
 
-    assert err['code'] == code
-    assert err['message'] == message
+    assert err['error']['code'] == code
+    assert err['error']['message'] == message
 
 
-def test_notification_yields_None_reply(prot):
+def test_notification_yields_None_response(prot):
     data = """{"jsonrpc": "2.0", "method": "update", "params": [1,2,3,4,5]}"""
 
     req = prot.parse_request(data)
 
     # updates should never cause retries
-    assert req.reply(None, True) == None
+    assert req.respond(True) == None
 
 
 def test_batch_empty_array(prot):
     with pytest.raises(JSONRPCInvalidRequestError):
-        req.parse_request("""[]""")
+        prot.parse_request("""[]""")
 
 
 def test_batch_invalid_array(prot):
-    with pytest.raises(JSONRPCInvalidRequestError):
-        req.parse_request("""[1]""")
+    assert isinstance(prot.parse_request("""[1]""")[0],
+                      JSONRPCInvalidRequestError)
 
 
 def test_batch_invalid_batch(prot):
-    with pytest.raises(JSONRPCInvalidRequestError):
-        req.parse_request("""[1, 2, 3]""")
+    for r in prot.parse_request("""[1, 2, 3]"""):
+        assert isinstance(r, JSONRPCInvalidRequestError)
 
 
 def test_batch_good_examples(prot):
@@ -166,10 +170,10 @@ def test_batch_good_examples(prot):
 
     results = prot.parse_request(data)
 
-    assert isinstance(list, results)
+    assert isinstance(results, list)
     assert results[0].method == 'sum'
     assert results[0].args == [1, 2, 4]
-    assert results[0]._jsonrpc_id == 1
+    assert results[0]._jsonrpc_id == "1"
 
     assert results[1].method == 'notify_hello'
     assert results[1].args == [7]
@@ -177,15 +181,17 @@ def test_batch_good_examples(prot):
 
     assert results[2].method == 'subtract'
     assert results[2].args == [42, 23]
-    assert results[2]._jsonrpc_id == 2
+    assert results[2]._jsonrpc_id == "2"
 
-    assert isinstance(JSONRPCInvalidRequestError, results[3])
+    assert isinstance(results[3], JSONRPCInvalidRequestError)
 
     assert results[4].method == 'foo.get'
     assert results[4].kwargs == {'name': 'myself'}
-    assert results[4]._jsonrpc_id == 5
+    assert results[4]._jsonrpc_id == "5"
 
     assert results[5].method == 'get_data'
     assert results[5].args == None
     assert results[5].kwargs == None
-    assert results[5]._jsonrpc_id == 9
+    assert results[5]._jsonrpc_id == "9"
+
+# FIXME: missing: response for invalid requests (with null id)

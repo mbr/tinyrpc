@@ -9,17 +9,28 @@ class RPCRequest(object):
     kwargs = None
     """The keyword arguments of the method call."""
 
-    def reply(self, error, rv):
-        """Create a reply.
+    def error_respond(self, error):
+        """Creates an error response.
+
+        Create a response indicating that an error has occured.
+
+        :param: An exception or a string describing the error.
+
+        :return: A response or ``None`` to indicate that no error should be sent
+        out.
+        """
+        raise RuntimeError('Not implemented')
+
+    def respond(self, rv):
+        """Create a response.
 
         This creates and returns an instance of a protocol-specific subclass of
-        :py:class:`~tinyrpc.RPCReply`.
+        :py:class:`~tinyrpc.RPCResponse`.
 
-        :param error: Passed on to new reply instance.
-        :param rv: Passed on to new reply instance.
+        :param rv: Passed on to new response instance.
 
-        :return: A reply or ``None`` to indicate this request does not expect a
-        reply.
+        :return: A response or ``None`` to indicate this request does not expect a
+        response.
         """
         raise RuntimeError('Not implemented')
 
@@ -31,34 +42,36 @@ class RPCRequest(object):
         raise RuntimeError('Not implemented')
 
 
-class RPCReply(object):
-    error = None
-    """If not ``None``, an error has occured (i.e. an exception has been
-    thrown) and this attribute contains the exception."""
+class RPCResponse(object):
+    """RPC call response base class."""
 
-    rv = None
-    """The function calls return value."""
+    is_error = False
+    """If true, the rpc call failed."""
 
     def serialize(self):
-        """Returns a serialization of the reply.
+        """Returns a serialization of the response.
 
-        :return: A string to be passed on to a transport.
+        :return: A reply to be passed on to a transport.
         """
         raise RuntimeError('Not implemented')
+
+
+class RPCErrorResponse(RPCResponse):
+    is_error = True
+
+    error = None
+    """The error that has occured, an exception or a string."""
+
+
+class RPCSuccessResponse(RPCResponse):
+    is_error = False
+
+    rv = None
+    """The rpc call's return value."""
 
 
 class RPCProtocol(object):
     """Base class for all protocol implementations."""
-
-    def create_error_message(self, error):
-        """Transforms an exception that occured outside of the desired function
-        into a possible reply-message.
-
-        :error: An exception.
-        :return: ``None``, if no action should be taken, or a string containing
-        the reply to send back.
-        """
-        raise RuntimeError('Not implemented')
 
     def create_request(self, method, args, kwargs):
         raise RuntimeError('Not implemented')
@@ -71,10 +84,10 @@ class RPCProtocol(object):
         """
         raise RuntimeError('Not implemented')
 
-    def parse_reply(data):
-        """Parses a reply and returns an :py:class:`RPCReply` instance.
+    def parse_reply(self, data):
+        """Parses a reply and returns an :py:class:`RPCResponse` instance.
 
-        :return: An instanced reply.
+        :return: An instanced response.
         """
         raise RuntimeError('Not implemented')
 
@@ -99,6 +112,10 @@ class RPCError(Exception):
 
 
 class InvalidRequestError(RPCError):
+    pass
+
+
+class InvalidReplyError(RPCError):
     pass
 
 
