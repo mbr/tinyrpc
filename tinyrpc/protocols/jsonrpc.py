@@ -7,7 +7,7 @@ from .. import RPCProtocol, RPCRequest, RPCReply, InvalidRequestError,\
 import json
 
 
-class JSONRPCInvalidJSONError(InvalidRequestError):
+class JSONRPCParseError(InvalidRequestError):
     jsonrpc_error_code = -32700
     message = 'Parse error'
 
@@ -63,7 +63,7 @@ class JSONRPCProtocol(RPCProtocol):
         try:
             req = json.loads(data)
         except Exception as e:
-            raise JSONRPCInvalidJSONError
+            raise JSONRPCParseError
 
         for k in req.iterkeys():
             if not k in self._ALLOWED_REQUEST_KEYS:

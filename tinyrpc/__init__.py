@@ -50,13 +50,13 @@ class RPCReply(object):
 class RPCProtocol(object):
     """Base class for all protocol implementations."""
 
-    def create_error_reply(self, error):
+    def create_error_message(self, error):
         """Transforms an exception that occured outside of the desired function
-        into a possible reply.
+        into a possible reply-message.
 
         :error: An exception.
-        :return: ``None``, if no action should be taken, or a
-        :py:class:`tinyrpc.RPCReply` object.
+        :return: ``None``, if no action should be taken, or a string containing
+        the reply to send back.
         """
         raise RuntimeError('Not implemented')
 
