@@ -218,3 +218,4 @@ def test_proper_construction_of_independent_errors(prot, exc, code, message):
 
 # FIXME: create_request test-cases
 # FIXME: support update-type requests
+# FIXME: actual mock communication test (full spec?)
