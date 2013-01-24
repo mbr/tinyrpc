@@ -23,7 +23,8 @@ Documentation
 -------------
 
 You'll quickly find that ``tinyrpc`` has more documentation and tests than core
-code, hence the name. See the documentation for more details, especially the
+code, hence the name. See the documentation at
+<https://tinyrpc.readthedocs.org> for more details, especially the
 Structure-section to get a birds-eye view.
 
 .. _jsonrpc: http://www.jsonrpc.org/
