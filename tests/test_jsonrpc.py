@@ -240,5 +240,12 @@ def test_raises_on_args_and_kwargs(prot):
 def test_supports_no_args(prot):
         prot.create_request('foo')
 
-# FIXME: create_request test-cases
+def test_request_generation(prot):
+    jdata = json.loads(prot.create_request('subtract', [42, 23]))
+
+    assert jdata['method'] == subtract
+    assert jdata['params'] == [42, 23]
+    assert jdata['id'] != None
+    assert jdata['jsonrpc'] == '2.0'
+
 # FIXME: actual mock communication test (full spec?)
