@@ -35,7 +35,7 @@ class RPCRequest(object):
         :return: A response or ``None`` to indicate that no error should be sent
                  out.
         """
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
     def respond(self, result):
         """Create a response.
@@ -50,14 +50,14 @@ class RPCRequest(object):
         :return: A response or ``None`` to indicate this request does not expect a
                  response.
         """
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
     def serialize(self):
         """Returns a serialization of the request.
 
         :return: A string to be passed on to a transport.
         """
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
 
 class RPCBatchRequest(list):
@@ -75,7 +75,7 @@ class RPCBatchRequest(list):
     """
 
     def serialize(self):
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
 
 class RPCResponse(object):
@@ -91,7 +91,7 @@ class RPCResponse(object):
 
         :return: A reply to be passed on to a transport.
         """
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
 
 class RPCBatchResponse(list):
@@ -110,11 +110,11 @@ class RPCBatchResponse(list):
 
         :return: An :py:class:`~tinyrpc.RPCBatchResponse` or ``None``, if no
         response is expected."""
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
     def serialize(self):
         """Returns a serialization of the batch response."""
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
 
 class RPCProtocol(object):
@@ -141,7 +141,7 @@ class RPCProtocol(object):
                         reply.
         :return: A new :py:class:`~tinyrpc.RPCRequest` instance.
         """
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
     def parse_request(self, data):
         """Parses a request given as a string and returns an
@@ -149,14 +149,14 @@ class RPCProtocol(object):
 
         :return: An instanced request.
         """
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
     def parse_reply(self, data):
         """Parses a reply and returns an :py:class:`RPCResponse` instance.
 
         :return: An instanced response.
         """
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
 
 
 class RPCBatchProtocol(RPCProtocol):
@@ -165,4 +165,4 @@ class RPCBatchProtocol(RPCProtocol):
 
         :param requests: A list of requests.
         """
-        raise RuntimeError('Not implemented')
+        raise NotImplementedError()
