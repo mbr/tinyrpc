@@ -27,6 +27,12 @@ code, hence the name. See the documentation at
 <https://tinyrpc.readthedocs.org> for more details, especially the
 Structure-section to get a birds-eye view.
 
+Installation
+------------
+
+tinyrpc is currently under developed, no usable release has been released to
+PyPI just yet. Use pip to install directly from github.
+
 .. _jsonrpc: http://www.jsonrpc.org/
 .. _PyPI: http://pypi.python.org
 .. _json: http://www.json.org/
