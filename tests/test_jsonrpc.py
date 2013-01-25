@@ -241,9 +241,9 @@ def test_supports_no_args(prot):
         prot.create_request('foo')
 
 def test_request_generation(prot):
-    jdata = json.loads(prot.create_request('subtract', [42, 23]))
+    jdata = json.loads(prot.create_request('subtract', [42, 23]).serialize())
 
-    assert jdata['method'] == subtract
+    assert jdata['method'] == 'subtract'
     assert jdata['params'] == [42, 23]
     assert jdata['id'] != None
     assert jdata['jsonrpc'] == '2.0'
