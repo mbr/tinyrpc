@@ -2,6 +2,16 @@
 # -*- coding: utf-8 -*-
 
 class RPCRequest(object):
+    unique_id = None
+    """A unique ID to remember the request by. Protocol specific, may or
+    may not be set.
+
+    The ID allows client to receive responses out-of-order and still allocate
+    them to the correct request.
+
+    Only supported if the parent protocol has
+    :py:attr:`~tinyrpc.RPCProtocol.supports_out_of_order` set to ``True``."""
+
     method = None
     """The name of the method to be called."""
     args = None
@@ -73,12 +83,17 @@ class RPCSuccessResponse(RPCResponse):
 class RPCProtocol(object):
     """Base class for all protocol implementations."""
 
-    def create_request(self, method, args, kwargs):
+    supports_out_of_order = False
+    """If true, this protocol can receive responses out of order correctly."""
+
+    def create_request(self, method, args, kwargs, one_way=False):
         """Creates a new RPCRequest object.
 
         :param method: The method name to invoke.
         :param args: The positional arguments to call the method with.
         :param kwargs: The keyword arguments to call the method with.
+        :param one_way: The request is an update, i.e. it does not expect a
+                        reply.
         :return: A new :py:class:`~tinyrpc.RPCRequest` instance.
         """
         raise RuntimeError('Not implemented')
