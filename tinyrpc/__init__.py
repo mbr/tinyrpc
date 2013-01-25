@@ -4,7 +4,8 @@
 class RPCRequest(object):
     unique_id = None
     """A unique ID to remember the request by. Protocol specific, may or
-    may not be set.
+    may not be set. This value should only be set by
+    :py:func:`~tinyrpc.RPCProtocol.create_request`.
 
     The ID allows client to receive responses out-of-order and still allocate
     them to the correct request.
@@ -84,7 +85,12 @@ class RPCProtocol(object):
     """Base class for all protocol implementations."""
 
     supports_out_of_order = False
-    """If true, this protocol can receive responses out of order correctly."""
+    """If true, this protocol can receive responses out of order correctly.
+
+    Note that this usually depends on the generation of unique_ids, the
+    generation of these may or may not be thread safe, depending on the
+    protocol. Ideally, only once instance of RPCProtocol should be used per
+    client."""
 
     def create_request(self, method, args=None, kwargs=None, one_way=False):
         """Creates a new RPCRequest object.
