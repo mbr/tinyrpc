@@ -12,7 +12,8 @@ class RPCRequest(object):
     them to the correct request.
 
     Only supported if the parent protocol has
-    :py:attr:`~tinyrpc.RPCProtocol.supports_out_of_order` set to ``True``."""
+    :py:attr:`~tinyrpc.RPCProtocol.supports_out_of_order` set to ``True``.
+    """
 
     method = None
     """The name of the method to be called."""
@@ -29,10 +30,10 @@ class RPCRequest(object):
         Create a response indicating that the request was parsed correctly,
         but an error has occured trying to fulfill it.
 
-        :param: An exception or a string describing the error.
+        :param error: An exception or a string describing the error.
 
         :return: A response or ``None`` to indicate that no error should be sent
-        out.
+                 out.
         """
         raise RuntimeError('Not implemented')
 
@@ -47,7 +48,7 @@ class RPCRequest(object):
         :param result: Passed on to new response instance.
 
         :return: A response or ``None`` to indicate this request does not expect a
-        response.
+                 response.
         """
         raise RuntimeError('Not implemented')
 
@@ -78,7 +79,12 @@ class RPCBatchRequest(list):
 
 
 class RPCResponse(object):
-    """RPC call response base class."""
+    """RPC call response class.
+
+    If the object has an attribute named ``error``, it is considered an error
+    response. Otherwise, the attribute ``result`` contains the result."""
+
+    unique_id = None
 
     def serialize(self):
         """Returns a serialization of the response.
@@ -155,4 +161,8 @@ class RPCProtocol(object):
 
 class RPCBatchProtocol(RPCProtocol):
     def create_batch_request(self, requests=None):
+        """Create a new :py:class:`tinyrpc.RPCBatchRequest` object.
+
+        :param requests: A list of requests.
+        """
         raise RuntimeError('Not implemented')

@@ -1,8 +1,8 @@
 The protocol layer
 ==================
 
-Any protocol is implemented by deriving from :py:class:`RPCProtocol` and
-implementing all of its members:
+Any protocol is implemented by deriving from :py:class:`~tinyrpc.RPCProtocol`
+and implementing all of its members:
 
 .. autoclass:: tinyrpc.RPCProtocol
    :members:
@@ -15,30 +15,42 @@ These require implementations of the following classes as well:
 .. autoclass:: tinyrpc.RPCResponse
    :members:
 
-.. autoclass:: tinyrpc.RPCSuccessResponse
+.. autoclass:: tinyrpc.BadRequestError
    :members:
 
-.. autoclass:: tinyrpc.RPCErrorResponse
-   :members:
-
-Every protocol deals with three kinds of structures: ``data`` arguments are
+Every protocol deals with multiple kinds of structures: ``data`` arguments are
 always byte strings, either messages or replies, that are sent via or received
 from a transport.
 
-The other two are protocol-specific subclasses of
-:py:class:`~tinyrpc.RPCRequest` and :py:class:`~tinyrpc.RPCReply`, the latter
-knows two subclasses for successful and unsuccessful requests.
+There are two protocol-specific subclasses of
+:py:class:`~tinyrpc.RPCRequest` and :py:class:`~tinyrpc.RPCReply`, these
+represent well-formed requests and responses.
+
+Finally, if an error occurs during parsing of a request, a
+:py:class:`~tinyrpc.BadRequestError` instance must be thrown. These need to be
+subclassed for each protocol as well, since they generate error replies.
+
+
+Batch protocols
+---------------
+
+Some protocols may support batch requests. In this case, they need to derive
+from :py:class:`~tinyrpc.RPCBatchProtocol`.
+
+.. autoclass:: tinyrpc.RPCBatchProtocol
+   :members:
+
 
 Supported protocols
 -------------------
 
-Any supported protocol is used by instantiating its classes and calling the
+Any supported protocol is used by instantiating its class and calling the
 interface of :py:class:`~tinyrpc.RPCProtocol`. Note that constructors are not
 part of the interface, any protocol may have specific arguments for its
 instances.
 
 Protocols usually live in their own module because they may need to import
-optinal modules.
+optional modules that needn't be a dependency for all of ``tinyrpc``.
 
 Example
 -------
@@ -53,6 +65,7 @@ Server
 .. code-block:: python
 
    from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
+   from tinyrpc import BadRequestError, RPCBatchRequest
 
    rpc = JSONRPCProtocol()
 
@@ -61,20 +74,32 @@ Server
    def handle_incoming_message(self, data):
        try:
            request = rpc.parse_request(data)
-       except Exception as e:
-           response = rpc.create_error_response(e)
+       except BadRequestError as e:
+           # request was invalid, directly create response
+           response = e.error_respond(e)
        else:
            # we got a valid request
-           try:
-               # at this point, response.method, response.args and response.kwargs
-               # can be used to determine a result
-               response = request.respond(result)
-           except Exception as e:
-               # for example, a method wasn't found
-               response = request.error_respond(e)
+           # the handle_request function is user-defined
+           # and returns some form of response
+           if hasattr(request, create_batch_response):
+               response = request.create_batch_response(
+                   handle_request(req) for req in request
+               )
+           else:
+               response = handle_request(request)
 
        # now send the response to the client
-       send_to_client(response.serialize())
+       if response != None:
+            send_to_client(response.serialize())
+
+
+   def handle_request(request):
+       try:
+           # do magic with method, args, kwargs...
+           return request.respond(result)
+       except Exception as e:
+           # for example, a method wasn't found
+           return request.error_respond(e)
 
 Client
 ~~~~~~
@@ -94,10 +119,43 @@ Client
 
    response = rpc.parse_reply(reply)
 
-   if response.is_error:
+   if hasattr(response, 'error'):
        # error handling...
    else:
-       # the return value is found in response.rv
+       # the return value is found in response.result
+       do_something_with(response.result)
+
+
+Another example, this time using batch requests:
+
+.. code-block:: python
+
+   # or using batch requests:
+
+   requests = rpc.create_batch_request([
+       rpc.create_request(method_1, args_1, kwargs_1)
+       rpc.create_request(method_2, args_2, kwargs_2)
+       # ...
+   ])
+
+   reply = send_to_server_and_get_reply(request)
+
+   responses = rpc.parse_reply(reply)
+
+   for responses in response:
+       if hasattr(reponse, 'error'):
+           # ...
+
+
+Finally, one-way requests are requests where the client does not expect an
+answer:
+
+.. code-block:: python
+
+   request = rpc.create_request(method, args, kwargs, one_way=True)
+   send_to_server(request)
+
+   # done
 
 
 JSON-RPC
