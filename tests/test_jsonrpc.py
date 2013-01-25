@@ -14,6 +14,16 @@ from tinyrpc.protocols.jsonrpc import JSONRPCParseError, \
                                       JSONRPCInternalError
 
 
+def _json_equal(a, b):
+    da = json.loads(a)
+    db = json.loads(b)
+
+    print repr(da)
+    print repr(db)
+
+    return da == db
+
+
 @pytest.fixture
 def prot():
     from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
@@ -194,6 +204,7 @@ def test_batch_good_examples(prot):
     assert results[5].kwargs == None
     assert results[5].unique_id == "9"
 
+
 @pytest.mark.parametrize(('exc', 'code', 'message'), [
     (JSONRPCParseError, -32700, 'Parse error'),
     (JSONRPCInvalidRequestError, -32600, 'Invalid Request'),
@@ -216,16 +227,19 @@ def test_proper_construction_of_independent_errors(prot, exc, code, message):
     assert err['error']['code'] == code
     assert err['error']['message'] == message
 
+
 def test_unique_ids(prot):
     req1 = prot.create_request('foo', [1, 2])
     req2 = prot.create_request('foo', [1, 2])
 
     assert req1.unique_id != req2.unique_id
 
+
 def test_one_way(prot):
     req = prot.create_request('foo', None, {'a': 'b'}, True)
 
     assert req.respond(None) == None
+
 
 def test_out_of_order(prot):
     req = prot.create_request('foo', ['a', 'b'], None)
@@ -233,12 +247,15 @@ def test_out_of_order(prot):
 
     assert req.unique_id == rep.unique_id
 
+
 def test_raises_on_args_and_kwargs(prot):
     with pytest.raises(Exception):
         prot.create_request('foo', ['arg1', 'arg2'], {'kw_key': 'kw_value'})
 
+
 def test_supports_no_args(prot):
         prot.create_request('foo')
+
 
 def test_request_generation(prot):
     jdata = json.loads(prot.create_request('subtract', [42, 23]).serialize())
@@ -248,4 +265,246 @@ def test_request_generation(prot):
     assert jdata['id'] != None
     assert jdata['jsonrpc'] == '2.0'
 
-# FIXME: actual mock communication test (full spec?)
+
+def test_jsonrpc_spec_v2_example1(prot):
+    # reset id counter
+    prot.__class__._id_counter = 0
+
+    request = prot.create_request('subtract', [42, 23])
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "method": "subtract", "params": [42, 23], "id":
+        1}""",
+        request.serialize()
+    )
+
+    reply = request.respond(19)
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "result": 19, "id": 1}""",
+        reply.serialize()
+    )
+
+    request = prot.create_request('subtract', [23, 42])
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "method": "subtract", "params": [23, 42], "id": 2}""",
+        request.serialize()
+    )
+
+    reply = request.respond(-19)
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "result": -19, "id": 2}""",
+        reply.serialize()
+    )
+
+
+def test_jsonrpc_spec_v2_example2(prot):
+    # reset id counter
+    prot.__class__._id_counter = 2
+
+    request = prot.create_request('subtract',
+                                  kwargs={'subtrahend': 23, 'minuend': 42})
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "method": "subtract", "params":
+           {"subtrahend": 23, "minuend": 42}, "id": 3}""",
+        request.serialize()
+    )
+
+    reply = request.respond(19)
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "result": 19, "id": 3}""",
+        reply.serialize()
+    )
+
+    request = prot.create_request('subtract',
+                                  kwargs={'subtrahend': 23, 'minuend': 42})
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "method": "subtract", "params": {"minuend":
+           42, "subtrahend": 23}, "id": 4}""",
+        request.serialize()
+    )
+
+    reply = request.respond(-19)
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "result": -19, "id": 4}""",
+        reply.serialize()
+    )
+
+
+def test_jsonrpc_spec_v2_example3(prot):
+    request = prot.create_request('update', [1, 2, 3, 4, 5], one_way=True)
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "method": "update", "params": [1,2,3,4,5]}""",
+        request.serialize()
+    )
+
+    request = prot.create_request('foobar', one_way=True)
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "method": "foobar"}""",
+        request.serialize()
+    )
+
+
+def test_jsonrpc_spec_v2_example4(prot):
+    request = prot.create_request('foobar')
+    request.unique_id = str(1)
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "method": "foobar", "id": "1"}""",
+        request.serialize()
+    )
+
+    response = request.error_respond(MethodNotFoundError('foobar'))
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "error": {"code": -32601, "message":
+           "Method not found"}, "id": "1"}""",
+           response.serialize()
+    )
+
+
+def test_jsonrpc_spec_v2_example5(prot):
+    try:
+        prot.parse_request(
+            """{"jsonrpc": "2.0", "method": "foobar, "params":
+            "bar", "baz]""")
+        assert False  # parsing must fail
+    except JSONRPCParseError as e:
+        pass
+
+    response = prot.create_error_response(e)
+
+    assert _json_equal(
+            """{"jsonrpc": "2.0", "error": {"code": -32700, "message":
+            "Parse error"}, "id": null}""",
+            response.serialize()
+    )
+
+
+def test_jsonrpc_spec_v2_example6(prot):
+    try:
+        prot.parse_request(
+            """{"jsonrpc": "2.0", "method": 1, "params": "bar"}""")
+        assert False  # parsing must fail
+    except JSONRPCInvalidRequestError as e:
+        pass
+
+    response = prot.create_error_response(e)
+
+    assert _json_equal(
+            """{"jsonrpc": "2.0", "error": {"code": -32600, "message":
+            "Invalid Request"}, "id": null}""",
+            response.serialize()
+    )
+
+
+def test_jsonrpc_spec_v2_example7(prot):
+    try:
+        prot.parse_request("""[
+            {"jsonrpc": "2.0", "method": "sum", "params": [1,2,4], "id": "1"},
+            {"jsonrpc": "2.0", "method" ]""")
+        assert False
+    except JSONRPCParseError as e:
+        pass
+
+    response = prot.create_error_response(e)
+
+    assert _json_equal(
+        """{"jsonrpc": "2.0", "error": {"code": -32700, "message":
+           "Parse error"}, "id": null}""",
+           response.serialize()
+    )
+
+
+def test_jsonrpc_spec_v2_example8(prot):
+    try:
+        prot.parse_request("""[]""")
+        assert False
+    except JSONRPCInvalidRequestError as e:
+        pass
+
+    response = prot.create_error_response(e)
+
+    assert _json_equal("""{"jsonrpc": "2.0", "error": {"code": -32600,
+    "message": "Invalid Request"}, "id": null}""",
+           response.serialize())
+
+
+def test_jsonrpc_spec_v2_example9(prot):
+    requests = prot.parse_request("""[1]""")
+
+    assert isinstance(requests[0], JSONRPCInvalidRequestError)
+
+    responses = requests.create_batch_response()
+    responses.append(prot.create_error_response(requests[0]))
+
+    assert _json_equal("""[ {"jsonrpc": "2.0", "error": {"code": -32600,
+                       "message": "Invalid Request"}, "id": null} ]""",
+           responses.serialize())
+
+
+def test_jsonrpc_spec_v2_example10(prot):
+    requests = prot.parse_request("""[1, 2, 3]""")
+
+    assert isinstance(requests[0], JSONRPCInvalidRequestError)
+    assert isinstance(requests[1], JSONRPCInvalidRequestError)
+    assert isinstance(requests[2], JSONRPCInvalidRequestError)
+
+    responses = requests.create_batch_response()
+    responses.append(prot.create_error_response(requests[0]))
+    responses.append(prot.create_error_response(requests[1]))
+    responses.append(prot.create_error_response(requests[2]))
+
+    assert _json_equal("""[
+  {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null},
+  {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null},
+  {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null}
+]""",
+           responses.serialize())
+
+
+def test_jsonrpc_spec_v2_example11(prot):
+    requests = prot.parse_request("""[
+        {"jsonrpc": "2.0", "method": "sum", "params": [1,2,4], "id": "1"},
+        {"jsonrpc": "2.0", "method": "notify_hello", "params": [7]},
+        {"jsonrpc": "2.0", "method": "subtract", "params": [42,23], "id": "2"},
+        {"foo": "boo"},
+        {"jsonrpc": "2.0", "method": "foo.get", "params": {"name": "myself"}, "id": "5"},
+        {"jsonrpc": "2.0", "method": "get_data", "id": "9"}
+    ]""")
+
+    assert isinstance(requests[3], JSONRPCInvalidRequestError)
+
+    responses = requests.create_batch_response()
+    responses.append(requests[0].respond(7))
+    responses.append(requests[2].respond(19))
+    responses.append(prot.create_error_response(requests[3]))
+    responses.append(requests[4].error_respond(MethodNotFoundError('foo.get')))
+    responses.append(requests[5].respond(['hello', 5]))
+
+    assert _json_equal("""[
+        {"jsonrpc": "2.0", "result": 7, "id": "1"},
+        {"jsonrpc": "2.0", "result": 19, "id": "2"},
+        {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null},
+        {"jsonrpc": "2.0", "error": {"code": -32601, "message": "Method not found"}, "id": "5"},
+        {"jsonrpc": "2.0", "result": ["hello", 5], "id": "9"}
+    ]""",
+        responses.serialize())
+
+
+def test_jsonrpc_spec_v2_example12(prot):
+    reqs = []
+    reqs.append(prot.create_request('notify_sum', [1, 2, 4], one_way=True))
+    reqs.append(prot.create_request('notify_hello', [7], one_way=True))
+
+    request = prot.create_batch_request(reqs)
+
+    assert request.create_batch_response() == None

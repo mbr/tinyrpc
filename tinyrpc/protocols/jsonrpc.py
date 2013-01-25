@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import RPCProtocol, RPCRequest, RPCErrorResponse, InvalidRequestError,\
-               MethodNotFoundError, ServerError, InvalidReplyError,\
-               RPCSuccessResponse, RPCError
+from .. import RPCBatchProtocol, RPCRequest, RPCErrorResponse,\
+               InvalidRequestError, MethodNotFoundError, ServerError,\
+               InvalidReplyError, RPCSuccessResponse, RPCError,\
+               RPCBatchRequest, RPCBatchResponse
 
 import json
 
@@ -40,24 +41,30 @@ class JSONRPCInternalError(FixedErrorMessageMixin, InvalidRequestError):
 
 
 class JSONRPCSuccessResponse(RPCSuccessResponse):
-    def serialize(self):
-        return json.dumps({
+    def _to_dict(self):
+        return {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
             'id': self.unique_id,
             'result': self.result,
-        })
+        }
+
+    def serialize(self):
+        return json.dumps(self._to_dict())
 
 
 class JSONRPCErrorResponse(RPCErrorResponse):
-    def serialize(self):
-        return json.dumps({
+    def _to_dict(self):
+        return {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
             'id': self.unique_id,
             'error': {
                 'message': str(self.error),
                 'code': self._jsonrpc_error_code,
             }
-        })
+        }
+
+    def serialize(self):
+        return json.dumps(self._to_dict())
 
 
 def _get_code_and_message(error):
@@ -107,18 +114,47 @@ class JSONRPCRequest(RPCRequest):
 
         return response
 
-    def serialize(self):
+    def _to_dict(self):
         jdata = {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
             'method': self.method,
-            'params': self.args if self.args != None else self.kwargs,
         }
+        if self.args:
+            jdata['params'] = self.args
+        if self.kwargs:
+            jdata['params'] = self.kwargs
         if self.unique_id != None:
             jdata['id'] = self.unique_id
-        return json.dumps(jdata)
+        return jdata
+
+    def serialize(self):
+        return json.dumps(self._to_dict())
 
 
-class JSONRPCProtocol(RPCProtocol):
+class JSONRPCBatchRequest(RPCBatchRequest):
+    def create_batch_response(self):
+        if self._expects_response():
+            return JSONRPCBatchResponse()
+
+    def _expects_response(self):
+        for request in self:
+            if isinstance(request, Exception):
+                return True
+            if request.unique_id != None:
+                return True
+
+        return False
+
+    def serialize(self):
+        return json.dumps([req._to_dict() for req in self])
+
+
+class JSONRPCBatchResponse(RPCBatchResponse):
+    def serialize(self):
+        return json.dumps([resp._to_dict() for resp in self if resp != None])
+
+
+class JSONRPCProtocol(RPCBatchProtocol):
     """JSONRPC protocol implementation.
 
     Currently, only version 2.0 is supported."""
@@ -127,13 +163,15 @@ class JSONRPCProtocol(RPCProtocol):
     _ALLOWED_REPLY_KEYS = sorted(['id', 'jsonrpc', 'error', 'result'])
     _ALLOWED_REQUEST_KEYS = sorted(['id', 'jsonrpc', 'method', 'params'])
 
-    _id_counter = -1
+    _id_counter = 0
 
     @classmethod
     def _get_unique_id(cls):
         cls._id_counter += 1
         return cls._id_counter
 
+    def create_batch_request(self, requests=None):
+        return JSONRPCBatchRequest(requests or [])
 
     def create_error_response(self, error):
         code, message = _get_code_and_message(error)
@@ -204,7 +242,7 @@ class JSONRPCProtocol(RPCProtocol):
 
         if isinstance(req, list):
             # batch request
-            requests = []
+            requests = JSONRPCBatchRequest()
             for subreq in req:
                 try:
                     requests.append(self._parse_subrequest(subreq))
@@ -228,7 +266,7 @@ class JSONRPCProtocol(RPCProtocol):
             raise JSONRPCInvalidRequestError()
 
         if not isinstance(req['method'], basestring):
-            raise JSONRPCMethodNotFoundError()
+            raise JSONRPCInvalidRequestError()
 
         request = JSONRPCRequest()
         request.method = str(req['method'])

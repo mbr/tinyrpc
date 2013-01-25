@@ -13,6 +13,7 @@ class RPCRequest(object):
     Only supported if the parent protocol has
     :py:attr:`~tinyrpc.RPCProtocol.supports_out_of_order` set to ``True``."""
 
+
     method = None
     """The name of the method to be called."""
     args = None
@@ -53,6 +54,22 @@ class RPCRequest(object):
         raise RuntimeError('Not implemented')
 
 
+class RPCBatchRequest(list, RPCRequest):
+    """Multiple requests batched together.
+
+    A batch request is a subclass of :py:class:`list`. Protocols that support
+    multiple requests in a single message use this to group them together.
+
+    Handling a batch requests is done in any order, responses must be gathered
+    in a batch response and be in the same order as their respective requests.
+
+    Any item of a batch request is either a request or a subclass of
+    :py:class:`~tinyrpc.RPCError`, which indicates that there has been an error
+    in parsing the request.
+    """
+    pass
+
+
 class RPCResponse(object):
     """RPC call response base class."""
 
@@ -64,6 +81,29 @@ class RPCResponse(object):
 
         :return: A reply to be passed on to a transport.
         """
+        raise RuntimeError('Not implemented')
+
+
+class RPCBatchResponse(list, RPCResponse):
+    """Multiple response from a batch request. See
+    :py:class:`~tinyrpc.RPCBatchRequest` on how to handle.
+
+    Items in a batch response need to be either
+    :py:class:`~tinyrpc.RCPResponse` instances or a subclass of
+    :py:class:`Exception`. In the case of the latter, they should be
+    automatically turned into response-instances through
+    :py:func:`~tinyrpc.RPCProtocol.create_error_response`.
+    """
+
+    def create_batch_response(self):
+        """Creates a response suitable for responding to this request.
+
+        :return: An :py:class:`~tinyrpc.RPCBatchResponse` or ``None``, if no
+        response is expected."""
+        raise RuntimeError('Not implemented')
+
+    def serialize(self):
+        """Returns a serialization of the batch response."""
         raise RuntimeError('Not implemented')
 
 
@@ -132,6 +172,11 @@ class RPCProtocol(object):
 
         :return: An instanced response.
         """
+        raise RuntimeError('Not implemented')
+
+
+class RPCBatchProtocol(RPCProtocol):
+    def create_batch_request(self, requests=None):
         raise RuntimeError('Not implemented')
 
 
