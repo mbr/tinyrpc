@@ -86,8 +86,11 @@ class RPCProtocol(object):
     supports_out_of_order = False
     """If true, this protocol can receive responses out of order correctly."""
 
-    def create_request(self, method, args, kwargs, one_way=False):
+    def create_request(self, method, args=None, kwargs=None, one_way=False):
         """Creates a new RPCRequest object.
+
+        It is up to the implementing protocol whether or not ``args``,
+        ``kwargs``, one of these, both at once or none of them are supported.
 
         :param method: The method name to invoke.
         :param args: The positional arguments to call the method with.
