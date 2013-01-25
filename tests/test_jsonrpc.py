@@ -268,7 +268,7 @@ def test_request_generation(prot):
 
 def test_jsonrpc_spec_v2_example1(prot):
     # reset id counter
-    prot.__class__._id_counter = 0
+    prot._id_counter = 0
 
     request = prot.create_request('subtract', [42, 23])
 
@@ -302,7 +302,7 @@ def test_jsonrpc_spec_v2_example1(prot):
 
 def test_jsonrpc_spec_v2_example2(prot):
     # reset id counter
-    prot.__class__._id_counter = 2
+    prot._id_counter = 2
 
     request = prot.create_request('subtract',
                                   kwargs={'subtrahend': 23, 'minuend': 42})

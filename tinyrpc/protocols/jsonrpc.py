@@ -163,12 +163,13 @@ class JSONRPCProtocol(RPCBatchProtocol):
     _ALLOWED_REPLY_KEYS = sorted(['id', 'jsonrpc', 'error', 'result'])
     _ALLOWED_REQUEST_KEYS = sorted(['id', 'jsonrpc', 'method', 'params'])
 
-    _id_counter = 0
+    def __init__(self, *args, **kwargs):
+        super(JSONRPCProtocol, self).__init__(*args, **kwargs)
+        self._id_counter = 0
 
-    @classmethod
-    def _get_unique_id(cls):
-        cls._id_counter += 1
-        return cls._id_counter
+    def _get_unique_id(self):
+        self._id_counter += 1
+        return self._id_counter
 
     def create_batch_request(self, requests=None):
         return JSONRPCBatchRequest(requests or [])
