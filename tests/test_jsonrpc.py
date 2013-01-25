@@ -25,24 +25,24 @@ def prot():
     # examples from the spec, parsing only
     ("""{"jsonrpc": "2.0", "method": "subtract",
        "params": [42, 23], "id": 1}""",
-     {'method': 'subtract', 'args': [42, 23], '_jsonrpc_id': 1}
+     {'method': 'subtract', 'args': [42, 23], 'unique_id': 1}
     ),
 
     ("""{"jsonrpc": "2.0", "method": "subtract", "params":
         [23, 42], "id": 2}""",
-     {'method': 'subtract', 'args': [23, 42], '_jsonrpc_id': 2}
+     {'method': 'subtract', 'args': [23, 42], 'unique_id': 2}
     ),
 
     ("""{"jsonrpc": "2.0", "method": "subtract", "params":
         {"subtrahend": 23, "minuend": 42}, "id": 3}""",
      {'method': 'subtract', 'kwargs': {'subtrahend': 23, 'minuend': 42},
-      '_jsonrpc_id': 3}
+      'unique_id': 3}
     ),
 
     ("""{"jsonrpc": "2.0", "method": "subtract", "params": {"minuend": 42,
         "subtrahend": 23}, "id": 4}""",
      {'method': 'subtract', 'kwargs': {'minuend': 42, 'subtrahend': 23},
-      '_jsonrpc_id': 4},
+      'unique_id': 4},
     ),
 
     ("""{"jsonrpc": "2.0", "method": "update", "params": [1,2,3,4,5]}""",
@@ -100,7 +100,7 @@ def test_parsing_invalid_arguments(prot):
 def test_good_reply_samples(prot, data, id, result):
     reply = prot.parse_reply(data)
 
-    assert reply._jsonrpc_id == id
+    assert reply.unique_id == id
     assert not reply.is_error
     assert reply.result == result
 
@@ -173,26 +173,26 @@ def test_batch_good_examples(prot):
     assert isinstance(results, list)
     assert results[0].method == 'sum'
     assert results[0].args == [1, 2, 4]
-    assert results[0]._jsonrpc_id == "1"
+    assert results[0].unique_id == "1"
 
     assert results[1].method == 'notify_hello'
     assert results[1].args == [7]
-    assert results[1]._jsonrpc_id == None
+    assert results[1].unique_id == None
 
     assert results[2].method == 'subtract'
     assert results[2].args == [42, 23]
-    assert results[2]._jsonrpc_id == "2"
+    assert results[2].unique_id == "2"
 
     assert isinstance(results[3], JSONRPCInvalidRequestError)
 
     assert results[4].method == 'foo.get'
     assert results[4].kwargs == {'name': 'myself'}
-    assert results[4]._jsonrpc_id == "5"
+    assert results[4].unique_id == "5"
 
     assert results[5].method == 'get_data'
     assert results[5].args == None
     assert results[5].kwargs == None
-    assert results[5]._jsonrpc_id == "9"
+    assert results[5].unique_id == "9"
 
 @pytest.mark.parametrize(('exc', 'code', 'message'), [
     (JSONRPCParseError, -32700, 'Parse error'),

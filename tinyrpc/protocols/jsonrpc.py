@@ -43,7 +43,7 @@ class JSONRPCSuccessResponse(RPCSuccessResponse):
     def serialize(self):
         return json.dumps({
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
-            'id': self._jsonrpc_id,
+            'id': self.unique_id,
             'result': self.result,
         })
 
@@ -52,7 +52,7 @@ class JSONRPCErrorResponse(RPCErrorResponse):
     def serialize(self):
         return json.dumps({
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
-            'id': self._jsonrpc_id,
+            'id': self.unique_id,
             'error': {
                 'message': str(self.error),
                 'code': self._jsonrpc_error_code,
@@ -84,7 +84,7 @@ def _get_code_and_message(error):
 
 class JSONRPCRequest(RPCRequest):
     def error_respond(self, error):
-        if not self._jsonrpc_id:
+        if not self.unique_id:
             return None
 
         response = JSONRPCErrorResponse()
@@ -92,14 +92,14 @@ class JSONRPCRequest(RPCRequest):
         code, msg = _get_code_and_message(error)
 
         response.error = msg
-        response._jsonrpc_id = self._jsonrpc_id
+        response.unique_id = self.unique_id
         response._jsonrpc_error_code = code
         return response
 
     def respond(self, result):
         response = JSONRPCSuccessResponse()
 
-        if not self._jsonrpc_id:
+        if not self.unique_id:
             return None
 
         response.result = result
@@ -123,7 +123,7 @@ class JSONRPCProtocol(RPCProtocol):
         code, msg = _get_code_and_message(error)
 
         response.error = msg
-        response._jsonrpc_id = None
+        response.unique_id = None
         response._jsonrpc_error_code = code
         return response
 
@@ -157,7 +157,7 @@ class JSONRPCProtocol(RPCProtocol):
             response = JSONRPCSuccessResponse()
             response.result = rep.get('result', None)
 
-        response._jsonrpc_id = rep['id']
+        response.unique_id = rep['id']
 
         return response
 
@@ -197,7 +197,7 @@ class JSONRPCProtocol(RPCProtocol):
 
         request = JSONRPCRequest()
         request.method = str(req['method'])
-        request._jsonrpc_id = req.get('id', None)
+        request.unique_id = req.get('id', None)
 
         params = req.get('params', None)
         if params != None:
