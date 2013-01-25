@@ -103,8 +103,19 @@ class JSONRPCRequest(RPCRequest):
             return None
 
         response.result = result
+        response.unique_id = self.unique_id
 
         return response
+
+    def serialize(self):
+        jdata = {
+            'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
+            'method': self.method,
+            'params': self.args if self.args != None else self.kwargs,
+        }
+        if self.unique_id != None:
+            jdata['id'] = self.unique_id
+        return json.dumps(jdata)
 
 
 class JSONRPCProtocol(RPCProtocol):
@@ -116,6 +127,14 @@ class JSONRPCProtocol(RPCProtocol):
     _ALLOWED_REPLY_KEYS = sorted(['id', 'jsonrpc', 'error', 'result'])
     _ALLOWED_REQUEST_KEYS = sorted(['id', 'jsonrpc', 'method', 'params'])
 
+    _id_counter = -1
+
+    @classmethod
+    def _get_unique_id(cls):
+        cls._id_counter += 1
+        return cls._id_counter
+
+
     def create_error_response(self, error):
         code, message = _get_code_and_message(error)
 
@@ -126,6 +145,22 @@ class JSONRPCProtocol(RPCProtocol):
         response.unique_id = None
         response._jsonrpc_error_code = code
         return response
+
+    def create_request(self, method, args=None, kwargs=None, one_way=False):
+        if args != None and kwargs != None:
+            raise InvalidRequestError('Does not support args and kwargs at '\
+                                      'the same time')
+
+        request = JSONRPCRequest()
+
+        if not one_way:
+            request.unique_id = self._get_unique_id()
+
+        request.method = method
+        request.args = args
+        request.kwargs = kwargs
+
+        return request
 
     def parse_reply(self, data):
         try:
