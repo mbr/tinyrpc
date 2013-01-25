@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import RPCBatchProtocol, RPCRequest, RPCErrorResponse,\
+from .. import RPCBatchProtocol, RPCRequest, RPCResponse,\
                InvalidRequestError, MethodNotFoundError, ServerError,\
-               InvalidReplyError, RPCSuccessResponse, RPCError,\
-               RPCBatchRequest, RPCBatchResponse
+               InvalidReplyError, RPCError, RPCBatchRequest, RPCBatchResponse
 
 import json
 
@@ -13,6 +12,15 @@ class FixedErrorMessageMixin(object):
         if not args:
             args = [self.message]
         super(FixedErrorMessageMixin, self).__init__(*args, **kwargs)
+
+    def error_respond(self):
+        response = JSONRPCErrorResponse()
+
+        response.error = self.message
+        response.unique_id = None
+        response._jsonrpc_error_code = self.jsonrpc_error_code
+        return response
+
 
 
 class JSONRPCParseError(FixedErrorMessageMixin, InvalidRequestError):
@@ -40,7 +48,7 @@ class JSONRPCInternalError(FixedErrorMessageMixin, InvalidRequestError):
     message = 'Internal error'
 
 
-class JSONRPCSuccessResponse(RPCSuccessResponse):
+class JSONRPCSuccessResponse(RPCResponse):
     def _to_dict(self):
         return {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
@@ -52,7 +60,7 @@ class JSONRPCSuccessResponse(RPCSuccessResponse):
         return json.dumps(self._to_dict())
 
 
-class JSONRPCErrorResponse(RPCErrorResponse):
+class JSONRPCErrorResponse(RPCResponse):
     def _to_dict(self):
         return {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
@@ -173,17 +181,6 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
     def create_batch_request(self, requests=None):
         return JSONRPCBatchRequest(requests or [])
-
-    def create_error_response(self, error):
-        code, message = _get_code_and_message(error)
-
-        response = JSONRPCErrorResponse()
-        code, msg = _get_code_and_message(error)
-
-        response.error = msg
-        response.unique_id = None
-        response._jsonrpc_error_code = code
-        return response
 
     def create_request(self, method, args=None, kwargs=None, one_way=False):
         if args != None and kwargs != None:

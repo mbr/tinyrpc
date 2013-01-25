@@ -6,7 +6,7 @@ import json
 import pytest
 
 from tinyrpc import MethodNotFoundError, InvalidRequestError, ServerError, \
-                    RPCError, RPCSuccessResponse, RPCErrorResponse
+                    RPCError, RPCResponse
 from tinyrpc.protocols.jsonrpc import JSONRPCParseError, \
                                       JSONRPCInvalidRequestError, \
                                       JSONRPCMethodNotFoundError, \
@@ -111,7 +111,6 @@ def test_good_reply_samples(prot, data, id, result):
     reply = prot.parse_reply(data)
 
     assert reply.unique_id == id
-    assert not reply.is_error
     assert reply.result == result
 
 
@@ -123,18 +122,16 @@ def test_good_reply_samples(prot, data, id, result):
     (JSONRPCInternalError, -32603, 'Internal error'),
 
     # generic errors
-    (RPCError, -32603, 'Internal error'),
-    (Exception, -32603, 'Internal error'),
-    (InvalidRequestError, -32600, 'Invalid Request'),
-    (MethodNotFoundError, -32601, 'Method not found'),
-    (ServerError, -32603, 'Internal error'),
+    #(InvalidRequestError, -32600, 'Invalid Request'),
+    #(MethodNotFoundError, -32601, 'Method not found'),
+    #(ServerError, -32603, 'Internal error'),
 ])
 def test_proper_construction_of_error_codes(prot, exc, code, message):
     request = prot.parse_request(
         """{"jsonrpc": "2.0", "method": "sum", "params": [1,2,4],
            "id": "1"}"""
     )
-    reply = request.error_respond(exc()).serialize()
+    reply = exc().error_respond().serialize()
 
     err = json.loads(reply)
 
@@ -203,29 +200,6 @@ def test_batch_good_examples(prot):
     assert results[5].args == None
     assert results[5].kwargs == None
     assert results[5].unique_id == "9"
-
-
-@pytest.mark.parametrize(('exc', 'code', 'message'), [
-    (JSONRPCParseError, -32700, 'Parse error'),
-    (JSONRPCInvalidRequestError, -32600, 'Invalid Request'),
-    (JSONRPCMethodNotFoundError, -32601, 'Method not found'),
-    (JSONRPCInvalidParamsError, -32602, 'Invalid params'),
-    (JSONRPCInternalError, -32603, 'Internal error'),
-
-    # generic errors
-    (RPCError, -32603, 'Internal error'),
-    (Exception, -32603, 'Internal error'),
-    (InvalidRequestError, -32600, 'Invalid Request'),
-    (MethodNotFoundError, -32601, 'Method not found'),
-    (ServerError, -32603, 'Internal error'),
-])
-def test_proper_construction_of_independent_errors(prot, exc, code, message):
-    reply = prot.create_error_response(exc()).serialize()
-
-    err = json.loads(reply)
-
-    assert err['error']['code'] == code
-    assert err['error']['message'] == message
 
 
 def test_unique_ids(prot):
@@ -380,7 +354,7 @@ def test_jsonrpc_spec_v2_example5(prot):
     except JSONRPCParseError as e:
         pass
 
-    response = prot.create_error_response(e)
+    response = e.error_respond()
 
     assert _json_equal(
             """{"jsonrpc": "2.0", "error": {"code": -32700, "message":
@@ -397,7 +371,7 @@ def test_jsonrpc_spec_v2_example6(prot):
     except JSONRPCInvalidRequestError as e:
         pass
 
-    response = prot.create_error_response(e)
+    response = e.error_respond()
 
     assert _json_equal(
             """{"jsonrpc": "2.0", "error": {"code": -32600, "message":
@@ -415,7 +389,7 @@ def test_jsonrpc_spec_v2_example7(prot):
     except JSONRPCParseError as e:
         pass
 
-    response = prot.create_error_response(e)
+    response = e.error_respond()
 
     assert _json_equal(
         """{"jsonrpc": "2.0", "error": {"code": -32700, "message":
@@ -431,7 +405,7 @@ def test_jsonrpc_spec_v2_example8(prot):
     except JSONRPCInvalidRequestError as e:
         pass
 
-    response = prot.create_error_response(e)
+    response = e.error_respond()
 
     assert _json_equal("""{"jsonrpc": "2.0", "error": {"code": -32600,
     "message": "Invalid Request"}, "id": null}""",
@@ -444,7 +418,7 @@ def test_jsonrpc_spec_v2_example9(prot):
     assert isinstance(requests[0], JSONRPCInvalidRequestError)
 
     responses = requests.create_batch_response()
-    responses.append(prot.create_error_response(requests[0]))
+    responses.append(requests[0].error_respond())
 
     assert _json_equal("""[ {"jsonrpc": "2.0", "error": {"code": -32600,
                        "message": "Invalid Request"}, "id": null} ]""",
@@ -459,9 +433,9 @@ def test_jsonrpc_spec_v2_example10(prot):
     assert isinstance(requests[2], JSONRPCInvalidRequestError)
 
     responses = requests.create_batch_response()
-    responses.append(prot.create_error_response(requests[0]))
-    responses.append(prot.create_error_response(requests[1]))
-    responses.append(prot.create_error_response(requests[2]))
+    responses.append(requests[0].error_respond())
+    responses.append(requests[1].error_respond())
+    responses.append(requests[2].error_respond())
 
     assert _json_equal("""[
   {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null},
@@ -486,7 +460,7 @@ def test_jsonrpc_spec_v2_example11(prot):
     responses = requests.create_batch_response()
     responses.append(requests[0].respond(7))
     responses.append(requests[2].respond(19))
-    responses.append(prot.create_error_response(requests[3]))
+    responses.append(requests[3].error_respond())
     responses.append(requests[4].error_respond(MethodNotFoundError('foo.get')))
     responses.append(requests[5].respond(['hello', 5]))
 
