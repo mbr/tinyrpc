@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from .protocols import *
+from .exc import *
 
 #class RPCDispatcher(object):
 #    def get_method(method_name, args=None, kwargs=None):
@@ -16,27 +17,6 @@ from .protocols import *
 #    return_value = dispatcher.call(function_call)
 #    data_out = protocol.serialize_response(return_value, protocol_ctx)
 #    transport.send_reply(data_out, transport_ctx)
-
-
-class RPCError(Exception):
-    pass
-
-
-class InvalidRequestError(RPCError):
-    pass
-
-
-class InvalidReplyError(RPCError):
-    pass
-
-
-class MethodNotFoundError(RPCError):
-    pass
-
-
-class ServerError(RPCError):
-    pass
-
 
 # IDEA: nest dispatchers, allowing trees - decouples classes from
 #       instance dispatchers?
