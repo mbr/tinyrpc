@@ -48,6 +48,11 @@ class JSONRPCInternalError(FixedErrorMessageMixin, InvalidRequestError):
     message = 'Internal error'
 
 
+class JSONRPCServerError(FixedErrorMessageMixin, InvalidRequestError):
+    jsonrpc_error_code = -32000
+    message = ''
+
+
 class JSONRPCSuccessResponse(RPCResponse):
     def _to_dict(self):
         return {
@@ -88,8 +93,9 @@ def _get_code_and_message(error):
             code = JSONRPCMethodNotFoundError.jsonrpc_error_code
             msg = JSONRPCMethodNotFoundError.message
         else:
-            code = JSONRPCInternalError.jsonrpc_error_code
-            msg = JSONRPCInternalError.message
+            # allow exception message to propagate
+            code = JSONRPCServerError.jsonrpc_error_code
+            msg = str(error)
     else:
         code = -32000
         msg = error
