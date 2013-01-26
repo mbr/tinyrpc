@@ -482,3 +482,17 @@ def test_jsonrpc_spec_v2_example12(prot):
     request = prot.create_batch_request(reqs)
 
     assert request.create_batch_response() == None
+
+
+def test_can_get_custom_error_messages_out(prot):
+    request = prot.create_request('foo')
+
+    custom_msg = 'join the army, they said. see the world, they said.'
+
+    e = Exception(custom_msg)
+
+    response = request.error_respond(e)
+
+    data = json.loads(response.serialize())
+
+    assert data['error']['message'] == custom_msg
