@@ -197,8 +197,8 @@ def test_batch_good_examples(prot):
     assert results[4].unique_id == "5"
 
     assert results[5].method == 'get_data'
-    assert results[5].args == None
-    assert results[5].kwargs == None
+    assert results[5].args == []
+    assert results[5].kwargs == {}
     assert results[5].unique_id == "9"
 
 
