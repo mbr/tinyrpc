@@ -18,10 +18,10 @@ class RPCRequest(object):
     method = None
     """The name of the method to be called."""
 
-    args = None
+    args = []
     """The positional arguments of the method call."""
 
-    kwargs = None
+    kwargs = {}
     """The keyword arguments of the method call."""
 
     def error_respond(self, error):
