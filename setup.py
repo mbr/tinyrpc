@@ -9,7 +9,7 @@ def read(fname):
 
 setup(
     name='tinyrpc',
-    version='0.3dev',
+    version='0.4dev',
     description='A small, modular, transport and protocol neutral RPC '
                 'library that, among other things, supports JSON-RPC and zmq.',
     long_description=read('README.rst'),
