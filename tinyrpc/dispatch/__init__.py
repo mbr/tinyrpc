@@ -62,6 +62,27 @@ class RPCDispatcher(object):
 
         self.method_map[name] = f
 
+    def dispatch(self, request):
+        """Undocumented feature, currently under development."""
+        try:
+            try:
+                method = self.get_method(request.method)
+            except KeyError as e:
+                return request.error_respond(MethodNotFoundError)
+
+            # we found the method
+            try:
+                result = method(*request.args, **request.kwargs)
+            except Exception as e:
+                # an error occured within the method, return it
+                return request.error_respond(e)
+
+            # respond with result
+            return request.respond(result)
+        except Exception as e:
+            # unexpected error, do not let client know what happened
+            return request.error_respond(ServerError())
+
     def get_method(self, name):
         """Retrieve a previously registered method.
 
