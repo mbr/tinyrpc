@@ -25,5 +25,6 @@ Table of contents
 
    structure
    protocols
+   dispatch
 
 .. _jsonrpc: http://jsonrpc.org
