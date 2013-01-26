@@ -30,8 +30,12 @@ Structure-section to get a birds-eye view.
 Installation
 ------------
 
-tinyrpc is currently under developed, no usable release has been released to
-PyPI just yet. Use pip to install directly from github.
+tinyrpc is currently under developed, the current version should be considered
+alpha quality. You are invited to try it out and install via
+
+.. code-block:: sh
+
+   pip install tinyrpc
 
 .. _jsonrpc: http://www.jsonrpc.org/
 .. _PyPI: http://pypi.python.org
