@@ -63,7 +63,27 @@ class RPCDispatcher(object):
         self.method_map[name] = f
 
     def dispatch(self, request):
-        """Undocumented feature, currently under development."""
+        """Fully handle request.
+
+        The dispatch method determines which method to call, calls it and
+        returns a response containing a result.
+
+        No exceptions will be thrown, rather, every exception will be turned
+        into a response using :py:func:`~tinyrpc.RPCRequest.error_respond`.
+
+        If a method isn't found, a :py:func:`~tinyrpc.exc.MethodNotFoundError`
+        response will be returned. If any error occurs outside of the requested
+        method, a :py:func:`~tinyrpc.exc.ServerError` without any error
+        information will be returend.
+
+        If the method is found and called but throws an exception, the
+        exception thrown is used as a response instead. This is the only case
+        in which information from the exception is possibly propagated back to
+        the client, as the exception is part of the requested method.
+
+        :param request: An :py:func:`~tinyrpc.RPCRequest`.
+        :return: An :py:func:`~tinyrpc.RPCResponse`.
+        """
         try:
             try:
                 method = self.get_method(request.method)

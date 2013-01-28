@@ -5,10 +5,11 @@ Dispatching in ``tinyrpc`` is very similiar to url-routing in web frameworks.
 Functions are registered with a specific name and made public, i.e. callable,
 to remote clients.
 
-Example
--------
+Examples
+--------
 
 Exposing a few functions:
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -30,6 +31,7 @@ Exposing a few functions:
    f(*args, **kwargs)
 
 Using prefixes and instance registration:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -85,6 +87,27 @@ In the example above, the :py:class:`~tinyrpc.dispatch.RPCDispatcher` now knows
 a total of six registered methods: ``version``, ``hello``,
 ``sitea.get_user_info``, ``sitea.get_user_comment``, ``siteb.get_user_info``,
 ``siteb.get_user_comment``.
+
+Automatic dispatching
+~~~~~~~~~~~~~~~~~~~~~
+
+When writing a server application, a higher level dispatching method is
+available with :py:func:`~tinyrpc.dispatch.RPCDispatcher.dispatch`:
+
+.. code-block:: python
+
+   from tinyrpc.dispatch import RPCDispatcher
+
+   dispatcher = RPCDispatcher()
+
+   # register methods like in the examples above
+   # ...
+   # now assumes that a valid RPCRequest has been obtained, as `request`
+
+   response = dispatcher.dispatch(request)
+
+   # response can be directly processed back to the client, all Exceptions have
+   # been handled already
 
 
 API reference
