@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from mock import Mock
+from mock import Mock, MagicMock
 import pytest
 
 from tinyrpc.dispatch import RPCDispatcher, public
-from tinyrpc import RPCRequest
+from tinyrpc import RPCRequest, RPCBatchRequest, RPCBatchResponse
 
 
 @pytest.fixture
@@ -19,11 +19,11 @@ def subdispatch():
 
 
 @pytest.fixture()
-def mock_request():
+def mock_request(method='subtract', args=None, kwargs=None):
     mock_request = Mock(RPCRequest)
-    mock_request.method = 'subtract'
-    mock_request.args = [4, 6]
-    mock_request.kwargs = {}
+    mock_request.method = method
+    mock_request.args = args or [4, 6]
+    mock_request.kwargs = kwargs or {}
     mock_request.respond = Mock(RPCRequest.respond)
     mock_request.error_respond = Mock(RPCRequest.error_respond)
 
@@ -175,3 +175,30 @@ def test_dispatch_handles_in_function_exceptions(dispatch, mock_request):
     m.subtract.assert_called()
 
     mock_request.error_respond.assert_called_with(m.subtract.side_effect)
+
+
+def test_batch_dispatch(dispatch):
+    method1 = Mock(return_value='rv1')
+    method2 = Mock(return_value=None)
+
+    dispatch.add_method(method1, 'method1')
+    dispatch.add_method(method2, 'method2')
+
+    batch_request = RPCBatchRequest()
+    batch_request.error_respond = Mock(return_value='ERROR')
+    batch_request.append(mock_request('method1', args=[1,2]))
+    batch_request.append(mock_request('non_existant_method', args=[5,6]))
+    batch_request.append(mock_request('method2', args=[3,4]))
+
+    batch_request.create_batch_response = lambda: RPCBatchResponse()
+
+    assert batch_request.error_respond.call_count == 0
+
+    pytest.set_trace()
+    response = dispatch.dispatch(batch_request)
+
+    # assert all methods are called
+    method1.assert_called_with(1, 2)
+    method2.assert_called_with(3, 4)
+
+    # FIXME: could use better checking?
