@@ -194,7 +194,6 @@ def test_batch_dispatch(dispatch):
 
     assert batch_request.error_respond.call_count == 0
 
-    pytest.set_trace()
     response = dispatch.dispatch(batch_request)
 
     # assert all methods are called
