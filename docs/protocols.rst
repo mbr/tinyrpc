@@ -46,6 +46,10 @@ Handling a batch request is slightly different, while it supports
 :py:func:`~tinyrpc.RPCBatchRequest.error_respond`, to make actual responses,
 :py:func:`~tinyrpc.RPCBatchRequest.create_batch_response` needs to be used.
 
+No assumptions are made whether or not it is okay for batch requests to be
+handled in parallel. This is up to the server/dispatch implementation, which
+must be chosen appropriately.
+
 .. autoclass:: tinyrpc.RPCBatchProtocol
    :members:
 

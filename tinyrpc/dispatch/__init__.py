@@ -71,10 +71,9 @@ class RPCDispatcher(object):
         No exceptions will be thrown, rather, every exception will be turned
         into a response using :py:func:`~tinyrpc.RPCRequest.error_respond`.
 
-        If a method isn't found, a
-        :py:exc:`~tinyrpc.exc.MethodNotFoundError` response will be
-        returned. If any error occurs outside of the requested method, a
-        :py:exc:`~tinyrpc.exc.ServerError` without any error
+        If a method isn't found, a :py:exc:`~tinyrpc.exc.MethodNotFoundError`
+        response will be returned. If any error occurs outside of the requested
+        method, a :py:exc:`~tinyrpc.exc.ServerError` without any error
         information will be returend.
 
         If the method is found and called but throws an exception, the
@@ -82,9 +81,25 @@ class RPCDispatcher(object):
         in which information from the exception is possibly propagated back to
         the client, as the exception is part of the requested method.
 
+        :py:class:`~tinyrpc.RPCBatchRequest` instances are handled by handling
+        all its children in order and collecting the results, then returning an
+        :py:class:`~tinyrpc.RPCBatchResponse` with the results.
+
         :param request: An :py:func:`~tinyrpc.RPCRequest`.
         :return: An :py:func:`~tinyrpc.RPCResponse`.
         """
+        if hasattr(request, 'create_batch_response'):
+            results = [self._dispatch(req for req in request)]
+
+            response = request.create_batch_response()
+            if response != None:
+                response.extend(results)
+
+            return response
+        else:
+            return self._dispatch(request)
+
+    def _dispatch(self, request):
         try:
             try:
                 method = self.get_method(request.method)
