@@ -6,28 +6,35 @@ class RPCError(Exception):
 
 
 class BadRequestError(RPCError):
-    """Base class for all exceptions that caused the processing of a request to
-    abort."""
+    """Base class for all errors that caused the processing of a request to
+    abort before a request object could be instantiated."""
 
     def error_respond(self):
-        """Create :py:class:`~tinyrpc.RPCErrorResponse` for handling error.
+        """Create :py:class:`~tinyrpc.RPCErrorResponse` to respond the error.
 
         :return: A error responce instance or ``None``, if the protocol decides
                  to drop the error silently."""
         raise RuntimeError('Not implemented')
 
 
+class BadReplyError(RPCError):
+    """Base class for all errors that caused processing of a reply to abort
+    before it could be turned in a response object."""
+
+
 class InvalidRequestError(BadRequestError):
-    """A request made was malformed and could not be parsed."""
+    """A request made was malformed (i.e. violated the specification) and could
+    not be parsed."""
 
 
-class InvalidReplyError(RPCError):
-    pass
+class InvalidReplyError(BadReplyError):
+    """A reply received was malformed (i.e. violated the specification) and
+    could not be parsed into a response."""
 
 
 class MethodNotFoundError(RPCError):
-    pass
+    """The desired method was not found."""
 
 
 class ServerError(RPCError):
-    pass
+    """An internal error in the RPC system occured."""

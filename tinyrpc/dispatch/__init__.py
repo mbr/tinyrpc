@@ -71,9 +71,10 @@ class RPCDispatcher(object):
         No exceptions will be thrown, rather, every exception will be turned
         into a response using :py:func:`~tinyrpc.RPCRequest.error_respond`.
 
-        If a method isn't found, a :py:func:`~tinyrpc.exc.MethodNotFoundError`
-        response will be returned. If any error occurs outside of the requested
-        method, a :py:func:`~tinyrpc.exc.ServerError` without any error
+        If a method isn't found, a
+        :py:exc:`~tinyrpc.exc.MethodNotFoundError` response will be
+        returned. If any error occurs outside of the requested method, a
+        :py:exc:`~tinyrpc.exc.ServerError` without any error
         information will be returend.
 
         If the method is found and called but throws an exception, the
