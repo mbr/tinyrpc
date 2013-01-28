@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from mock import Mock
 import pytest
 
 from tinyrpc.dispatch import RPCDispatcher, public
+from tinyrpc import RPCRequest
 
 
 @pytest.fixture
@@ -14,6 +16,18 @@ def dispatch():
 @pytest.fixture()
 def subdispatch():
     return RPCDispatcher()
+
+
+@pytest.fixture()
+def mock_request():
+    mock_request = Mock(RPCRequest)
+    mock_request.method = 'subtract'
+    mock_request.args = [4, 6]
+    mock_request.kwargs = {}
+    mock_request.respond = Mock(RPCRequest.respond)
+    mock_request.error_respond = Mock(RPCRequest.error_respond)
+
+    return mock_request
 
 
 def test_function_decorating_without_paramters(dispatch):
@@ -132,3 +146,32 @@ def test_object_method_register_with_prefix(dispatch):
 
     assert dispatch.get_method('myprefixfoo2') == f.foo2
     assert dispatch.get_method('myprefixbaz') == f.foo3
+
+
+def test_dispatch_calls_method_and_responds(dispatch, mock_request):
+    m = Mock()
+    m.subtract = Mock(return_value=-2)
+
+    dispatch.add_method(m.subtract, 'subtract')
+    response = dispatch.dispatch(mock_request)
+
+    m.subtract.assert_called()
+
+    mock_request.respond.assert_called_with(-2)
+
+
+def test_dispatch_handles_in_function_exceptions(dispatch, mock_request):
+    m = Mock()
+    m.subtract = Mock(return_value=-2)
+
+    class MockError(Exception):
+        pass
+
+    m.subtract.side_effect = MockError('mock error')
+
+    dispatch.add_method(m.subtract, 'subtract')
+    response = dispatch.dispatch(mock_request)
+
+    m.subtract.assert_called()
+
+    mock_request.error_respond.assert_called_with(m.subtract.side_effect)
