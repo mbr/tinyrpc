@@ -54,6 +54,9 @@ class RPCDispatcher(object):
         :param name: Name to register it with. If ``None``, ``f.__name__`` will
                      be used.
         """
+        assert callable(f), "method argument must be callable"
+                            # catches a few programming errors that are
+                            # commonly silently swallowed otherwise
         if not name:
             name = f.__name__
 
