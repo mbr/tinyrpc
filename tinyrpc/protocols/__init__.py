@@ -74,6 +74,13 @@ class RPCBatchRequest(list):
     an error in parsing the request.
     """
 
+    def create_batch_response(self):
+        """Creates a response suitable for responding to this request.
+
+        :return: An :py:class:`~tinyrpc.RPCBatchResponse` or ``None``, if no
+        response is expected."""
+        raise NotImplementedError()
+
     def serialize(self):
         raise NotImplementedError()
 
@@ -104,13 +111,6 @@ class RPCBatchResponse(list):
     automatically turned into response-instances through
     :py:func:`~tinyrpc.RPCProtocol.create_error_response`.
     """
-
-    def create_batch_response(self):
-        """Creates a response suitable for responding to this request.
-
-        :return: An :py:class:`~tinyrpc.RPCBatchResponse` or ``None``, if no
-        response is expected."""
-        raise NotImplementedError()
 
     def serialize(self):
         """Returns a serialization of the batch response."""
