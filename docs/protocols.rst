@@ -37,7 +37,22 @@ Batch protocols
 Some protocols may support batch requests. In this case, they need to derive
 from :py:class:`~tinyrpc.RPCBatchProtocol`.
 
+Batch protocols differ in that their
+:py:func:`~tinyrpc.RPCProtocol.parse_request` method may return an instance of
+:py:class:`~tinyrpc.RPCBatchRequest`. They also possess an addional method in
+:py:func:`~tinyrpc.RPCBatchProtocol.create_batch_request`.
+
+Handling a batch request is slightly different, while it supports
+:py:func:`~tinyrpc.RPCBatchRequest.error_respond`, to make actual responses,
+:py:func:`~tinyrpc.RPCBatchRequest.create_batch_response` needs to be used.
+
 .. autoclass:: tinyrpc.RPCBatchProtocol
+   :members:
+
+.. autoclass:: tinyrpc.RPCBatchRequest
+   :members:
+
+.. autoclass:: tinyrpc.RPCBatchResponse
    :members:
 
 

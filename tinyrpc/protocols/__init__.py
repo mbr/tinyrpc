@@ -78,7 +78,7 @@ class RPCBatchRequest(list):
         """Creates a response suitable for responding to this request.
 
         :return: An :py:class:`~tinyrpc.RPCBatchResponse` or ``None``, if no
-        response is expected."""
+                 response is expected."""
         raise NotImplementedError()
 
     def serialize(self):
@@ -105,11 +105,9 @@ class RPCBatchResponse(list):
     """Multiple response from a batch request. See
     :py:class:`~tinyrpc.RPCBatchRequest` on how to handle.
 
-    Items in a batch response need to be either
-    :py:class:`~tinyrpc.RCPResponse` instances or a subclass of
-    :py:class:`Exception`. In the case of the latter, they should be
-    automatically turned into response-instances through
-    :py:func:`~tinyrpc.RPCProtocol.create_error_response`.
+    Items in a batch response need to be
+    :py:class:`~tinyrpc.RPCResponse` instances or None, meaning no reply should
+    generated for the request.
     """
 
     def serialize(self):
