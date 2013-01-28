@@ -92,7 +92,7 @@ class RPCDispatcher(object):
         :return: An :py:func:`~tinyrpc.RPCResponse`.
         """
         if hasattr(request, 'create_batch_response'):
-            results = [self._dispatch(req for req in request)]
+            results = [self._dispatch(req) for req in request]
 
             response = request.create_batch_response()
             if response != None:
