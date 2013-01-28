@@ -18,9 +18,6 @@ def _json_equal(a, b):
     da = json.loads(a)
     db = json.loads(b)
 
-    print repr(da)
-    print repr(db)
-
     return da == db
 
 
