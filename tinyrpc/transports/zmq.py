@@ -7,12 +7,11 @@ import zmq
 from . import ServerTransport, ClientTransport
 
 
-# FIXME: setup intersphinx
 class ZmqServerTransport(ServerTransport):
     def __init__(self, socket):
-        """Server transport based on a zmq.ROUTER socket.
+        """Server transport based on a :py:const:`zmq.ROUTER` socket.
 
-        :param socket: A zmq.ROUTER socket instance.
+        :param socket: A :py:const:zmq.ROUTER socket instance.
         """
         self.socket = socket
 
@@ -32,9 +31,9 @@ class ZmqServerTransport(ServerTransport):
 
 class ZmqClientTransport(ClientTransport):
     def __init__(self, socket):
-        """Client transport based on a zmq.REQ socket.
+        """Client transport based on a :py:const:`zmq.REQ` socket.
 
-        :param socket: A zmq.REQ socket instance.
+        :param socket: A :py:const:`zmq.REQ` socket instance.
         """
         self.socket = socket
 
