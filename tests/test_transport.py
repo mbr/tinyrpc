@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+import zmq
+import zmq.green
 
 from tinyrpc.transports import ServerTransport, ClientTransport
+from tinyrpc.transports.zmq import ZmqServerTransport, ZmqClientTransport
 
 
 class DummyServerTransport(ServerTransport):
@@ -36,25 +39,43 @@ class DummyClientTransport(ClientTransport):
         return self.messages.pop()
 
 
-@pytest.fixture
-def dummy_context():
-    return []
+ZMQ_ENDPOINT = 'inproc://example2'
 
 
-@pytest.fixture
-def dummy_server():
-    return DummyServerTransport()
+@pytest.fixture(scope='session')
+def zmq_context(request):
+    ctx = zmq.Context()
+    def fin():
+        request.addfinalizer(ctx.destroy())
+    return ctx
 
 
-@pytest.fixture
-def dummy_client(dummy_server):
-    return DummyClientTransport(dummy_server)
+@pytest.fixture(scope='session')
+def zmq_green_context(request):
+    ctx = zmq.Context()
+    def fin():
+        request.addfinalizer(ctx.destroy())
+    return ctx
 
 
-@pytest.fixture(params=[(dummy_client, dummy_server)])
-def transport(request):
-    server = request.param[1]()
-    client = request.param[0](server)
+@pytest.fixture(params=['dummy', 'zmq', 'zmq.green'])
+def transport(request, zmq_context, zmq_green_context):
+    if request.param == 'dummy':
+        server = DummyServerTransport()
+        client = DummyClientTransport(server)
+    elif request.param in ('zmq', 'zmq.green'):
+        ctx = zmq_context if request.param == 'zmq' else zmq_green_context
+
+        server = ZmqServerTransport.create(ctx, ZMQ_ENDPOINT)
+        client = ZmqClientTransport.create(ctx, ZMQ_ENDPOINT)
+
+        def fin():
+            server.socket.close()
+            client.socket.close()
+
+        request.addfinalizer(fin)
+    else:
+        raise ValueError('Invalid transport.')
     return (client, server)
 
 SAMPLE_MESSAGES = ['asdf', 'loremipsum' * 1500, '', '\x00', 'b\x00a', '\r\n',
