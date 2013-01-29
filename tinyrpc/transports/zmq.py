@@ -8,11 +8,13 @@ from . import ServerTransport, ClientTransport
 
 
 class ZmqServerTransport(ServerTransport):
-    def __init__(self, socket):
-        """Server transport based on a :py:const:`zmq.ROUTER` socket.
+    """Server transport based on a :py:const:`zmq.ROUTER` socket.
 
-        :param socket: A :py:const:zmq.ROUTER socket instance.
-        """
+    :param socket: A :py:const:`zmq.ROUTER` socket instance, bound to an
+                   endpoint.
+    """
+
+    def __init__(self, socket):
         self.socket = socket
 
     def receive_message(self):
@@ -24,17 +26,30 @@ class ZmqServerTransport(ServerTransport):
 
     @classmethod
     def create(cls, zmq_context, endpoint):
+        """Create new server transport.
+
+        Instead of creating the socket yourself, you can call this function and
+        merely pass the :py:class:`zmq.core.context.Context` instance.
+
+        By passing a context imported from :py:mod:`zmq.green`, you can use
+        green (gevent) 0mq sockets as well.
+
+        :param zmq_context: A 0mq context.
+        :param endpoint: The endpoint clients will connect to.
+        """
         socket = zmq_context.socket(zmq.ROUTER)
         socket.bind(endpoint)
         return cls(socket)
 
 
 class ZmqClientTransport(ClientTransport):
-    def __init__(self, socket):
-        """Client transport based on a :py:const:`zmq.REQ` socket.
+    """Client transport based on a :py:const:`zmq.REQ` socket.
 
-        :param socket: A :py:const:`zmq.REQ` socket instance.
-        """
+    :param socket: A :py:const:`zmq.REQ` socket instance, connected to the
+                   server socket.
+    """
+
+    def __init__(self, socket):
         self.socket = socket
 
     def send_message(self, message):
@@ -45,6 +60,17 @@ class ZmqClientTransport(ClientTransport):
 
     @classmethod
     def create(cls, zmq_context, endpoint):
+        """Create new client transport.
+
+        Instead of creating the socket yourself, you can call this function and
+        merely pass the :py:class:`zmq.core.context.Context` instance.
+
+        By passing a context imported from :py:mod:`zmq.green`, you can use
+        green (gevent) 0mq sockets as well.
+
+        :param zmq_context: A 0mq context.
+        :param endpoint: The endpoint the server is bound to.
+        """
         socket = zmq_context.socket(zmq.REQ)
         socket.connect(endpoint)
         return cls(socket)

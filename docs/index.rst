@@ -52,6 +52,7 @@ Table of contents
    structure
    protocols
    dispatch
+   transports
    exceptions
 
 .. _jsonrpc: http://jsonrpc.org
