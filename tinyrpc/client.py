@@ -9,9 +9,7 @@ class RPCClient(object):
         self.protocol = protocol
         self.transport = transport
 
-    def call(self, method, args, kwargs, one_way=False):
-        req = self.protocol.create_request(method, args, kwargs, one_way)
-
+    def _send_and_handle_reply(self, req):
         # sends and waits for reply
         reply = self.transport.send_message(req.serialize())
 
@@ -21,7 +19,21 @@ class RPCClient(object):
             raise RPCError('Error calling remote procedure: %s' %\
                            response.error)
 
-        return response.result
+        return response
+
+    def call(self, method, args, kwargs, one_way=False):
+        req = self.protocol.create_request(method, args, kwargs, one_way)
+
+        return self._send_and_handle_reply(req).result
+
+    def batch_call(self, calls):
+        """Experimental, use at your own peril."""
+        req = self.protocol.create_batch_request()
+
+        for call_args in calls:
+            req.append(self.protocol.create_request(*call_args))
+
+        return self._send_and_handle_reply(req)
 
 
 class RPCProxy(object):
