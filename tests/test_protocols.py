@@ -48,7 +48,7 @@ def test_creates_error_response(protocol):
     req = protocol.create_request('foo', ['bar'])
     err_rep = req.error_respond(Exception('foo'))
 
-    assert isinstance(err_rep, RPCErrorResponse)
+    assert hasattr(err_rep, 'error')
 
 
 def test_parses_error_response(protocol):
@@ -57,4 +57,4 @@ def test_parses_error_response(protocol):
 
     parsed = protocol.parse_reply(err_rep.serialize())
 
-    assert isinstance(parsed, RPCErrorResponse)
+    assert hasattr(parsed, 'error')

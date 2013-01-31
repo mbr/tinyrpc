@@ -88,7 +88,11 @@ class RPCBatchRequest(list):
 class RPCResponse(object):
     """RPC call response class.
 
-    Base class for all deriving responses."""
+    Base class for all deriving responses.
+
+    Has an attribute ``result`` containing the result of the RPC call, unless
+    an error occured, in which case an attribute ``error`` will contain the
+    error message."""
 
     unique_id = None
 
@@ -101,9 +105,7 @@ class RPCResponse(object):
 
 
 class RPCErrorResponse(RPCResponse):
-    """RPC call error response class.
-
-    A response derived from this class indicates an error."""
+    pass
 
 
 class RPCBatchResponse(list):
