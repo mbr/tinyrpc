@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import RPCBatchProtocol, RPCRequest, RPCResponse,\
+from .. import RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,\
                InvalidRequestError, MethodNotFoundError, ServerError,\
                InvalidReplyError, RPCError, RPCBatchRequest, RPCBatchResponse
 
@@ -65,7 +65,7 @@ class JSONRPCSuccessResponse(RPCResponse):
         return json.dumps(self._to_dict())
 
 
-class JSONRPCErrorResponse(RPCResponse):
+class JSONRPCErrorResponse(RPCErrorResponse):
     def _to_dict(self):
         return {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,

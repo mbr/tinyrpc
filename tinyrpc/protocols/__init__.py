@@ -88,8 +88,7 @@ class RPCBatchRequest(list):
 class RPCResponse(object):
     """RPC call response class.
 
-    If the object has an attribute named ``error``, it is considered an error
-    response. Otherwise, the attribute ``result`` contains the result."""
+    Base class for all deriving responses."""
 
     unique_id = None
 
@@ -99,6 +98,12 @@ class RPCResponse(object):
         :return: A reply to be passed on to a transport.
         """
         raise NotImplementedError()
+
+
+class RPCErrorResponse(RPCResponse):
+    """RPC call error response class.
+
+    A response derived from this class indicates an error."""
 
 
 class RPCBatchResponse(list):
