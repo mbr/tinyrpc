@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+
 import zmq
 import zmq.green
 
@@ -107,6 +108,9 @@ def test_transport_rejects_bad_values(transport, sample_msg, bad_msg):
     with pytest.raises(TypeError):
         client.send_message(bad_msg)
 
+
+def test_transport_rejects_bad_replies(transport, sample_msg, bad_msg):
+    client, server = transport
 
     client.send_message(sample_msg)
     context, _ = server.receive_message()
