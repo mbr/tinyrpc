@@ -13,20 +13,11 @@ class HttpPostClientTransport(ClientTransport):
         self.endpoint = endpoint
         self.request_kwargs = kwargs
 
-    def _run_background(self):
-        while True:
-            message = self.request_queue.get()
-            if message == None:
-                break
-
-    def send_message(self, message):
+    def send_message(self, message, expect_reply=True):
         if not isinstance(message, str):
             raise TypeError('str expected')
 
-        self._response = requests.post(self.endpoint, data=message, **self.request_kwargs)
+        r = requests.post(self.endpoint, data=message, **self.request_kwargs)
 
-
-    def receive_reply(self):
-        assert self._response
-
-        return self._reponse.data
+        if expect_reply:
+            return r.data

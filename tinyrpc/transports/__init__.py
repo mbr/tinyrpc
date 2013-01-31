@@ -36,23 +36,17 @@ class ServerTransport(object):
 class ClientTransport(object):
     """Base class for all client transports."""
 
-    def send_message(self, message):
-        """Send a message to the server.
+    def send_message(self, message, expect_reply=True):
+        """Send a message to the server and possibly receive a reply.
 
         Sends a message to the connected server.
 
         Messages must be strings, it is up to the sender to convert the
         beforehand. A non-string value raises a :py:exc:`TypeError`.
 
-        :param message: A string to send.
-        """
-        raise NotImplementedError
-
-    def receive_reply(self):
-        """Receive a reply from the server.
-
         This function will block until one reply has been received.
 
+        :param message: A string to send.
         :return: A string containing the server reply.
         """
         raise NotImplementedError

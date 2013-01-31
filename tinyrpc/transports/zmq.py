@@ -52,11 +52,11 @@ class ZmqClientTransport(ClientTransport):
     def __init__(self, socket):
         self.socket = socket
 
-    def send_message(self, message):
+    def send_message(self, message, expect_reply=True):
         self.socket.send(message)
 
-    def receive_reply(self):
-        return self.socket.recv()
+        if expect_reply:
+            return self.socket.recv()
 
     @classmethod
     def create(cls, zmq_context, endpoint):
