@@ -26,7 +26,7 @@ class RPCProxy(object):
     def __init__(self, client, prefix='', one_way=False):
         self.client = client
         self.prefix = prefix
-        self.one_way = False
+        self.one_way = one_way
 
     def __getattr__(self, name):
         proxy_func = lambda *args, **kwargs: self.client.call(
