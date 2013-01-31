@@ -30,3 +30,17 @@ Based on :py:mod:`zmq`, supports 0mq based sockets. Highly recommended:
 
 .. autoclass:: tinyrpc.transports.zmq.ZmqClientTransport
    :members:
+
+HTTP
+~~~~
+
+There is only an HTTP client, no server (use WSGI instead).
+
+.. autoclass:: tinyrpc.transports.http.HttpPostClientTransport
+   :members:
+
+WSGI
+~~~~
+
+.. autoclass:: tinyrpc.transports.wsgi.WsgiServerTransport
+   :members:

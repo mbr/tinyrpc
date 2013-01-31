@@ -246,4 +246,6 @@ texinfo_documents = [
 intersphinx_mapping = {
     'http://docs.python.org/': None,
     'http://zeromq.github.com/pyzmq/': None,
+    'http://docs.python-requests.org/en/latest/': None,
+    'http://werkzeug.pocoo.org/docs/': None,
 }
