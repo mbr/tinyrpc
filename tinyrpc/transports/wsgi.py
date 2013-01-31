@@ -33,7 +33,6 @@ class WsgiServerTransport(ServerTransport):
         request.max_content_length = self.max_content_length
 
         if request.method == 'POST':
-            response = Response('Bla bla bla', 500)
             # message is encoded in POST, read it and send reply
             self.messages.put(request.stream.read())
             response = Response(self.replies.get())
