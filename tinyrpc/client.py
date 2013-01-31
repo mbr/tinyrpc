@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .exc import RPCError
+
 
 class RPCClient(object):
     def __init__(self, protocol, transport):
