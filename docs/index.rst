@@ -57,6 +57,7 @@ Table of contents
    dispatch
    transports
    client
+   server
    exceptions
 
 .. _jsonrpc: http://jsonrpc.org
