@@ -3,3 +3,4 @@
 
 from .protocols import *
 from .exc import *
+from .client import *
