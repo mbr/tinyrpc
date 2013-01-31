@@ -8,12 +8,34 @@ and modular to make it easy to add support for further protocols.
 A feature is support of multiple transports (or none at all) and providing
 clever syntactic sugar for writing dispatchers.
 
+Quickstart examples
+-------------------
 
-Examples
---------
+A client making JSONRPC calls via HTTP (this requires :py:mod:`requests` to be
+installed):
 
-A few examples to get started as fast as possible are included in this
-documentation. Ideally, they're all you have to read.
+.. code-block:: python
+
+   from tinyrpc.protocols.json import JSONRPCProtocol
+   from tinyrpc.transports.http import HttpPostClientTransport
+   from tinyrpc import RPCClient
+
+   rpc_client = RPCClient(
+       JSONRPCProtocol(),
+       HttpPostClientTransport('http://example.org/jsonrpc/2.0/')
+   )
+
+   time_server = rpc_client.get_proxy()
+
+   # ...
+
+   # call a method called 'get_time_in' with a single string argument
+   time_in_berlin = time_server.get_time_in('Europe/Berlin')
+
+
+
+Further examples
+----------------
 
 In :doc:`protocols`, you can find client and server examples on how
 to use just the protocol parsing parts of ``tinyrpc``.
@@ -22,25 +44,6 @@ The :py:class:`~tinyrpc.dispatch.RPCDispatcher` should be useful on its own (or
 at least easily replaced with one of your choosing), see :doc:`dispatch` for
 details.
 
-
-Why are there no transports
----------------------------
-
-In version 0.3dev (the current version), there is no implementation for
-transports yet, neither is there an interface for them.
-
-When using ``tinyrpc`` to write a server, it is assumed that you're using a
-transport that is capable of sending fixed-length messages. Pass these messages
-to an instance of :py:class:`~tinyrpc.RPCProtocol` to parse them,
-then dispatch the resulting request with
-:py:class:`~tinyrpc.dispatch.RPCDispatcher`. Results should be turned into a
-response using :py:func:`~tinyrpc.RPCRequest.respond`, which is
-then serialized and sent back on the transport.
-
-Clients of the request-reply kind are easier to write: Use
-:py:func:`~tinyrpc.RPCProtocol.create_request` to create a request,
-pass it to the transport. Wait for a reply and decode it with
-:py:func:`~tinyrpc.RPCProtocol.parse_reply`.
 
 
 Table of contents
