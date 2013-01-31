@@ -26,3 +26,18 @@ def test_procotol_responds_strings(protocol):
 
     assert isinstance(rep.serialize(), str)
     assert isinstance(err_rep.serialize(), str)
+
+
+def test_one_way(prot):
+    req = prot.create_request('foo', None, {'a': 'b'}, True)
+
+    assert req.respond(None) == None
+
+
+def test_raises_on_args_and_kwargs(prot):
+    with pytest.raises(Exception):
+        prot.create_request('foo', ['arg1', 'arg2'], {'kw_key': 'kw_value'})
+
+
+def test_supports_no_args(prot):
+        prot.create_request('foo')

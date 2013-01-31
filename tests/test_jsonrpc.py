@@ -206,26 +206,11 @@ def test_unique_ids(prot):
     assert req1.unique_id != req2.unique_id
 
 
-def test_one_way(prot):
-    req = prot.create_request('foo', None, {'a': 'b'}, True)
-
-    assert req.respond(None) == None
-
-
 def test_out_of_order(prot):
     req = prot.create_request('foo', ['a', 'b'], None)
     rep = req.respond(1)
 
     assert req.unique_id == rep.unique_id
-
-
-def test_raises_on_args_and_kwargs(prot):
-    with pytest.raises(Exception):
-        prot.create_request('foo', ['arg1', 'arg2'], {'kw_key': 'kw_value'})
-
-
-def test_supports_no_args(prot):
-        prot.create_request('foo')
 
 
 def test_request_generation(prot):
