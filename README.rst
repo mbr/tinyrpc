@@ -30,9 +30,6 @@ Structure-section to get a birds-eye view.
 Installation
 ------------
 
-tinyrpc is currently under developed, the current version should be considered
-alpha quality. You are invited to try it out and install via
-
 .. code-block:: sh
 
    pip install tinyrpc
