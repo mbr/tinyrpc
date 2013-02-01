@@ -478,3 +478,7 @@ def test_can_get_custom_error_messages_out(prot):
     data = json.loads(response.serialize())
 
     assert data['error']['message'] == custom_msg
+
+
+def test_accepts_empty_but_not_none_args_kwargs(prot):
+    request = prot.create_request('foo', args=[], kwargs={})

@@ -189,7 +189,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
         return JSONRPCBatchRequest(requests or [])
 
     def create_request(self, method, args=None, kwargs=None, one_way=False):
-        if args != None and kwargs != None:
+        if args and kwargs:
             raise InvalidRequestError('Does not support args and kwargs at '\
                                       'the same time')
 
