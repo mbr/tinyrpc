@@ -28,4 +28,4 @@ class HttpPostClientTransport(ClientTransport):
         r = requests.post(self.endpoint, data=message, **self.request_kwargs)
 
         if expect_reply:
-            return r.data
+            return r.content
