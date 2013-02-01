@@ -107,7 +107,7 @@ class RPCDispatcher(object):
             try:
                 method = self.get_method(request.method)
             except KeyError as e:
-                return request.error_respond(MethodNotFoundError)
+                return request.error_respond(MethodNotFoundError(e))
 
             # we found the method
             try:

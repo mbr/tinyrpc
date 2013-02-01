@@ -47,12 +47,12 @@ class RPCServer(object):
                 except RPCError as e:
                     response = e.error_respond()
                 else:
-                    response = dispatcher.dispatch(request)
+                    response = self.dispatcher.dispatch(request)
 
                 # send reply
                 self.transport.send_reply(context, response.serialize())
 
-            self._spawn(self.handle_message, context, message)
+            self._spawn(handle_message, context, message)
 
     def _spawn(self, func, *args, **kwargs):
         """Spawn a handler function.
