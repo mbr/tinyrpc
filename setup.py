@@ -13,7 +13,7 @@ setup(
     description='A small, modular, transport and protocol neutral RPC '
                 'library that, among other things, supports JSON-RPC and zmq.',
     long_description=read('README.rst'),
-    packages=find_packages(exclude=['test']),
+    packages=find_packages(exclude=['test', 'examples']),
     keywords='json rpc json-rpc jsonrpc 0mq zmq zeromq',
     author='Marc Brinkmann',
     author_email='git@marcbrinkmann.de',
