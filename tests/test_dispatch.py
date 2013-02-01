@@ -201,3 +201,8 @@ def test_batch_dispatch(dispatch):
     method2.assert_called_with(3, 4)
 
     # FIXME: could use better checking?
+
+
+def test_dispatch_raises_key_error(dispatch):
+    with pytest.raises(KeyError):
+        dispatch.get_method('foo')
