@@ -16,7 +16,7 @@ installed):
 
 .. code-block:: python
 
-   from tinyrpc.protocols.json import JSONRPCProtocol
+   from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
    from tinyrpc.transports.http import HttpPostClientTransport
    from tinyrpc import RPCClient
 
