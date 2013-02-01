@@ -71,6 +71,64 @@ These can be answered by a server implemented as follows:
    rpc_server.serve_forever()
 
 
+0mq
+~~~
+
+An example using :py:mod:`zmq` is very similiar, differing only in the
+instantiation of the transport:
+
+.. code-block:: python
+
+  import zmq
+
+  from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
+  from tinyrpc.transports.zmq import ZmqClientTransport
+  from tinyrpc import RPCClient
+
+  ctx = zmq.Context()
+
+  rpc_client = RPCClient(
+      JSONRPCProtocol(),
+      ZmqClientTransport.create(ctx, 'tcp://127.0.0.1:5001')
+  )
+
+  remote_server = rpc_client.get_proxy()
+
+  # call a method called 'reverse_string' with a single string argument
+  result = remote_server.reverse_string('Hello, World!')
+
+  print "Server answered:", result
+
+
+Matching server:
+
+.. code-block:: python
+
+   import zmq
+
+   from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
+   from tinyrpc.transports.zmq import ZmqServerTransport
+   from tinyrpc.server import RPCServer
+   from tinyrpc.dispatch import RPCDispatcher
+
+   ctx = zmq.Context()
+   dispatcher = RPCDispatcher()
+   transport = ZmqServerTransport.create(ctx, 'tcp://127.0.0.1:5001')
+
+   rpc_server = RPCServer(
+       transport,
+       JSONRPCProtocol(),
+       dispatcher
+   )
+
+   @dispatcher.public
+   def reverse_string(s):
+       return s[::-1]
+
+   rpc_server.serve_forever()
+
+
+
 Further examples
 ----------------
 
