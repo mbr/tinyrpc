@@ -16,7 +16,7 @@ class RPCServer(object):
         self.protocol = protocol
         self.dispatcher = dispatcher
 
-    def serve_forever():
+    def serve_forever(self):
         """Handle requests forever.
 
         Starts the server loop in which the transport will be polled for a new
