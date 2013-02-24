@@ -214,6 +214,9 @@ class JSONRPCProtocol(RPCBatchProtocol):
             if not k in self._ALLOWED_REPLY_KEYS:
                 raise InvalidReplyError('Key not allowed: %s' % k)
 
+        if not 'jsonrpc' in rep:
+            raise InvalidReplyError('Missing jsonrpc (version) in response.')
+
         if rep['jsonrpc'] != self.JSON_RPC_VERSION:
             raise InvalidReplyError('Wrong JSONRPC version')
 
@@ -266,7 +269,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
             if not k in self._ALLOWED_REQUEST_KEYS:
                 raise JSONRPCInvalidRequestError()
 
-        if req['jsonrpc'] != self.JSON_RPC_VERSION:
+        if req.get('jsonrpc', None) != self.JSON_RPC_VERSION:
             raise JSONRPCInvalidRequestError()
 
         if not isinstance(req['method'], basestring):

@@ -6,7 +6,7 @@ import json
 import pytest
 
 from tinyrpc import MethodNotFoundError, InvalidRequestError, ServerError, \
-                    RPCError, RPCResponse
+                    RPCError, RPCResponse, InvalidReplyError
 from tinyrpc.protocols.jsonrpc import JSONRPCParseError, \
                                       JSONRPCInvalidRequestError, \
                                       JSONRPCMethodNotFoundError, \
@@ -482,3 +482,12 @@ def test_can_get_custom_error_messages_out(prot):
 
 def test_accepts_empty_but_not_none_args_kwargs(prot):
     request = prot.create_request('foo', args=[], kwargs={})
+
+
+def test_missing_jsonrpc_version_on_request(prot):
+    with pytest.raises(JSONRPCInvalidRequestError):
+        prot.parse_request('{"method": "sum", "params": [1,2,4], "id": "1"}')
+
+def test_missing_jsonrpc_version_on_reply(prot):
+    with pytest.raises(InvalidReplyError):
+        prot.parse_reply('{"result": 7, "id": "1"}')
