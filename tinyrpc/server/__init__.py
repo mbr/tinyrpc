@@ -3,6 +3,7 @@
 
 # FIXME: needs unittests
 # FIXME: needs checks for out-of-order, concurrency, etc as attributes
+from tinyrpc.exc import RPCError
 
 class RPCServer(object):
     """High level RPC server.
