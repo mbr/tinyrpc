@@ -29,11 +29,15 @@ class WsgiServerTransport(ServerTransport):
     :param max_content_length: The maximum request content size allowed. Should
                                be set to a sane value to prevent DoS-Attacks.
     :param queue_class: The Queue class to use.
+    :param allow_origin: The ``Access-Control-Allow-Origin`` header. Defaults
+                         to ``*`` (so change it if you need actual security).
     """
-    def __init__(self, max_content_length=4096, queue_class=Queue.Queue):
+    def __init__(self, max_content_length=4096, queue_class=Queue.Queue,
+                       allow_origin='*'):
         self._queue_class = queue_class
         self.messages = queue_class()
         self.max_content_length = max_content_length
+        self.allow_origin = allow_origin
 
     def receive_message(self):
         return self.messages.get()
@@ -58,7 +62,17 @@ class WsgiServerTransport(ServerTransport):
         request = Request(environ)
         request.max_content_length = self.max_content_length
 
-        if request.method == 'POST':
+        access_control_headers = {
+            'Access-Control-Allow-Methods': 'POST',
+            'Access-Control-Allow-Origin': self.allow_origin,
+            'Access-Control-Allow-Headers': \
+                'Content-Type, X-Requested-With, Accept, Origin'
+        }
+
+        if request.method == 'OPTIONS':
+            response = Response(headers=access_control_headers)
+
+        elif request.method == 'POST':
             # message is encoded in POST, read it...
             msg = request.stream.read()
 
@@ -68,7 +82,7 @@ class WsgiServerTransport(ServerTransport):
             self.messages.put((context, msg))
 
             # ...and send the reply
-            response = Response(context.get())
+            response = Response(context.get(), headers=access_control_headers)
         else:
             # nothing else supported at the moment
             response = Response('Only POST supported', 405)
