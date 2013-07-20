@@ -80,8 +80,8 @@ These can be used with a dispatcher now:
    dispatcher.add_method(hello)
 
    # register the two website instances
-   dispatch.register_instance(website1, 'sitea.')
-   dispatch.register_instance(website2, 'siteb.')
+   dispatcher.register_instance(website1, 'sitea.')
+   dispatcher.register_instance(website2, 'siteb.')
 
 In the example above, the :py:class:`~tinyrpc.dispatch.RPCDispatcher` now knows
 a total of six registered methods: ``version``, ``hello``,
