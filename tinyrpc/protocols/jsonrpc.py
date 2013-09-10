@@ -5,7 +5,7 @@ from .. import RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,\
                InvalidRequestError, MethodNotFoundError, ServerError,\
                InvalidReplyError, RPCError, RPCBatchRequest, RPCBatchResponse
 
-import json
+import json, datetime
 
 class FixedErrorMessageMixin(object):
     def __init__(self, *args, **kwargs):
@@ -142,7 +142,9 @@ class JSONRPCRequest(RPCRequest):
         return jdata
 
     def serialize(self):
-        return json.dumps(self._to_dict())
+        #: http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript/2680060#2680060                    
+        dthandler = lambda obj: obj.isoformat() if isinstance(obj, datetime.datetime) else None
+        return json.dumps(self._to_dict(), default=dthandler)
 
 
 class JSONRPCBatchRequest(RPCBatchRequest):
