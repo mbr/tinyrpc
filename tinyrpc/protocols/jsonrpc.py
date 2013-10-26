@@ -57,7 +57,6 @@ def for_json_bridge(o):
     try:
         return o.for_json()
     except AttributeError, e:
-        print e
         raise TypeError('{0} is not JSON serializable'.format(o))
     
 class JSONRPCSuccessResponse(RPCResponse):
