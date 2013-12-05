@@ -37,23 +37,26 @@ class RPCServer(object):
         will fetch the next message and repeat.
         """
         while True:
-            context, message = self.transport.receive_message()
+            self.receive_one_message()
 
-            # assuming protocol is threadsafe and dispatcher is theadsafe, as
-            # long as its immutable
+    def receive_one_message(self):
+        context, message = self.transport.receive_message()
 
-            def handle_message(context, message):
-                try:
-                    request = self.protocol.parse_request(message)
-                except RPCError as e:
-                    response = e.error_respond()
-                else:
-                    response = self.dispatcher.dispatch(request)
+        # assuming protocol is threadsafe and dispatcher is theadsafe, as
+        # long as its immutable
 
-                # send reply
-                self.transport.send_reply(context, response.serialize())
+        def handle_message(context, message):
+            try:
+                request = self.protocol.parse_request(message)
+            except RPCError as e:
+                response = e.error_respond()
+            else:
+                response = self.dispatcher.dispatch(request)
 
-            self._spawn(handle_message, context, message)
+            # send reply
+            self.transport.send_reply(context, response.serialize())
+
+        self._spawn(handle_message, context, message)
 
     def _spawn(self, func, *args, **kwargs):
         """Spawn a handler function.
