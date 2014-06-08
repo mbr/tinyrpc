@@ -3,6 +3,8 @@
 
 import pytest
 
+
+import six
 import gevent
 import gevent.queue
 import gevent.monkey
@@ -33,8 +35,8 @@ def monkey_patches(request):
     )
 
     def fin():
-        reload(socket)
-        reload(httplib)
+        six.moves.reload_module(socket)
+        six.moves.reload_module(httplib)
 
     request.addfinalizer(fin)
 

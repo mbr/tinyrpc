@@ -6,6 +6,8 @@ from .. import RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,\
                InvalidReplyError, RPCError, RPCBatchRequest, RPCBatchResponse
 
 import json
+import six
+
 
 class FixedErrorMessageMixin(object):
     def __init__(self, *args, **kwargs):
@@ -81,7 +83,7 @@ class JSONRPCErrorResponse(RPCErrorResponse):
 
 
 def _get_code_and_message(error):
-    assert isinstance(error, (Exception, basestring))
+    assert isinstance(error, (Exception, six.string_types))
     if isinstance(error, Exception):
         if hasattr(error, 'jsonrpc_error_code'):
             code = error.jsonrpc_error_code
@@ -205,12 +207,17 @@ class JSONRPCProtocol(RPCBatchProtocol):
         return request
 
     def parse_reply(self, data):
+        if six.PY3 and isinstance(data, bytes):
+            # zmq won't accept unicode strings, and this is the other
+            # end; decoding non-unicode strings back into unicode
+            data = data.decode()
+
         try:
             rep = json.loads(data)
         except Exception as e:
             raise InvalidReplyError(e)
 
-        for k in rep.iterkeys():
+        for k in six.iterkeys(rep):
             if not k in self._ALLOWED_REPLY_KEYS:
                 raise InvalidReplyError('Key not allowed: %s' % k)
 
@@ -242,6 +249,11 @@ class JSONRPCProtocol(RPCBatchProtocol):
         return response
 
     def parse_request(self, data):
+        if six.PY3 and isinstance(data, bytes):
+            # zmq won't accept unicode strings, and this is the other
+            # end; decoding non-unicode strings back into unicode
+            data = data.decode()
+
         try:
             req = json.loads(data)
         except Exception as e:
@@ -265,14 +277,14 @@ class JSONRPCProtocol(RPCBatchProtocol):
             return self._parse_subrequest(req)
 
     def _parse_subrequest(self, req):
-        for k in req.iterkeys():
+        for k in six.iterkeys(req):
             if not k in self._ALLOWED_REQUEST_KEYS:
                 raise JSONRPCInvalidRequestError()
 
         if req.get('jsonrpc', None) != self.JSON_RPC_VERSION:
             raise JSONRPCInvalidRequestError()
 
-        if not isinstance(req['method'], basestring):
+        if not isinstance(req['method'], six.string_types):
             raise JSONRPCInvalidRequestError()
 
         request = JSONRPCRequest()

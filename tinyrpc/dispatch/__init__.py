@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import six
 import inspect
 
 from ..exc import *
@@ -138,7 +139,7 @@ class RPCDispatcher(object):
         if name in self.method_map:
             return self.method_map[name]
 
-        for prefix, subdispatchers in self.subdispatchers.iteritems():
+        for prefix, subdispatchers in six.iteritems(self.subdispatchers):
             if name.startswith(prefix):
                 for sd in subdispatchers:
                     try:
