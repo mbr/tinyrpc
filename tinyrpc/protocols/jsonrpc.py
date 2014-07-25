@@ -5,7 +5,9 @@ from .. import RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,\
                InvalidRequestError, MethodNotFoundError, ServerError,\
                InvalidReplyError, RPCError, RPCBatchRequest, RPCBatchResponse
 
+from six import iterkeys, string_types
 import json
+
 
 class FixedErrorMessageMixin(object):
     def __init__(self, *args, **kwargs):
@@ -81,7 +83,7 @@ class JSONRPCErrorResponse(RPCErrorResponse):
 
 
 def _get_code_and_message(error):
-    assert isinstance(error, (Exception, basestring))
+    assert isinstance(error, (Exception, string_types))
     if isinstance(error, Exception):
         if hasattr(error, 'jsonrpc_error_code'):
             code = error.jsonrpc_error_code
@@ -210,7 +212,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
         except Exception as e:
             raise InvalidReplyError(e)
 
-        for k in rep.iterkeys():
+        for k in iterkeys(rep):
             if not k in self._ALLOWED_REPLY_KEYS:
                 raise InvalidReplyError('Key not allowed: %s' % k)
 
@@ -265,14 +267,14 @@ class JSONRPCProtocol(RPCBatchProtocol):
             return self._parse_subrequest(req)
 
     def _parse_subrequest(self, req):
-        for k in req.iterkeys():
+        for k in iterkeys(req):
             if not k in self._ALLOWED_REQUEST_KEYS:
                 raise JSONRPCInvalidRequestError()
 
         if req.get('jsonrpc', None) != self.JSON_RPC_VERSION:
             raise JSONRPCInvalidRequestError()
 
-        if not isinstance(req['method'], basestring):
+        if not isinstance(req['method'], string_types):
             raise JSONRPCInvalidRequestError()
 
         request = JSONRPCRequest()
