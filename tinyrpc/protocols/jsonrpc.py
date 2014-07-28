@@ -8,7 +8,6 @@ from .. import RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,\
 from six import iterkeys, string_types
 import json
 
-
 class FixedErrorMessageMixin(object):
     def __init__(self, *args, **kwargs):
         if not args:
