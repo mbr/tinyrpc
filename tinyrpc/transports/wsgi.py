@@ -81,8 +81,14 @@ class WsgiServerTransport(ServerTransport):
 
             self.messages.put((context, msg))
 
+            # set Content-Type header and join it with access contol headers
+            headers = {
+                'Content-Type': environ.get('CONTENT_TYPE')
+            }
+            headers.update(access_control_headers)
+
             # ...and send the reply
-            response = Response(context.get(), headers=access_control_headers)
+            response = Response(context.get(), headers=headers)
         else:
             # nothing else supported at the moment
             response = Response('Only POST supported', 405)
