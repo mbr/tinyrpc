@@ -105,7 +105,7 @@ def _get_code_and_message(error):
 
 class JSONRPCRequest(RPCRequest):
     def error_respond(self, error):
-        if not self.unique_id:
+        if self.unique_id is None:
             return None
 
         response = JSONRPCErrorResponse()
@@ -120,7 +120,7 @@ class JSONRPCRequest(RPCRequest):
     def respond(self, result):
         response = JSONRPCSuccessResponse()
 
-        if not self.unique_id:
+        if self.unique_id is None:
             return None
 
         response.result = result
