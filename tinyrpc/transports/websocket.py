@@ -3,8 +3,10 @@
 
 import Queue
 
-from . import ServerTransport
 from geventwebsocket.resource import WebSocketApplication, Resource
+import websocket
+
+from . import ServerTransport
 
 
 class WSServerTransport(ServerTransport):
@@ -72,6 +74,7 @@ class WSApplicationFactory(object):
     def protocol(cls):
         return WebSocketApplication.protocol()
 
+
 class WSApplication(WebSocketApplication):
     '''
     This class is the bridge between the WSServerTransport and the WebSocket
@@ -85,3 +88,32 @@ class WSApplication(WebSocketApplication):
         response = context.get()
         self.ws.send(response, *args, **kwargs)
 
+
+class HttpWebSocketClientTransport(ClientTransport):
+    """HTTP WebSocket based client transport.
+
+    Requires :py:mod:`websocket-python`. Submits messages to a server using the body of
+    an ``HTTP`` ``WebSocket`` message. Replies are taken from the response of the websocket.
+
+    The connection is establish on the ``__init__`` because the protocol is connection oriented,
+    you need to close the connection calling the close method.
+
+    :param endpoint: The URL to connect the websocket.
+    :param kwargs: Additional parameters for :py:func:`websocket.send`.
+    """
+    def __init__(self, endpoint, **kwargs):
+        self.endpoint = endpoint
+        self.request_kwargs = kwargs
+        self.ws = websocket.create_connection(self.endpoint, **kwargs)
+
+    def send_message(self, message, expect_reply=True):
+        if not isinstance(message, str):
+            raise TypeError('str expected')
+        self.ws.send(message)
+        r = self.ws.recv()
+        if expect_reply:
+            return r
+
+    def close(self):
+        if self.ws is not None:
+            self.ws.close()
