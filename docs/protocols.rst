@@ -23,7 +23,7 @@ always byte strings, either messages or replies, that are sent via or received
 from a transport.
 
 There are two protocol-specific subclasses of
-:py:class:`~tinyrpc.RPCRequest` and :py:class:`~tinyrpc.RPCReply`, these
+:py:class:`~tinyrpc.RPCRequest` and :py:class:`~tinyrpc.RPCResponse`, these
 represent well-formed requests and responses.
 
 Finally, if an error occurs during parsing of a request, a
