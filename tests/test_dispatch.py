@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from mock import Mock, MagicMock
+from _compat.mock import Mock, MagicMock
 import pytest
 
 from tinyrpc.dispatch import RPCDispatcher, public

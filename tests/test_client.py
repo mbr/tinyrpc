@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from mock import Mock
+from _compat.mock import Mock
 
 from tinyrpc.exc import RPCError
 from tinyrpc.client import RPCClient, RPCProxy
