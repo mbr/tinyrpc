@@ -156,7 +156,7 @@ def test_dispatch_calls_method_and_responds(dispatch, mock_request):
     dispatch.add_method(m.subtract, 'subtract')
     response = dispatch.dispatch(mock_request)
 
-    m.subtract.assert_called()
+    assert m.subtract.called
 
     mock_request.respond.assert_called_with(-2)
 
@@ -173,7 +173,7 @@ def test_dispatch_handles_in_function_exceptions(dispatch, mock_request):
     dispatch.add_method(m.subtract, 'subtract')
     response = dispatch.dispatch(mock_request)
 
-    m.subtract.assert_called()
+    assert m.subtract.called
 
     mock_request.error_respond.assert_called_with(m.subtract.side_effect)
 

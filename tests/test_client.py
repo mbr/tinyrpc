@@ -85,14 +85,14 @@ def test_client_uses_correct_protocol(client, mock_protocol, method_name,
                                       one_way_setting):
     client.call(method_name, method_args, method_kwargs, one_way_setting)
 
-    mock_protocol.create_request.assert_called()
+    assert mock_protocol.create_request.called
 
 
 def test_client_uses_correct_transport(client, mock_protocol, method_name,
                                        method_args, method_kwargs,
                                        one_way_setting, mock_transport):
     client.call(method_name, method_args, method_kwargs, one_way_setting)
-    mock_transport.send_message.assert_called()
+    assert mock_transport.send_message.called
 
 
 def test_client_passes_correct_reply(client, mock_protocol, method_name,
