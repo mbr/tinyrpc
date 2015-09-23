@@ -25,8 +25,6 @@ def mock_request(method='subtract', args=None, kwargs=None):
     mock_request.method = method
     mock_request.args = args or [4, 6]
     mock_request.kwargs = kwargs or {}
-    mock_request.respond = Mock(RPCRequest.respond)
-    mock_request.error_respond = Mock(RPCRequest.error_respond)
 
     return mock_request
 
