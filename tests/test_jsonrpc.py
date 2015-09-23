@@ -3,6 +3,7 @@
 
 import json
 
+import six
 import pytest
 
 from tinyrpc import MethodNotFoundError, InvalidRequestError, ServerError, \
@@ -63,7 +64,7 @@ def prot():
 def test_parsing_good_request_samples(prot, data, attrs):
     req = prot.parse_request(data)
 
-    for k, v in attrs.iteritems():
+    for k, v in six.iteritems(attrs):
         assert getattr(req, k) == v
 
 
@@ -333,8 +334,8 @@ def test_jsonrpc_spec_v2_example5(prot):
             """{"jsonrpc": "2.0", "method": "foobar, "params":
             "bar", "baz]""")
         assert False  # parsing must fail
-    except JSONRPCParseError as e:
-        pass
+    except JSONRPCParseError as error:
+        e = error
 
     response = e.error_respond()
 
@@ -350,8 +351,8 @@ def test_jsonrpc_spec_v2_example6(prot):
         prot.parse_request(
             """{"jsonrpc": "2.0", "method": 1, "params": "bar"}""")
         assert False  # parsing must fail
-    except JSONRPCInvalidRequestError as e:
-        pass
+    except JSONRPCInvalidRequestError as error:
+        e = error
 
     response = e.error_respond()
 
@@ -368,8 +369,8 @@ def test_jsonrpc_spec_v2_example7(prot):
             {"jsonrpc": "2.0", "method": "sum", "params": [1,2,4], "id": "1"},
             {"jsonrpc": "2.0", "method" ]""")
         assert False
-    except JSONRPCParseError as e:
-        pass
+    except JSONRPCParseError as error:
+        e = error
 
     response = e.error_respond()
 
@@ -384,8 +385,8 @@ def test_jsonrpc_spec_v2_example8(prot):
     try:
         prot.parse_request("""[]""")
         assert False
-    except JSONRPCInvalidRequestError as e:
-        pass
+    except JSONRPCInvalidRequestError as error:
+        e = error
 
     response = e.error_respond()
 
