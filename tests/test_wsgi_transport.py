@@ -22,6 +22,7 @@ def monkey_patches(request):
     import socket
     import httplib
 
+    # FIXME: httplib=True has been removed in more recent gevent versions
     gevent.monkey.patch_all(
         socket=True,
         dns=False,
@@ -29,10 +30,9 @@ def monkey_patches(request):
         select=False,
         thread=False,
         os=False,
+        httplib=False,
         ssl=False,
-        httplib=True,
-        aggressive=False,
-    )
+        aggressive=False)
 
     def fin():
         six.moves.reload_module(socket)
