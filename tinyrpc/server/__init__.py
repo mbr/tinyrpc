@@ -39,24 +39,29 @@ class RPCServer(object):
         while True:
             self.receive_one_message()
 
-    def receive_one_message(self):
+    def receive_one_message(self, msg = None):
         context, message = self.transport.receive_message()
 
         # assuming protocol is threadsafe and dispatcher is theadsafe, as
         # long as its immutable
 
-        def handle_message(context, message):
+        def do_dispatch(message):
             try:
                 request = self.protocol.parse_request(message)
-            except RPCError as e:
+            except RCPError as e:
                 response = e.error_respond()
             else:
                 response = self.dispatcher.dispatch(request)
+            return response.serialize()
 
-            # send reply
-            self.transport.send_reply(context, response.serialize())
+        def handle_message(context, message):
+            self.transport.send_reply(context, do_dispatch(message))
 
-        self._spawn(handle_message, context, message)
+        if msg:
+            return do_dispatch(msg)
+        else:
+            context, message = self.transport.receive_message()
+            self._spawn(handle_message, context, message)
 
     def _spawn(self, func, *args, **kwargs):
         """Spawn a handler function.
