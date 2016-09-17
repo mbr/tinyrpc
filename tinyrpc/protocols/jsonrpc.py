@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from .. import RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,\
-               InvalidRequestError, MethodNotFoundError, ServerError,\
+               InvalidRequestError, MethodNotFoundError, \
                InvalidReplyError, RPCError, RPCBatchRequest, RPCBatchResponse
 
 import json

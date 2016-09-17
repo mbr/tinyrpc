@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from Queue import Queue
-import threading
 import requests
 import websocket
 
-from . import ServerTransport, ClientTransport
+from . import ClientTransport
 
 
 class HttpPostClientTransport(ClientTransport):
@@ -30,8 +28,6 @@ class HttpPostClientTransport(ClientTransport):
 
         if expect_reply:
             return r.content
-
-
 
 class HttpWebSocketClientTransport(ClientTransport):
     """HTTP WebSocket based client transport.
