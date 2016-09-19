@@ -15,7 +15,10 @@ from __future__ import print_function
 
 import sys
 import json
-import urlparse
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urllib as urlparse
 
 from . import ServerTransport
 
