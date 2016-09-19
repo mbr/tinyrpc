@@ -18,8 +18,15 @@ if HAS_GEVENT:
     """Defines the elements of a RPC call.
 
     RPCCall is used with ``call_all`` to provide the list of
-    requests to be processed. Each request contains the three elements
+    requests to be processed. Each request contains the elements
     defined in this tuple.
+    """
+    
+    RCPCallTo = namedtuple('RPCCallTo', 'transport method args kwargs')
+    """Defines the elements of a RPC call directed to multiple transports.
+    
+    RPCCallTo is used with ``call_all`` to provide the list of
+    requests to be processed.
     """
 
 class RPCClient(object):
@@ -34,9 +41,11 @@ class RPCClient(object):
         self.protocol = protocol
         self.transport = transport
 
-    def _send_and_handle_reply(self, req, one_way):
+    def _send_and_handle_reply(self, req, one_way, transport=None):
+        tport = self.transport if transport is None else transport
+        
         # sends ...
-        reply = self.transport.send_message(req.serialize())
+        reply = tport.send_message(req.serialize())
 
         if one_way:
             # ... and be done
@@ -61,6 +70,7 @@ class RPCClient(object):
         :param args: Arguments to pass to the method.
         :param kwargs: Keyword arguments to pass to the method.
         :param one_way: Whether or not a reply is desired.
+        :param transport: Overrules the default transport if provided.
         """
         req = self.protocol.create_request(method, args, kwargs, one_way)
 
@@ -78,16 +88,29 @@ class RPCClient(object):
             When the gevent module is present ``call_all`` is defined. It takes a
             list of requests and processes them in parallel returning a list of results.
 
+            If gevent is **not present** then the calls are executed sequentially.
+
             :param requests: List of RPCCall tuples containing the requests to make.
             :param one_way: Whether or not the requests generate replies.
             """
-            reqs = [self.protocol.create_request(r.method, r.args, r.kwargs, one_way) for r in requests]
-            threads = [gevent.spawn(self._send_and_handle_reply, r, one_way) for r in reqs]
+            threads = []
+            for r in requests:
+                req = self.protocol.create_request(r.method, r.args, r.kwargs, one_way)
+                tr = r.transport if len(r) == 4 else None
+                threads.append(gevent.spawn(self._send_and_handle_reply, req, one_way, tr))
+#            reqs = [self.protocol.create_request(r.method, r.args, r.kwargs, one_way) for r in requests]
+#            threads = [gevent.spawn(self._send_and_handle_reply, r, one_way) for r in reqs]
             gevent.joinall(threads)
             return [t.value for t in threads]
     else:
         def call_all(self, requests, one_way=False):
-            raise NotImplemented
+            threads = []
+            for r in requests:
+                req = self.protocol.create_request(r.method, r.args, r.kwargs, one_way)
+                tr = r.transport if len(r) == 4 else None
+                threads.append(self._send_and_handle_reply(req, one_way, tr))
+                return threads
+#            return [self.call(r.method, r.args, r.kwargs, one_way) for r in requests]
 
     def get_proxy(self, prefix='', one_way=False):
         """Convenience method for creating a proxy.

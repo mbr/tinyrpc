@@ -11,6 +11,8 @@ with the regular HTTP client.
 This code is made available under the same license as tinyrpc itself.
 """
 
+from __future__ import print_function
+
 import sys
 import json
 import urlparse
@@ -57,10 +59,10 @@ class CGIServerTransport(ServerTransport):
 
     def send_reply(self, context, reply):
         # context isn't used with cgi
-        print "Content-Type: application/json"
-        print "Cache-Control: no-cache"
-        print "Pragma: no-cache"
-        print "Content-Length: %d" % len(reply)
-        print
-        print reply
+        print("Content-Type: application/json")
+        print("Cache-Control: no-cache")
+        print("Pragma: no-cache")
+        print("Content-Length: %d" % len(reply))
+        print()
+        print(reply)
 
