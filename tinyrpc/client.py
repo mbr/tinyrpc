@@ -42,7 +42,7 @@ class RPCClient(object):
 
     def _send_and_handle_reply(self, req, one_way, transport=None):
         tport = self.transport if transport is None else transport
-        
+
         # sends ...
         reply = tport.send_message(req.serialize())
 
@@ -95,7 +95,7 @@ class RPCClient(object):
             threads = []
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs, one_way)
-                tr = r.transport if len(r) == 4 else None
+                tr = r.transport.transport if len(r) == 4 else None
                 threads.append(gevent.spawn(self._send_and_handle_reply, req, one_way, tr))
 #            reqs = [self.protocol.create_request(r.method, r.args, r.kwargs, one_way) for r in requests]
 #            threads = [gevent.spawn(self._send_and_handle_reply, r, one_way) for r in reqs]
@@ -106,9 +106,9 @@ class RPCClient(object):
             threads = []
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs, one_way)
-                tr = r.transport if len(r) == 4 else None
+                tr = r.transport.transport if len(r) == 4 else None
                 threads.append(self._send_and_handle_reply(req, one_way, tr))
-                return threads
+            return threads
 #            return [self.call(r.method, r.args, r.kwargs, one_way) for r in requests]
 
     def get_proxy(self, prefix='', one_way=False):
