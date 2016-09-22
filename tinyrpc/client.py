@@ -6,28 +6,27 @@ try:
     import gevent.monkey
 
     gevent.monkey.patch_all()
-    from collections import namedtuple
     HAS_GEVENT = True
 except:
     HAS_GEVENT = False
 
 from .exc import RPCError
+from collections import namedtuple
 
-if HAS_GEVENT:
-    RPCCall = namedtuple('RPCCall', 'method args kwargs')
-    """Defines the elements of a RPC call.
+RPCCall = namedtuple('RPCCall', 'method args kwargs')
+"""Defines the elements of a RPC call.
 
-    RPCCall is used with ``call_all`` to provide the list of
-    requests to be processed. Each request contains the elements
-    defined in this tuple.
-    """
-    
-    RCPCallTo = namedtuple('RPCCallTo', 'transport method args kwargs')
-    """Defines the elements of a RPC call directed to multiple transports.
-    
-    RPCCallTo is used with ``call_all`` to provide the list of
-    requests to be processed.
-    """
+RPCCall is used with ``call_all`` to provide the list of
+requests to be processed. Each request contains the elements
+defined in this tuple.
+"""
+
+RPCCallTo = namedtuple('RPCCallTo', 'transport method args kwargs')
+"""Defines the elements of a RPC call directed to multiple transports.
+
+RPCCallTo is used with ``call_all`` to provide the list of
+requests to be processed.
+"""
 
 class RPCClient(object):
     """Client for making RPC calls to connected servers.
