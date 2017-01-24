@@ -3,8 +3,10 @@
 
 import Queue
 
-from . import ServerTransport
 from geventwebsocket.resource import WebSocketApplication, Resource
+import websocket
+
+from . import ServerTransport
 
 
 class WSServerTransport(ServerTransport):
@@ -14,10 +16,10 @@ class WSServerTransport(ServerTransport):
     Due to the nature of WS, this transport has a few pecularities: It must
     be run in a thread, greenlet or some other form of concurrent execution
     primitive.
-    
+
     This is due to
     :py:prop:`~tinyrpc.transports.websocket.WSServerTransport.handle` which is
-    a :py:class:`geventwebsocket.resource.Resource` that joins a wsgi handler 
+    a :py:class:`geventwebsocket.resource.Resource` that joins a wsgi handler
     for the / and a WebSocket handler for the /ws path. These resource is
     used in combination with a :py:class:`geventwebsocket.server.WebSocketServer`
     that blocks while waiting for a call to
@@ -28,13 +30,13 @@ class WSServerTransport(ServerTransport):
     set it to :py:class:`gevent.queue.Queue`).
 
     :param queue_class: The Queue class to use.
-    :param wsgi_handler: Can be used to change the standard response to a 
-    http request to the /      
+    :param wsgi_handler: Can be used to change the standard response to a
+    http request to the /
     '''
     def __init__(self, queue_class=Queue.Queue, wsgi_handler=None):
         self._queue_class = queue_class
         self.messages = queue_class()
-    
+
         def static_wsgi_app(environ, start_response):
             start_response("200 OK", [("Content-Type", "text/html")])
             return 'Ready for WebSocket connection in /ws'
@@ -52,13 +54,13 @@ class WSServerTransport(ServerTransport):
 
 class WSApplicationFactory(object):
     '''
-    Creates WebSocketApplications with a messages queue and the queue_class 
+    Creates WebSocketApplications with a messages queue and the queue_class
     needed for the communication with the WSServerTransport.
     '''
     def __init__(self, messages, queue_class):
         self.messages = messages
         self._queue_class = queue_class
-        
+
     def __call__(self, ws):
         '''
         The fake __init__ for the WSApplication
@@ -66,16 +68,17 @@ class WSApplicationFactory(object):
         app = WSApplication(ws)
         app.messages = self.messages
         app._queue_class = self._queue_class
-        return app 
-    
+        return app
+
     @classmethod
     def protocol(cls):
         return WebSocketApplication.protocol()
 
+
 class WSApplication(WebSocketApplication):
     '''
-    This class is the bridge between the WSServerTransport and the WebSocket 
-    protocol implemented by 
+    This class is the bridge between the WSServerTransport and the WebSocket
+    protocol implemented by
     :py:class:`geventwebsocket.resource.WebSocketApplication`
     '''
     def on_message(self, msg, *args, **kwargs):
@@ -85,3 +88,32 @@ class WSApplication(WebSocketApplication):
         response = context.get()
         self.ws.send(response, *args, **kwargs)
 
+
+class HttpWebSocketClientTransport(ClientTransport):
+    """HTTP WebSocket based client transport.
+
+    Requires :py:mod:`websocket-python`. Submits messages to a server using the body of
+    an ``HTTP`` ``WebSocket`` message. Replies are taken from the response of the websocket.
+
+    The connection is establish on the ``__init__`` because the protocol is connection oriented,
+    you need to close the connection calling the close method.
+
+    :param endpoint: The URL to connect the websocket.
+    :param kwargs: Additional parameters for :py:func:`websocket.send`.
+    """
+    def __init__(self, endpoint, **kwargs):
+        self.endpoint = endpoint
+        self.request_kwargs = kwargs
+        self.ws = websocket.create_connection(self.endpoint, **kwargs)
+
+    def send_message(self, message, expect_reply=True):
+        if not isinstance(message, str):
+            raise TypeError('str expected')
+        self.ws.send(message)
+        r = self.ws.recv()
+        if expect_reply:
+            return r
+
+    def close(self):
+        if self.ws is not None:
+            self.ws.close()
