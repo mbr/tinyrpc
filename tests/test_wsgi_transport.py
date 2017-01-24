@@ -12,6 +12,7 @@ from gevent.pywsgi import WSGIServer
 import requests
 
 from tinyrpc.transports.wsgi import WsgiServerTransport
+from tinyrpc.transports.http import HttpPostClientTransport
 
 TEST_SERVER_ADDR = ('127.0.0.1', 49294)
 
@@ -88,3 +89,73 @@ def test_server_receives_messages(wsgi_server, msg):
     r = requests.post(addr, data=msg)
 
     assert r.content == 'reply:' + msg
+
+
+@pytest.fixture
+def sessioned_client():
+    session = requests.Session()
+    adapter = requests.adapters.HTTPAdapter(pool_maxsize=100)
+    session.mount('http://', adapter)
+    client = HttpPostClientTransport(
+        'http://%s:%d' % TEST_SERVER_ADDR,
+        post_method=session.post
+    )
+    return client
+
+
+@pytest.fixture
+def non_sessioned_client():
+    client = HttpPostClientTransport('http://%s:%d' % TEST_SERVER_ADDR)
+    return client
+
+
+@pytest.mark.parametrize(('msg',),
+    [('foo',), ('',), ('bar',), ('1234',), ('{}',), ('{',), ('\x00\r\n',)])
+def test_sessioned_http_sessioned_client(wsgi_server, sessioned_client, msg):
+    transport, addr = wsgi_server
+
+    def consumer():
+        context, received_msg = transport.receive_message()
+        assert received_msg == msg
+        reply = 'reply:' + msg
+        transport.send_reply(context, reply)
+
+    gevent.spawn(consumer)
+
+    result = sessioned_client.send_message(msg)
+    assert result == 'reply:' + msg
+
+
+def test_exhaust_ports(wsgi_server, non_sessioned_client):
+    """
+    This raises a
+    > ConnectionError: HTTPConnectionPool(host='127.0.0.1', port=49294):
+    >    Max retries exceeded with url: / (Caused by
+    >    NewConnectionError('<requests.packages.urllib3.connection.HTTPConnection
+    >    object at 0x7f6f86246210>: Failed to establish a new connection:
+    >    [Errno 99] Cannot assign requested address',))
+    """
+
+    transport, addr = wsgi_server
+
+    def consumer():
+        context, received_msg = transport.receive_message()
+        reply = 'reply:' + received_msg
+        transport.send_reply(context, reply)
+
+    def send_and_receive(i):
+        try:
+            gevent.spawn(consumer)
+            msg = 'msg_%s' % i
+            result = non_sessioned_client.send_message(msg)
+            return result == 'reply:' + msg
+        except Exception as e:
+            return e
+
+    pool = gevent.pool.Pool(500)
+
+    with pytest.raises(requests.ConnectionError):
+        for result in pool.imap_unordered(send_and_receive, xrange(55000)):
+            assert result
+            if isinstance(result, Exception):
+                raise result

@@ -16,21 +16,26 @@ class HttpPostClientTransport(ClientTransport):
     an ``HTTP`` ``POST`` request. Replies are taken from the responses body.
 
     :param endpoint: The URL to send ``POST`` data to.
+    :param post_method: allows to replace `requests.post` with another method,
+        e.g. the post method of a `requests.Session()` instance.
     :param kwargs: Additional parameters for :py:func:`requests.post`.
     """
-    def __init__(self, endpoint, **kwargs):
+    def __init__(self, endpoint, post_method=None, **kwargs):
         self.endpoint = endpoint
         self.request_kwargs = kwargs
+        if post_method is None:
+            self.post = requests.post
+        else:
+            self.post = post_method
 
     def send_message(self, message, expect_reply=True):
         if not isinstance(message, str):
             raise TypeError('str expected')
 
-        r = requests.post(self.endpoint, data=message, **self.request_kwargs)
+        r = self.post(self.endpoint, data=message, **self.request_kwargs)
 
         if expect_reply:
             return r.content
-
 
 
 class HttpWebSocketClientTransport(ClientTransport):
