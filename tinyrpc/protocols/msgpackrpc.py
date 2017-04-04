@@ -73,7 +73,7 @@ class MSGPACKRPCErrorResponse(RPCErrorResponse):
         return [
             1,
             self.unique_id,
-            "Error %d: %s" % (self._msgpackrpc_error_code, str(self.error)),
+            {"error": str(self.error), "error_code": self._msgpackrpc_error_code},
             None,
         ]
 
