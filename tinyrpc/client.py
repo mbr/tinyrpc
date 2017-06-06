@@ -1,14 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-try:
-    import gevent
-    import gevent.monkey
-
-    gevent.monkey.patch_all()
-    HAS_GEVENT = True
-except:
-    HAS_GEVENT = False
+import sys
 
 from .exc import RPCError
 from collections import namedtuple
@@ -40,7 +33,7 @@ class RPCClient(object):
         self.protocol = protocol
         self.transport = transport
 
-    def _send_and_handle_reply(self, req, one_way, transport=None):
+    def _send_and_handle_reply(self, req, one_way, transport=None, no_exception=False):
         tport = self.transport if transport is None else transport
 
         # sends ...
@@ -53,7 +46,7 @@ class RPCClient(object):
         # ... or waits for reply
         response = self.protocol.parse_reply(reply)
 
-        if hasattr(response, 'error'):
+        if not no_exception and hasattr(response, 'error'):
             raise RPCError('Error calling remote procedure: %s' %\
                            response.error)
 
@@ -80,37 +73,26 @@ class RPCClient(object):
 
         return rep.result
 
-    if HAS_GEVENT:
-        def call_all(self, requests, one_way=False):
-            """Calls all requests from greenlets thus parallelizing fan-out.
-
-            When the gevent module is present ``call_all`` is defined. It takes a
-            list of requests and processes them in parallel returning a list of results.
-
-            If gevent is **not present** then the calls are executed sequentially.
-
-            :param requests: List of RPCCall tuples containing the requests to make.
-            :param one_way: Whether or not the requests generate replies.
-            """
-            threads = []
+    def call_all(self, requests, one_way=False):
+        threads = []
+        
+        if 'gevent' in sys.modules:
+            # assume that gevent is available and functional, make calls in parallel
+            import gevent
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs, one_way)
                 tr = r.transport.transport if len(r) == 4 else None
-                threads.append(gevent.spawn(self._send_and_handle_reply, req, one_way, tr))
-#            reqs = [self.protocol.create_request(r.method, r.args, r.kwargs, one_way) for r in requests]
-#            threads = [gevent.spawn(self._send_and_handle_reply, r, one_way) for r in reqs]
+                threads.append(gevent.spawn(self._send_and_handle_reply, req, one_way, tr, True))
             gevent.joinall(threads)
             return [t.value for t in threads]
-    else:
-        def call_all(self, requests, one_way=False):
-            threads = []
+        else:
+            # call serially
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs, one_way)
                 tr = r.transport.transport if len(r) == 4 else None
-                threads.append(self._send_and_handle_reply(req, one_way, tr))
+                threads.append(self._send_and_handle_reply(req, one_way, tr, True))
             return threads
-#            return [self.call(r.method, r.args, r.kwargs, one_way) for r in requests]
-
+        
     def get_proxy(self, prefix='', one_way=False):
         """Convenience method for creating a proxy.
 
