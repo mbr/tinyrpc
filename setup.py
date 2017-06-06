@@ -9,7 +9,7 @@ def read(fname):
 
 setup(
     name='tinyrpc',
-    version='0.6dev',
+    version='0.8-lnoor',
     description='A small, modular, transport and protocol neutral RPC '
                 'library that, among other things, supports JSON-RPC and zmq.',
     long_description=read('README.rst'),
@@ -17,6 +17,6 @@ setup(
     keywords='json rpc json-rpc jsonrpc 0mq zmq zeromq',
     author='Marc Brinkmann',
     author_email='git@marcbrinkmann.de',
-    url='http://github.com/mbr/tinyrpc',
+    url='http://github.com/lnoor/tinyrpc',
     license='MIT',
 )

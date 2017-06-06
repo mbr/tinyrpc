@@ -108,6 +108,8 @@ class RPCDispatcher(object):
             try:
                 method = self.get_method(request.method)
             except KeyError as e:
+                import logging
+                logging.getLogger(__name__).exception('Method "%s" not found' % request.method)
                 return request.error_respond(MethodNotFoundError(e))
 
             # we found the method
@@ -115,12 +117,16 @@ class RPCDispatcher(object):
                 result = method(*request.args, **request.kwargs)
             except Exception as e:
                 # an error occured within the method, return it
+                import logging
+                logging.getLogger(__name__).exception('Error while handling method "%s"' % request.method)
                 return request.error_respond(e)
 
             # respond with result
             return request.respond(result)
         except Exception as e:
             # unexpected error, do not let client know what happened
+            import logging
+            logging.getLogger(__name__).exception('Unexpected error while handling method "%s"' % request.method)
             return request.error_respond(ServerError())
 
     def get_method(self, name):

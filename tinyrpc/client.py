@@ -1,8 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .exc import RPCError
+import sys
 
+from .exc import RPCError
+from collections import namedtuple
+
+RPCCall = namedtuple('RPCCall', 'method args kwargs')
+"""Defines the elements of a RPC call.
+
+RPCCall is used with ``call_all`` to provide the list of
+requests to be processed. Each request contains the elements
+defined in this tuple.
+"""
+
+RPCCallTo = namedtuple('RPCCallTo', 'transport method args kwargs')
+"""Defines the elements of a RPC call directed to multiple transports.
+
+RPCCallTo is used with ``call_all`` to provide the list of
+requests to be processed.
+"""
 
 class RPCClient(object):
     """Client for making RPC calls to connected servers.
@@ -16,13 +33,20 @@ class RPCClient(object):
         self.protocol = protocol
         self.transport = transport
 
-    def _send_and_handle_reply(self, req):
-        # sends and waits for reply
-        reply = self.transport.send_message(req.serialize())
+    def _send_and_handle_reply(self, req, one_way, transport=None, no_exception=False):
+        tport = self.transport if transport is None else transport
 
+        # sends ...
+        reply = tport.send_message(req.serialize())
+
+        if one_way:
+            # ... and be done
+            return
+
+        # ... or waits for reply
         response = self.protocol.parse_reply(reply)
 
-        if hasattr(response, 'error'):
+        if not no_exception and hasattr(response, 'error'):
             raise RPCError('Error calling remote procedure: %s' %\
                            response.error)
 
@@ -38,11 +62,37 @@ class RPCClient(object):
         :param args: Arguments to pass to the method.
         :param kwargs: Keyword arguments to pass to the method.
         :param one_way: Whether or not a reply is desired.
+        :param transport: Overrules the default transport if provided.
         """
         req = self.protocol.create_request(method, args, kwargs, one_way)
 
-        return self._send_and_handle_reply(req).result
+        rep = self._send_and_handle_reply(req, one_way)
 
+        if one_way:
+            return
+
+        return rep.result
+
+    def call_all(self, requests, one_way=False):
+        threads = []
+        
+        if 'gevent' in sys.modules:
+            # assume that gevent is available and functional, make calls in parallel
+            import gevent
+            for r in requests:
+                req = self.protocol.create_request(r.method, r.args, r.kwargs, one_way)
+                tr = r.transport.transport if len(r) == 4 else None
+                threads.append(gevent.spawn(self._send_and_handle_reply, req, one_way, tr, True))
+            gevent.joinall(threads)
+            return [t.value for t in threads]
+        else:
+            # call serially
+            for r in requests:
+                req = self.protocol.create_request(r.method, r.args, r.kwargs, one_way)
+                tr = r.transport.transport if len(r) == 4 else None
+                threads.append(self._send_and_handle_reply(req, one_way, tr, True))
+            return threads
+        
     def get_proxy(self, prefix='', one_way=False):
         """Convenience method for creating a proxy.
 

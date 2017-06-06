@@ -49,6 +49,8 @@ class RPCServer(object):
             try:
                 request = self.protocol.parse_request(message)
             except RPCError as e:
+                import logging
+                logging.getLogger(__name__).exception('Failed to parse "%s"' % message)
                 response = e.error_respond()
             else:
                 response = self.dispatcher.dispatch(request)
