@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import Queue
+from six.moves import queue as Queue
 
 from . import ServerTransport
 from geventwebsocket.resource import WebSocketApplication, Resource
