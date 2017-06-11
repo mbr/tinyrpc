@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from Queue import Queue
 import threading
 import requests
 import websocket
 
+from six.moves import queue as Queue
 from . import ServerTransport, ClientTransport
 
 
