@@ -16,10 +16,15 @@ class RPCClient(object):
         self.protocol = protocol
         self.transport = transport
 
-    def _send_and_handle_reply(self, req):
-        # sends and waits for reply
+    def _send_and_handle_reply(self, req, one_way):
+        # sends ...
         reply = self.transport.send_message(req.serialize())
 
+        if one_way:
+            # ... and be done
+            return
+
+        # ... or process the reply
         response = self.protocol.parse_reply(reply)
 
         if hasattr(response, 'error'):
@@ -41,7 +46,12 @@ class RPCClient(object):
         """
         req = self.protocol.create_request(method, args, kwargs, one_way)
 
-        return self._send_and_handle_reply(req).result
+        rep = self._send_and_handle_reply(req, one_way)
+
+        if one_way:
+            return
+
+        return rep.result
 
     def get_proxy(self, prefix='', one_way=False):
         """Convenience method for creating a proxy.
