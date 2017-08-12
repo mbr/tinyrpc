@@ -9,8 +9,8 @@ class ServerTransport(object):
 
         Blocks until another message has been received. May return a context
         opaque to clients that should be passed on
-        :py:func:`~tinyrpc.transport.Transport.send_reply` to identify the
-        client later on.
+        :py:func:`~tinyrpc.transport.ServerTransport.send_reply` to identify
+        the client later on.
 
         :return: A tuple consisting of ``(context, message)``.
         """
@@ -27,7 +27,7 @@ class ServerTransport(object):
         beforehand. A non-string value raises a :py:exc:`TypeError`.
 
         :param context: A context returned by
-                        :py:func:`~tinyrpc.transport.Transport.receive_message`.
+                        :py:func:`~tinyrpc.transport.ServerTransport.receive_message`.
         :param reply: A string to send back as the reply.
         """
         raise NotImplementedError
