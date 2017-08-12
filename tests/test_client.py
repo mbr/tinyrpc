@@ -101,7 +101,10 @@ def test_client_passes_correct_reply(client, mock_protocol, method_name,
     transport_return = '023hoisdfh'
     mock_transport.send_message = Mock(return_value=transport_return)
     client.call(method_name, method_args, method_kwargs, one_way_setting)
-    mock_protocol.parse_reply.assert_called_with(transport_return)
+    if one_way_setting:
+        mock_protocol.parse_reply.assert_not_called()
+    else:
+        mock_protocol.parse_reply.assert_called_with(transport_return)
 
 
 def test_client_raises_error_replies(client, mock_protocol, method_name,
@@ -111,5 +114,6 @@ def test_client_raises_error_replies(client, mock_protocol, method_name,
     error_response.error = 'foo'
     mock_protocol.parse_reply = Mock(return_value=error_response)
 
-    with pytest.raises(RPCError):
-        client.call(method_name, method_args, method_kwargs, one_way_setting)
+    if not one_way_setting:
+        with pytest.raises(RPCError):
+            client.call(method_name, method_args, method_kwargs, one_way_setting)
