@@ -244,8 +244,8 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'http://docs.python.org/': None,
-    'http://zeromq.github.com/pyzmq/': None,
+    'https://docs.python.org/': None,
+    'https://pyzmq.readthedocs.io/en/latest/': None,
     'http://docs.python-requests.org/en/latest/': None,
     'http://werkzeug.pocoo.org/docs/': None,
 }
