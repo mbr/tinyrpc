@@ -155,4 +155,19 @@ Table of contents
    server
    exceptions
 
+Creator
+-------
+
+Marc Brinkmann: https://github.com/mbr
+
+Maintainer
+----------
+
+Leo Noordergraaf: https://github.com/lnoor
+
+Contributors
+------------
+
+Satoshi Kobayashi: https://github.com/satosi-k
+
 .. _jsonrpc: http://jsonrpc.org
