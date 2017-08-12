@@ -44,3 +44,15 @@ WSGI
 
 .. autoclass:: tinyrpc.transports.wsgi.WsgiServerTransport
    :members:
+
+CGI
+~~~
+
+.. autoclass:: tinyrpc.transports.cgi.CGIServerTransport
+   :members:
+
+Callback
+~~~~~~~~
+
+.. autoclass:: tinyrpc.transports.callback.CallbackServerTransport
+   :members:
