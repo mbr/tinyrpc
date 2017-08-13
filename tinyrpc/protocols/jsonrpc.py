@@ -139,7 +139,7 @@ class JSONRPCRequest(RPCRequest):
             jdata['params'] = self.args
         if self.kwargs:
             jdata['params'] = self.kwargs
-        if self.unique_id != None:
+        if hasattr(self, 'unique_id') and self.unique_id is not None:
             jdata['id'] = self.unique_id
         return jdata
 
