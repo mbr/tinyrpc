@@ -20,11 +20,18 @@ class RPCServer(object):
     def serve_forever(self):
         """Handle requests forever.
 
-        Starts the server loop in which the transport will be polled for a new
-        message.
+        Starts the server loop continuously calling :py:meth:`receive_one_message`
+        to process the next incoming request.
+        """
+        while True:
+            self.receive_one_message()
 
-        After a new message has arrived,
-        :py:func:`~tinyrpc.server.RPCServer._spawn` is called with a handler
+    def receive_one_message(self):
+        """Handle a single request.
+
+        Polls the transport for a new message.
+        
+        After a new message has arrived :py:meth:`_spawn` is called with a handler
         function and arguments to handle the request.
 
         The handler function will try to decode the message using the supplied
@@ -32,14 +39,7 @@ class RPCServer(object):
         the message, the dispatcher will be asked to handle the resultung
         request and the return value (either an error or a result) will be sent
         back to the client using the transport.
-
-        After calling :py:func:`~tinyrpc.server.RPCServer._spawn`, the server
-        will fetch the next message and repeat.
         """
-        while True:
-            self.receive_one_message()
-
-    def receive_one_message(self):
         context, message = self.transport.receive_message()
 
         # assuming protocol is threadsafe and dispatcher is theadsafe, as
@@ -51,7 +51,10 @@ class RPCServer(object):
             except RPCError as e:
                 response = e.error_respond()
             else:
-                response = self.dispatcher.dispatch(request)
+                response = self.dispatcher.dispatch(
+                    request, 
+                    getattr(self.protocol, '_caller', None)
+                )
 
             # send reply
             self.transport.send_reply(context, response.serialize())

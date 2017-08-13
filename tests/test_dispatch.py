@@ -4,10 +4,11 @@
 import _compat
 from six.moves.mock import Mock, MagicMock
 import pytest
+import inspect
 
 from tinyrpc.dispatch import RPCDispatcher, public
 from tinyrpc import RPCRequest, RPCBatchRequest, RPCBatchResponse
-
+from tinyrpc.protocols.jsonrpc import JSONRPCProtocol, JSONRPCInvalidParamsError
 
 @pytest.fixture
 def dispatch():
@@ -205,3 +206,47 @@ def test_batch_dispatch(dispatch):
 def test_dispatch_raises_key_error(dispatch):
     with pytest.raises(KeyError):
         dispatch.get_method('foo')
+
+@pytest.fixture(params=[
+    ('fn_a', [4, 6], {}, -2),
+    ('fn_a', [4], {}, JSONRPCInvalidParamsError),
+    ('fn_a', [], {'a':4, 'b':6}, -2),
+    ('fn_a', [4], {'b':6}, -2),
+    ('fn_b', [4, 6], {}, -2),
+    ('fn_b', [], {'a':4, 'b':6}, JSONRPCInvalidParamsError),
+    ('fn_b', [4], {}, IndexError),
+    # a[1] doesn't exist, can't be detected beforehand
+    ('fn_c', [4, 6], {}, JSONRPCInvalidParamsError),
+    ('fn_c', [], {'a':4, 'b':6}, -2),
+    ('fn_c', [], {'a':4}, KeyError)
+    # a['b'] doesn't exist, can't be detected beforehand
+])
+def invoke_with(request):
+    return request.param
+
+def test_argument_error(dispatch, invoke_with):
+    method, args, kwargs, result = invoke_with
+    
+    protocol = JSONRPCProtocol()
+    
+    @dispatch.public
+    def fn_a(a, b):
+        return a-b
+    
+    @dispatch.public
+    def fn_b(*a):
+        return a[0]-a[1]
+    
+    @dispatch.public
+    def fn_c(**a):
+        return a['a']-a['b']
+
+    mock_request = Mock(RPCRequest)
+    mock_request.args = args
+    mock_request.kwargs = kwargs
+    mock_request.method = method
+    dispatch._dispatch(mock_request, getattr(protocol, '_caller', None))
+    if inspect.isclass(result) and issubclass(result, Exception):
+        assert type(mock_request.error_respond.call_args[0][0]) == result
+    else:
+        mock_request.respond.assert_called_with(result)

@@ -66,7 +66,7 @@ class RPCDispatcher(object):
 
         self.method_map[name] = f
 
-    def dispatch(self, request):
+    def dispatch(self, request, caller=None):
         """Fully handle request.
 
         The dispatch method determines which method to call, calls it and
@@ -89,11 +89,16 @@ class RPCDispatcher(object):
         all its children in order and collecting the results, then returning an
         :py:class:`~tinyrpc.RPCBatchResponse` with the results.
 
+        To allow for custom processing around calling the method (i.e. custom
+        error handling), the optional parameter ``caller`` may be provided with
+        a callable. When present invoking the method is deferred to this callable.
+        
         :param request: An :py:func:`~tinyrpc.RPCRequest`.
+        :param caller: An optional callable used to invoke the method.
         :return: An :py:func:`~tinyrpc.RPCResponse`.
         """
         if hasattr(request, 'create_batch_response'):
-            results = [self._dispatch(req) for req in request]
+            results = [self._dispatch(req, caller) for req in request]
 
             response = request.create_batch_response()
             if response != None:
@@ -101,9 +106,9 @@ class RPCDispatcher(object):
 
             return response
         else:
-            return self._dispatch(request)
+            return self._dispatch(request, caller)
 
-    def _dispatch(self, request):
+    def _dispatch(self, request, caller):
         try:
             try:
                 method = self.get_method(request.method)
@@ -112,7 +117,10 @@ class RPCDispatcher(object):
 
             # we found the method
             try:
-                result = method(*request.args, **request.kwargs)
+                if caller is not None:
+                    result = caller(method, request.args, request.kwargs)
+                else:
+                    result = method(*request.args, **request.kwargs)
             except Exception as e:
                 # an error occured within the method, return it
                 return request.error_respond(e)
