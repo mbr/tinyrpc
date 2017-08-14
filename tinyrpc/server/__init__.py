@@ -57,7 +57,8 @@ class RPCServer(object):
                 )
 
             # send reply
-            self.transport.send_reply(context, response.serialize())
+            if response is not None:
+                self.transport.send_reply(context, response.serialize())
 
         self._spawn(handle_message, context, message)
 

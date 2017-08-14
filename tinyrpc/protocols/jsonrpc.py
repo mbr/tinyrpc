@@ -121,10 +121,10 @@ class JSONRPCRequest(RPCRequest):
         return response
 
     def respond(self, result):
-        response = JSONRPCSuccessResponse()
-
         if self.unique_id is None:
             return None
+
+        response = JSONRPCSuccessResponse()
 
         response.result = result
         response.unique_id = self.unique_id

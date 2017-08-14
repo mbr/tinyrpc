@@ -171,6 +171,7 @@ Maintainer
 Contributors
 ~~~~~~~~~~~~
 
+- Guilherme Salgado: https://github.com/gsalgado
 - jnnk: https://github.com/jnnk
 - Satoshi Kobayashi: https://github.com/satosi-k
 
