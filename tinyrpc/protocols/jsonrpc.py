@@ -56,6 +56,12 @@ class JSONRPCServerError(FixedErrorMessageMixin, InvalidRequestError):
     message = ''
 
 
+def for_json_bridge(o):
+    try:
+        return o.for_json()
+    except AttributeError, e:
+        raise TypeError('{0} is not JSON serializable'.format(o))
+    
 class JSONRPCSuccessResponse(RPCResponse):
     def _to_dict(self):
         return {
@@ -65,7 +71,7 @@ class JSONRPCSuccessResponse(RPCResponse):
         }
 
     def serialize(self):
-        return json.dumps(self._to_dict())
+        return json.dumps(self._to_dict(), default=for_json_bridge)
 
 
 class JSONRPCErrorResponse(RPCErrorResponse):
@@ -145,7 +151,7 @@ class JSONRPCRequest(RPCRequest):
         return jdata
 
     def serialize(self):
-        return json.dumps(self._to_dict())
+        return json.dumps(self._to_dict(), default=for_json_bridge)
 
 
 class JSONRPCBatchRequest(RPCBatchRequest):
