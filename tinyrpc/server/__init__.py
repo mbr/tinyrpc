@@ -12,10 +12,35 @@ class RPCServer(object):
     :param protocol: The :py:class:`~tinyrpc.RPCProtocol` to use.
     :param dispatcher: The :py:class:`~tinyrpc.dispatch.RPCDispatcher` to use.
     """
+    
+    trace = None
+    """Trace incoming and outgoing messages.
+    
+    When this attribute is set to a callable this callable will be called directly
+    after a message has been received and immediately after a reply is sent.
+    The callable should accept three positional parameters:
+    * *direction*: string, either '-->' for incoming or '<--' for outgoing data.
+    * *context*: the context returned by
+      :py:meth:`~tinyrpc.transport.RPCTransport.receive_message`.
+    * *message*: the message string itself.
+    
+    Example::
+    
+        def my_trace(direction, context, message):
+            logger.debug('%s%s', direction, message)
+        
+        server = RPCServer(transport, protocol, dispatcher)
+        server.trace = my_trace
+        server.serve_forever
+        
+    will log all incoming and outgoing traffic of the RPC service.
+    """
+    
     def __init__(self, transport, protocol, dispatcher):
         self.transport = transport
         self.protocol = protocol
         self.dispatcher = dispatcher
+        self.trace = None
 
     def serve_forever(self):
         """Handle requests forever.
@@ -41,7 +66,9 @@ class RPCServer(object):
         back to the client using the transport.
         """
         context, message = self.transport.receive_message()
-
+        if callable(self.trace):
+            self.trace('-->', context, message)
+        
         # assuming protocol is threadsafe and dispatcher is theadsafe, as
         # long as its immutable
 
@@ -58,7 +85,10 @@ class RPCServer(object):
 
             # send reply
             if response is not None:
-                self.transport.send_reply(context, response.serialize())
+                result = response.serialize()
+                if callable(self.trace):
+                    self.trace('<--', context, result)
+                self.transport.send_reply(context, result)
 
         self._spawn(handle_message, context, message)
 
