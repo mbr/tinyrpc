@@ -55,7 +55,6 @@ def test_handle_message_callback(transport, protocol, dispatcher):
     server.trace = Mock(return_value=None)
     server.receive_one_message()
 
-    print server.trace.call_args_list
     assert server.trace.call_args_list == [call('-->', CONTEXT, RECMSG), call('<--', CONTEXT, SERMSG)]
     server.trace.assert_called()
     
