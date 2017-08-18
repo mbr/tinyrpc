@@ -1,7 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+from collections import namedtuple
+
 from .exc import RPCError
+
+RPCCall = namedtuple('RPCCall', 'method args kwargs')
+"""Defines the elements of a RPC call.
+
+RPCCall is used with :py:meth:`~tinyrpc.client.RPCClient.call_all`
+to provide the list of requests to be processed. Each request contains the 
+elements defined in this tuple.
+"""
+
+RPCCallTo = namedtuple('RPCCallTo', 'transport method args kwargs')
+"""Defines the elements of a RPC call directed to multiple transports.
+
+RPCCallTo is used with :py:meth:`~tinyrpc.client.RPCClient.call_all`
+to provide the list of requests to be processed.
+"""
 
 
 class RPCClient(object):
@@ -16,9 +34,11 @@ class RPCClient(object):
         self.protocol = protocol
         self.transport = transport
 
-    def _send_and_handle_reply(self, req, one_way):
+    def _send_and_handle_reply(self, req, one_way, transport=None, no_exception=False):
+        tport = self.transport if transport is None else transport
+
         # sends ...
-        reply = self.transport.send_message(req.serialize())
+        reply = tport.send_message(req.serialize())
 
         if one_way:
             # ... and be done
@@ -27,7 +47,7 @@ class RPCClient(object):
         # ... or process the reply
         response = self.protocol.parse_reply(reply)
 
-        if hasattr(response, 'error'):
+        if not no_exception and hasattr(response, 'error'):
             raise RPCError('Error calling remote procedure: %s' %\
                            response.error)
 
@@ -53,6 +73,39 @@ class RPCClient(object):
 
         return rep.result
 
+    def call_all(self, requests):
+        """Calls the methods in the request in parallel.
+        
+        When the :py:mod:`gevent` module is already loaded it is assumed to be
+        correctly initialized, including monkey patching if necessary.
+        In that case the RPC calls defined by ``requests`` is performed in
+        parallel otherwise the methods are called sequentially.
+        
+        :param requests: A listof either RPCCall or RPCCallTo elements.
+                         When RPCCallTo is used each element defines a transport.
+                         Otherwise the default transport set when RPCClient is
+                         created is used.
+        :return: A list with replies matching the order of the requests.
+        """
+        threads = []
+        
+        if 'gevent' in sys.modules:
+            # assume that gevent is available and functional, make calls in parallel
+            import gevent
+            for r in requests:
+                req = self.protocol.create_request(r.method, r.args, r.kwargs)
+                tr = r.transport.transport if len(r) == 4 else None
+                threads.append(gevent.spawn(self._send_and_handle_reply, req, False, tr, True))
+            gevent.joinall(threads)
+            return [t.value for t in threads]
+        else:
+            # call serially
+            for r in requests:
+                req = self.protocol.create_request(r.method, r.args, r.kwargs)
+                tr = r.transport.transport if len(r) == 4 else None
+                threads.append(self._send_and_handle_reply(req, False, tr, True))
+            return threads
+        
     def get_proxy(self, prefix='', one_way=False):
         """Convenience method for creating a proxy.
 
