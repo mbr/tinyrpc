@@ -34,6 +34,37 @@ Installation
 
    pip install tinyrpc
 
+will install ``tinyrpc`` with its default dependencies.
+
+Optional dependencies
+---------------------
+
+Depending on the protocols and transports you want to use additional dependencies
+are required. You can instruct pip to install these dependencies by specifying
+extras to the basic install command.
+
+.. code-block:: sh
+
+   pip install tinyrpc[httpclient, wsgi]
+
+will install ``tinyrpc`` with dependencies for the httpclient and wsgi transports.
+
+Available extras are:
+
++------------+-------------------------------------------------------+
+| Option     |  Needed to use objects of class                       |
++============+=======================================================+
+| gevent     | optional in RPCClient, required by RPCServerGreenlets |
++------------+-------------------------------------------------------+
+| httpclient | HttpPostClientTransport, HttpWebSocketClientTransport |
++------------+-------------------------------------------------------+
+| websocket  | WSServerTransport                                     |
++------------+-------------------------------------------------------+
+| wsgi       | WsgiServerTransport                                   |
++------------+-------------------------------------------------------+
+| zmq        | ZmqServerTransport, ZmqClientTransport                |
++------------+-------------------------------------------------------+
+
 .. _jsonrpc: http://www.jsonrpc.org/
 .. _PyPI: http://pypi.python.org
 .. _json: http://www.json.org/

@@ -13,10 +13,18 @@ setup(
     description='A small, modular, transport and protocol neutral RPC '
                 'library that, among other things, supports JSON-RPC and zmq.',
     long_description=read('README.rst'),
-    packages=find_packages(exclude=['test', 'examples']),
+    packages=find_packages(exclude=['tests', 'examples']),
     keywords='json rpc json-rpc jsonrpc 0mq zmq zeromq',
     author='Marc Brinkmann',
     author_email='git@marcbrinkmann.de',
     url='http://github.com/mbr/tinyrpc',
     license='MIT',
+    install_requires=['six'],
+    extra_requires={
+        'gevent': ['gevent'],
+        'httpclient': ['requests', 'websocket-client'],
+        'websocket': ['gevent-websocket'],
+        'wsgi': ['werkzeug'],
+        'zmq': ['pyzmq']
+    }
 )

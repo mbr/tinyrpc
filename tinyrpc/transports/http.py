@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import requests
-import websocket
+import geventwebsocket as websocket
 
 from . import ClientTransport
 
