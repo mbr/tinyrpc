@@ -25,6 +25,7 @@ setup(
         'httpclient': ['requests', 'websocket-client'],
         'websocket': ['gevent-websocket'],
         'wsgi': ['werkzeug'],
-        'zmq': ['pyzmq']
+        'zmq': ['pyzmq'],
+        'jsonext: ['jsonext']
     }
 )

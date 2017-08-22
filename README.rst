@@ -58,6 +58,8 @@ Available extras are:
 +------------+-------------------------------------------------------+
 | httpclient | HttpPostClientTransport, HttpWebSocketClientTransport |
 +------------+-------------------------------------------------------+
+| jsonext    | optional in JSONRPCProtocol                           |
++------------+-------------------------------------------------------+
 | websocket  | WSServerTransport                                     |
 +------------+-------------------------------------------------------+
 | wsgi       | WsgiServerTransport                                   |
