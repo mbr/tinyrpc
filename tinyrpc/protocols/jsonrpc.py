@@ -8,7 +8,15 @@ from .. import RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,\
 import json
 import six
 import inspect
+import sys
 
+if 'jsonext' in sys.modules:
+    # jsonext was imported before this file, assume the intent is that
+    # it is used in place of the regular json encoder.
+    import jsonext
+    json_dumps = jsonext.dumps
+else:
+    json_dumps = json.dumps
 
 class FixedErrorMessageMixin(object):
     def __init__(self, *args, **kwargs):
@@ -65,7 +73,7 @@ class JSONRPCSuccessResponse(RPCResponse):
         }
 
     def serialize(self):
-        return json.dumps(self._to_dict())
+        return json_dumps(self._to_dict())
 
 
 class JSONRPCErrorResponse(RPCErrorResponse):
@@ -80,7 +88,7 @@ class JSONRPCErrorResponse(RPCErrorResponse):
         }
 
     def serialize(self):
-        return json.dumps(self._to_dict())
+        return json_dumps(self._to_dict())
 
 
 def _get_code_and_message(error):
@@ -145,7 +153,7 @@ class JSONRPCRequest(RPCRequest):
         return jdata
 
     def serialize(self):
-        return json.dumps(self._to_dict())
+        return json_dumps(self._to_dict())
 
 
 class JSONRPCBatchRequest(RPCBatchRequest):
@@ -163,12 +171,12 @@ class JSONRPCBatchRequest(RPCBatchRequest):
         return False
 
     def serialize(self):
-        return json.dumps([req._to_dict() for req in self])
+        return json_dumps([req._to_dict() for req in self])
 
 
 class JSONRPCBatchResponse(RPCBatchResponse):
     def serialize(self):
-        return json.dumps([resp._to_dict() for resp in self if resp != None])
+        return json_dumps([resp._to_dict() for resp in self if resp != None])
 
 
 class JSONRPCProtocol(RPCBatchProtocol):
