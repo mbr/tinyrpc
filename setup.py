@@ -20,7 +20,7 @@ setup(
     url='http://github.com/mbr/tinyrpc',
     license='MIT',
     install_requires=['six'],
-    extra_requires={
+    extras_require={
         'gevent': ['gevent'],
         'httpclient': ['requests', 'websocket-client'],
         'websocket': ['gevent-websocket'],

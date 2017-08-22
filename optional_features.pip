@@ -1,5 +1,0 @@
-requests
-werkzeug
-gevent
-pyzmq
-websocket-client
