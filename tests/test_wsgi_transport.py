@@ -131,7 +131,7 @@ def test_sessioned_http_sessioned_client(wsgi_server, sessioned_client, msg):
     assert result == 'reply:' + msg
 
 
-@pytest.mark.skipif(True,reason='tmp')
+@pytest.mark.skip(reason='not now')
 def test_exhaust_ports(wsgi_server, non_sessioned_client):
     """
     This raises a
@@ -161,7 +161,7 @@ def test_exhaust_ports(wsgi_server, non_sessioned_client):
     pool = gevent.pool.Pool(500)
 
     with pytest.raises(requests.ConnectionError):
-        for result in pool.imap_unordered(send_and_receive, xrange(55000)):
+        for result in pool.imap_unordered(send_and_receive, six.moves.xrange(55000)):
             assert result
             if isinstance(result, Exception):
                 raise result

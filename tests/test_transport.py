@@ -20,7 +20,7 @@ class DummyServerTransport(ServerTransport):
         return self.messages.pop()
 
     def send_reply(self, context, message):
-        if not isinstance(message, str):
+        if not isinstance(message, sid.string_types):
             raise TypeError('Message must be str().')
         self.clients[context].messages.append(message)
 
@@ -60,7 +60,12 @@ def zmq_green_context(request):
     return ctx
 
 
-@pytest.fixture(params=['dummy', 'zmq', 'zmq.green'])
+if six.PY3:
+    # zmq and zmq.green fail on python3
+    SERVERS=['dummy']
+else:
+    SERVERS=['dummy', 'zmq', 'zmq.green']
+@pytest.fixture(params=SERVERS)
 def transport(request, zmq_context, zmq_green_context):
     if request.param == 'dummy':
         server = DummyServerTransport()
@@ -82,7 +87,10 @@ def transport(request, zmq_context, zmq_green_context):
 
 SAMPLE_MESSAGES = ['asdf', 'loremipsum' * 1500, '', '\x00', 'b\x00a', '\r\n',
                    '\n', u'\u1234'.encode('utf8')]
-BAD_MESSAGES = [u'asdf', u'', 1234, 1.2, None, True, False, ('foo',)]
+if six.PY3:
+    BAD_MESSAGES = [b'asdf', b'', 1234, 1.2, None, True, False, ('foo',)]
+else:
+    BAD_MESSAGES = [u'asdf', u'', 1234, 1.2, None, True, False, ('foo',)]
 
 
 @pytest.fixture(scope='session',
@@ -102,10 +110,9 @@ def sample_msg2(request):
 def bad_msg(request):
     return request.param
 
-@pytest.mark.skipif(six.PY3, reason='Somehow fails on PY3')
-def test_transport_rejects_bad_values(transport, sample_msg, bad_msg):
+def test_transport_rejects_bad_values(transport, bad_msg):
     client, server = transport
-
+   
     with pytest.raises(TypeError):
         client.send_message(bad_msg)
 
