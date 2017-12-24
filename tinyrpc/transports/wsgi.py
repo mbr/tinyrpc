@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import six
 from six.moves import queue as Queue
 
 from werkzeug.wrappers import Response, Request
@@ -43,8 +44,12 @@ class WsgiServerTransport(ServerTransport):
         return self.messages.get()
 
     def send_reply(self, context, reply):
-        if not isinstance(reply, str):
-            raise TypeError('str expected')
+        if six.PY2:
+            if not isinstance(reply, str):
+                raise TypeError('str expected')
+        else:
+            if not isinstance(reply, bytes):
+                raise TypeError('bytes expected')
 
         context.put(reply)
 

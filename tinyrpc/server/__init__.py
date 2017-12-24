@@ -20,8 +20,7 @@ class RPCServer(object):
     after a message has been received and immediately after a reply is sent.
     The callable should accept three positional parameters:
     * *direction*: string, either '-->' for incoming or '<--' for outgoing data.
-    * *context*: the context returned by
-      :py:meth:`~tinyrpc.transport.RPCTransport.receive_message`.
+    * *context*: the context returned by :py:meth:`~tinyrpc.transport.RPCTransport.receive_message`.
     * *message*: the message string itself.
     
     Example::

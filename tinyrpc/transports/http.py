@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import six
 import requests
 import geventwebsocket as websocket
 
@@ -27,7 +28,7 @@ class HttpPostClientTransport(ClientTransport):
             self.post = post_method
 
     def send_message(self, message, expect_reply=True):
-        if not isinstance(message, str):
+        if not isinstance(message, six.binary_type):
             raise TypeError('str expected')
 
         r = self.post(self.endpoint, data=message, **self.request_kwargs)
@@ -54,7 +55,7 @@ class HttpWebSocketClientTransport(ClientTransport):
         self.ws = websocket.create_connection(self.endpoint, **kwargs)
 
     def send_message(self, message, expect_reply=True):
-        if not isinstance(message, str):
+        if not isinstance(message, six.binary_type):
             raise TypeError('str expected')
         self.ws.send(message)
         r = self.ws.recv()

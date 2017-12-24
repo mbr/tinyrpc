@@ -21,12 +21,6 @@ TEST_SERVER_ADDR = ('127.0.0.1', 49294)
 def monkey_patches(request):
     # ugh? ugh. ugh. ugh!
     import socket
-#    if six.PY2:
-#        import httplib
-#    else:
-#        import http.client as httplib
-
-    # FIXME: httplib=True has been removed in more recent gevent versions
     gevent.monkey.patch_all(
         socket=True,
         dns=False,
@@ -40,7 +34,6 @@ def monkey_patches(request):
 
     def fin():
         six.moves.reload_module(socket)
-#        six.moves.reload_module(httplib)
 
     request.addfinalizer(fin)
 
@@ -76,23 +69,22 @@ def test_server_supports_post_only(wsgi_server):
     assert r.status_code == 405
 
 
-@pytest.mark.skipif(six.PY3, reason='Somehow fails on PY3')
 @pytest.mark.parametrize(('msg',),
-    [('foo',), ('',), ('bar',), ('1234',), ('{}',), ('{',), ('\x00\r\n',)])
+    [(six.b('foo'),), (six.b(''),), (six.b('bar'),), (six.b('1234'),), (six.b('{}'),), (six.b('{'),), (six.b('\x00\r\n'),)])
 def test_server_receives_messages(wsgi_server, msg):
     transport, addr = wsgi_server
 
     def consumer():
         context, received_msg = transport.receive_message()
         assert received_msg == msg
-        reply = 'reply:' + msg
+        reply = six.b('reply:') + msg
         transport.send_reply(context, reply)
 
     gevent.spawn(consumer)
 
     r = requests.post(addr, data=msg)
 
-    assert r.content == 'reply:' + msg
+    assert r.content == six.b('reply:') + msg
 
 
 @pytest.fixture
@@ -113,22 +105,21 @@ def non_sessioned_client():
     return client
 
 
-@pytest.mark.skipif(six.PY3, reason='Somehow fails on PY3')
 @pytest.mark.parametrize(('msg',),
-    [('foo',), ('',), ('bar',), ('1234',), ('{}',), ('{',), ('\x00\r\n',)])
+    [(six.b('foo'),), (six.b(''),), (six.b('bar'),), (six.b('1234'),), (six.b('{}'),), (six.b('{'),), (six.b('\x00\r\n'),)])
 def test_sessioned_http_sessioned_client(wsgi_server, sessioned_client, msg):
     transport, addr = wsgi_server
 
     def consumer():
         context, received_msg = transport.receive_message()
         assert received_msg == msg
-        reply = 'reply:' + msg
+        reply = six.b('reply:') + msg
         transport.send_reply(context, reply)
 
     gevent.spawn(consumer)
 
     result = sessioned_client.send_message(msg)
-    assert result == 'reply:' + msg
+    assert result == six.b('reply:') + msg
 
 
 @pytest.mark.skip(reason='not now')
