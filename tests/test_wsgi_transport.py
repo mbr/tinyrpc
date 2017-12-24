@@ -122,7 +122,6 @@ def test_sessioned_http_sessioned_client(wsgi_server, sessioned_client, msg):
     assert result == six.b('reply:') + msg
 
 
-@pytest.mark.skip(reason='not now')
 def test_exhaust_ports(wsgi_server, non_sessioned_client):
     """
     This raises a
@@ -137,15 +136,15 @@ def test_exhaust_ports(wsgi_server, non_sessioned_client):
 
     def consumer():
         context, received_msg = transport.receive_message()
-        reply = 'reply:' + received_msg
+        reply = six.b('reply:') + received_msg
         transport.send_reply(context, reply)
 
     def send_and_receive(i):
         try:
             gevent.spawn(consumer)
-            msg = 'msg_%s' % i
+            msg = six.b('msg_%s' % i)
             result = non_sessioned_client.send_message(msg)
-            return result == 'reply:' + msg
+            return result == six.b('reply:') + msg
         except Exception as e:
             return e
 
