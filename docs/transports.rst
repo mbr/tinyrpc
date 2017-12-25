@@ -15,6 +15,11 @@ Note that these transports are of relevance when using ``tinyrpc``-built in
 facilities. They can be coopted for any other purpose, if you simply need
 reliable server-client message passing as well.
 
+Also note that the client transport interface is not designed for asynchronous
+use. For simple use cases (sending multiple concurrent requests) monkey patching
+with gevent may get the job done.
+
+
 Transport implementations
 -------------------------
 
