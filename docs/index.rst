@@ -1,7 +1,7 @@
 tinyrpc: A modular RPC library
 ==============================
 
-``tinyrpc`` is a library for making and handling RPC calls in python. Its
+``tinyrpc`` is a library for making and handling RPC calls in Python. Its
 initial scope is handling jsonrpc_, although it aims to be very well-documented
 and modular to make it easy to add support for further protocols.
 

@@ -39,6 +39,14 @@ There is only an HTTP client, no server (use WSGI instead).
 .. autoclass:: tinyrpc.transports.http.HttpPostClientTransport
    :members:
 
+.. note:: To set a timeout on your client transport provide a ``timeout``
+    keyword parameter like::
+   
+        transport = HttpPostClientTransport(endpoint, timeout=0.1)
+            
+    It will result in a ``requests.exceptions.Timeout`` exception when a
+    timeout occurs.
+
 WSGI
 ~~~~
 
