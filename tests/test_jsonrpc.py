@@ -492,3 +492,32 @@ def test_missing_jsonrpc_version_on_request(prot):
 def test_missing_jsonrpc_version_on_reply(prot):
     with pytest.raises(InvalidReplyError):
         prot.parse_reply('{"result": 7, "id": "1"}')
+
+def test_pass_error_data_with_standard_exception(prot):
+    request = prot.create_request('foo')
+    
+    custom_msg = 'join the army, they said. see the world, they said.'
+    data = {'pi': 3.14, 'lst': ['a', 'b', 'c']}
+    
+    e = Exception(custom_msg, data)
+    
+    response = request.error_respond(e)
+
+    decoded = json.loads(response.serialize())
+    assert decoded['error']['code'] == -32000
+    assert decoded['error']['message'] == custom_msg
+    assert decoded['error']['data'] == data
+
+def test_pass_error_data_with_custom_exception(prot):
+    request = prot.create_request('foo')
+
+    data = {'pi': 3.14, 'lst': ['a', 'b', 'c']}
+
+    e = JSONRPCParseError(data=data)
+
+    response = request.error_respond(e)
+
+    decoded = json.loads(response.serialize())
+    assert decoded['error']['code'] == -32700
+    assert decoded['error']['message'] == JSONRPCParseError.message
+    assert decoded['error']['data'] == data

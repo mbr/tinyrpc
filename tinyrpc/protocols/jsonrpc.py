@@ -22,6 +22,8 @@ class FixedErrorMessageMixin(object):
     def __init__(self, *args, **kwargs):
         if not args:
             args = [self.message]
+        if 'data' in kwargs:
+            self.data = kwargs.pop('data')
         super(FixedErrorMessageMixin, self).__init__(*args, **kwargs)
 
     def error_respond(self):
@@ -30,6 +32,8 @@ class FixedErrorMessageMixin(object):
         response.error = self.message
         response.unique_id = None
         response._jsonrpc_error_code = self.jsonrpc_error_code
+        if hasattr(self, 'data'):
+            response.data = self.data
         return response
 
 
@@ -69,7 +73,7 @@ class JSONRPCSuccessResponse(RPCResponse):
         return {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
             'id': self.unique_id,
-            'result': self.result,
+            'result': self.result
         }
 
     def serialize(self):
@@ -78,25 +82,30 @@ class JSONRPCSuccessResponse(RPCResponse):
 
 class JSONRPCErrorResponse(RPCErrorResponse):
     def _to_dict(self):
-        return {
+        msg = {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
             'id': self.unique_id,
             'error': {
                 'message': str(self.error),
-                'code': self._jsonrpc_error_code,
+                'code': self._jsonrpc_error_code
             }
         }
+        if hasattr(self, 'data'):
+            msg['error']['data'] = self.data
+        return msg
 
     def serialize(self):
         return json_dumps(self._to_dict())
 
 
-def _get_code_and_message(error):
+def _get_code_message_and_data(error):
     assert isinstance(error, (Exception, six.string_types))
+    data = None
     if isinstance(error, Exception):
         if hasattr(error, 'jsonrpc_error_code'):
             code = error.jsonrpc_error_code
             msg = str(error)
+            data = error.data
         elif isinstance(error, InvalidRequestError):
             code = JSONRPCInvalidRequestError.jsonrpc_error_code
             msg = JSONRPCInvalidRequestError.message
@@ -106,12 +115,16 @@ def _get_code_and_message(error):
         else:
             # allow exception message to propagate
             code = JSONRPCServerError.jsonrpc_error_code
-            msg = str(error)
+            if len(error.args) == 2:
+                msg = str(error.args[0])
+                data = error.args[1]
+            else:
+                msg = str(error)
     else:
         code = -32000
         msg = error
 
-    return code, msg
+    return code, msg, data
 
 
 class JSONRPCRequest(RPCRequest):
@@ -121,11 +134,13 @@ class JSONRPCRequest(RPCRequest):
 
         response = JSONRPCErrorResponse()
 
-        code, msg = _get_code_and_message(error)
+        code, msg, data = _get_code_message_and_data(error)
 
         response.error = msg
         response.unique_id = self.unique_id
         response._jsonrpc_error_code = code
+        if data:
+            response.data = data
         return response
 
     def respond(self, result):
