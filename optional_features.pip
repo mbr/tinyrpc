@@ -1,0 +1,8 @@
+requests
+werkzeug
+gevent
+pyzmq
+websocket-client
+gevent-websocket
+pyzmq
+jsonext
