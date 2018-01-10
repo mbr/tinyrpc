@@ -29,7 +29,7 @@ class HttpPostClientTransport(ClientTransport):
 
     def send_message(self, message, expect_reply=True):
         if not isinstance(message, six.binary_type):
-            raise TypeError('str expected')
+            raise TypeError('bytes expected')
 
         r = self.post(self.endpoint, data=message, **self.request_kwargs)
 
