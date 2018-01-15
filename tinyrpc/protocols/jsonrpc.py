@@ -105,7 +105,10 @@ def _get_code_message_and_data(error):
         if hasattr(error, 'jsonrpc_error_code'):
             code = error.jsonrpc_error_code
             msg = str(error)
-            data = error.data
+            try:
+                data = error.data
+            except AttributeError:
+                pass
         elif isinstance(error, InvalidRequestError):
             code = JSONRPCInvalidRequestError.jsonrpc_error_code
             msg = JSONRPCInvalidRequestError.message
