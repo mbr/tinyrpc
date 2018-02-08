@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,\
-               InvalidRequestError, MethodNotFoundError, ServerError,\
-               InvalidReplyError, RPCError, RPCBatchRequest, RPCBatchResponse
+from .. import (RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,
+                InvalidRequestError, MethodNotFoundError, InvalidReplyError,
+                RPCError, RPCBatchRequest, RPCBatchResponse)
 
 import json
 import six
@@ -17,6 +17,7 @@ if 'jsonext' in sys.modules:
     json_dumps = jsonext.dumps
 else:
     json_dumps = json.dumps
+
 
 class FixedErrorMessageMixin(object):
     def __init__(self, *args, **kwargs):
@@ -35,7 +36,6 @@ class FixedErrorMessageMixin(object):
         if hasattr(self, 'data'):
             response.data = self.data
         return response
-
 
 
 class JSONRPCParseError(FixedErrorMessageMixin, InvalidRequestError):
@@ -132,9 +132,6 @@ def _get_code_message_and_data(error):
 
 class JSONRPCRequest(RPCRequest):
     def error_respond(self, error):
-        if self.unique_id is None:
-            return None
-
         response = JSONRPCErrorResponse()
 
         code, msg, data = _get_code_message_and_data(error)
@@ -176,17 +173,7 @@ class JSONRPCRequest(RPCRequest):
 
 class JSONRPCBatchRequest(RPCBatchRequest):
     def create_batch_response(self):
-        if self._expects_response():
-            return JSONRPCBatchResponse()
-
-    def _expects_response(self):
-        for request in self:
-            if isinstance(request, Exception):
-                return True
-            if request.unique_id != None:
-                return True
-
-        return False
+        return JSONRPCBatchResponse()
 
     def serialize(self):
         return json_dumps([req._to_dict() for req in self])
@@ -259,8 +246,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
         if ('error' in rep) == ('result' in rep):
             raise InvalidReplyError(
-                'Reply must contain exactly one of result and error.'
-            )
+                'Reply must contain exactly one of result and error.')
 
         if 'error' in rep:
             response = JSONRPCErrorResponse()
