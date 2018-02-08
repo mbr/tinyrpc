@@ -1,28 +1,25 @@
-#!/usr/bin/env python
-
-from ..exc import *
-
 class RPCRequest(object):
-    unique_id = None
-    """A unique ID to remember the request by. Protocol specific, may or
-    may not be set. This value should only be set by
-    :py:func:`~tinyrpc.RPCProtocol.create_request`.
+    def __init__(self):
+        self.unique_id = None
+        """A unique ID to remember the request by. Protocol specific, may or
+        may not be set. This value should only be set by
+        :py:func:`~tinyrpc.RPCProtocol.create_request`.
 
-    The ID allows client to receive responses out-of-order and still allocate
-    them to the correct request.
+        The ID allows client to receive responses out-of-order and still allocate
+        them to the correct request.
 
-    Only supported if the parent protocol has
-    :py:attr:`~tinyrpc.RPCProtocol.supports_out_of_order` set to ``True``.
-    """
+        Only supported if the parent protocol has
+        :py:attr:`~tinyrpc.RPCProtocol.supports_out_of_order` set to ``True``.
+        """
 
-    method = None
-    """The name of the method to be called."""
+        self.method = None
+        """The name of the method to be called."""
 
-    args = []
-    """The positional arguments of the method call."""
+        self.args = []
+        """The positional arguments of the method call."""
 
-    kwargs = {}
-    """The keyword arguments of the method call."""
+        self.kwargs = {}
+        """The keyword arguments of the method call."""
 
     def error_respond(self, error):
         """Creates an error response.
@@ -94,7 +91,8 @@ class RPCResponse(object):
     an error occured, in which case an attribute ``error`` will contain the
     error message."""
 
-    unique_id = None
+    def __init__(self):
+        self.unique_id = None
 
     def serialize(self):
         """Returns a serialization of the response.
