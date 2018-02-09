@@ -101,7 +101,7 @@ class RPCDispatcher(object):
             results = [self._dispatch(req, caller) for req in request]
 
             response = request.create_batch_response()
-            if response != None:
+            if response is not None:
                 response.extend(results)
 
             return response

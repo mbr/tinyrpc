@@ -306,7 +306,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
         request.unique_id = req.get('id', None)
 
         params = req.get('params', None)
-        if params != None:
+        if params is not None:
             if isinstance(params, list):
                 request.args = req['params']
             elif isinstance(params, dict):
