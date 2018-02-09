@@ -77,7 +77,7 @@ class JSONRPCSuccessResponse(RPCResponse):
         }
 
     def serialize(self):
-        return json_dumps(self._to_dict())
+        return json_dumps(self._to_dict()) if self.unique_id is not None else ''
 
 
 class JSONRPCErrorResponse(RPCErrorResponse):
@@ -181,7 +181,8 @@ class JSONRPCBatchRequest(RPCBatchRequest):
 
 class JSONRPCBatchResponse(RPCBatchResponse):
     def serialize(self):
-        return json_dumps([resp._to_dict() for resp in self if resp != None])
+        results = [resp._to_dict() for resp in self if resp is not None]
+        return json_dumps(results) if len(results) > 0 else ''
 
 
 class JSONRPCProtocol(RPCBatchProtocol):
