@@ -458,13 +458,16 @@ def test_jsonrpc_spec_v2_example11(prot):
 
 
 def test_jsonrpc_spec_v2_example12(prot):
-    reqs = []
-    reqs.append(prot.create_request('notify_sum', [1, 2, 4], one_way=True))
-    reqs.append(prot.create_request('notify_hello', [7], one_way=True))
+    reqs = [
+        prot.create_request('notify_sum', [1, 2, 4], one_way=True),
+        prot.create_request('notify_hello', [7], one_way=True),
+    ]
 
     request = prot.create_batch_request(reqs)
+    response = request.create_batch_response()
 
-    assert request.create_batch_response() == None
+    assert len(response) == 0
+    assert response.serialize() == ''
 
 
 def test_can_get_custom_error_messages_out(prot):
