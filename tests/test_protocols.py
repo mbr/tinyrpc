@@ -4,7 +4,6 @@
 import pytest
 
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
-from tinyrpc import RPCErrorResponse
 
 
 @pytest.fixture(params=['jsonrpc'])
@@ -20,6 +19,7 @@ def test_protocol_returns_strings(protocol):
 
     assert isinstance(req.serialize(), str)
 
+
 def test_procotol_responds_strings(protocol):
     req = protocol.create_request('foo', ['bar'])
     rep = req.respond(42)
@@ -32,7 +32,7 @@ def test_procotol_responds_strings(protocol):
 def test_one_way(protocol):
     req = protocol.create_request('foo', None, {'a': 'b'}, True)
 
-    assert req.respond(None) == None
+    assert req.respond(None) is None
 
 
 def test_raises_on_args_and_kwargs(protocol):

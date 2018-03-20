@@ -6,13 +6,13 @@ import json
 import six
 import pytest
 
-from tinyrpc import MethodNotFoundError, InvalidRequestError, ServerError, \
-                    RPCError, RPCResponse, InvalidReplyError
-from tinyrpc.protocols.jsonrpc import JSONRPCParseError, \
-                                      JSONRPCInvalidRequestError, \
-                                      JSONRPCMethodNotFoundError, \
-                                      JSONRPCInvalidParamsError, \
-                                      JSONRPCInternalError
+from tinyrpc import MethodNotFoundError, InvalidReplyError
+from tinyrpc.protocols.jsonrpc import (JSONRPCBatchRequest,
+                                       JSONRPCParseError,
+                                       JSONRPCInvalidRequestError,
+                                       JSONRPCMethodNotFoundError,
+                                       JSONRPCInvalidParamsError,
+                                       JSONRPCInternalError)
 
 
 def _json_equal(a, b):
@@ -137,13 +137,13 @@ def test_proper_construction_of_error_codes(prot, exc, code, message):
     assert err['error']['message'] == message
 
 
-def test_notification_yields_None_response(prot):
+def test_notification_yields_none_response(prot):
     data = """{"jsonrpc": "2.0", "method": "update", "params": [1,2,3,4,5]}"""
 
     req = prot.parse_request(data)
 
     # updates should never cause retries
-    assert req.respond(True) == None
+    assert req.respond(True) is None
 
 
 def test_batch_empty_array(prot):
@@ -182,7 +182,7 @@ def test_batch_good_examples(prot):
 
     assert results[1].method == 'notify_hello'
     assert results[1].args == [7]
-    assert results[1].unique_id == None
+    assert results[1].unique_id is None
 
     assert results[2].method == 'subtract'
     assert results[2].args == [42, 23]
@@ -198,6 +198,36 @@ def test_batch_good_examples(prot):
     assert results[5].args == []
     assert results[5].kwargs == {}
     assert results[5].unique_id == "9"
+
+
+def test_batch_middleware_injecting_context(prot):
+    data = [
+        {"jsonrpc": "2.0", "method": "subtract", "params": [42, 23], "id": "0"},
+        {"jsonrpc": "2.0", "method": "subtract", "params": {"a": 42, "b": 23}, "id": "1"},
+        {"jsonrpc": "2.0", "method": "subtract", "id": "2"},
+    ]
+
+    results = prot.parse_request(json.dumps(data))
+
+    # Middleware
+    for result in results:
+        result.args.insert(0, 'context')
+
+    assert isinstance(results, JSONRPCBatchRequest)
+    assert results[0].method == 'subtract'
+    assert results[0].args == ['context', 42, 23]
+    assert results[0].kwargs == {}
+    assert results[0].unique_id == "0"
+
+    assert results[1].method == 'subtract'
+    assert results[1].args == ['context']
+    assert results[1].kwargs == {"a": 42, "b": 23}
+    assert results[1].unique_id == "1"
+
+    assert results[2].method == 'subtract'
+    assert results[2].args == ['context']
+    assert results[2].kwargs == {}
+    assert results[2].unique_id == "2"
 
 
 def test_unique_ids(prot):
@@ -219,7 +249,7 @@ def test_request_generation(prot):
 
     assert jdata['method'] == 'subtract'
     assert jdata['params'] == [42, 23]
-    assert jdata['id'] != None
+    assert jdata['id'] is not None
     assert jdata['jsonrpc'] == '2.0'
 
 
@@ -492,9 +522,11 @@ def test_missing_jsonrpc_version_on_request(prot):
     with pytest.raises(JSONRPCInvalidRequestError):
         prot.parse_request('{"method": "sum", "params": [1,2,4], "id": "1"}')
 
+
 def test_missing_jsonrpc_version_on_reply(prot):
     with pytest.raises(InvalidReplyError):
         prot.parse_reply('{"result": 7, "id": "1"}')
+
 
 def test_pass_error_data_with_standard_exception(prot):
     request = prot.create_request('foo')
@@ -510,6 +542,7 @@ def test_pass_error_data_with_standard_exception(prot):
     assert decoded['error']['code'] == -32000
     assert decoded['error']['message'] == custom_msg
     assert decoded['error']['data'] == data
+
 
 def test_pass_error_data_with_custom_exception(prot):
     request = prot.create_request('foo')
