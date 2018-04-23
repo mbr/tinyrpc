@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import six
 import inspect
+
+import six
 
 from ..exc import *
 
@@ -56,8 +57,8 @@ class RPCDispatcher(object):
                      be used.
         """
         assert callable(f), "method argument must be callable"
-                            # catches a few programming errors that are
-                            # commonly silently swallowed otherwise
+        # catches a few programming errors that are
+        # commonly silently swallowed otherwise
         if not name:
             name = f.__name__
 
@@ -92,7 +93,7 @@ class RPCDispatcher(object):
         To allow for custom processing around calling the method (i.e. custom
         error handling), the optional parameter ``caller`` may be provided with
         a callable. When present invoking the method is deferred to this callable.
-        
+
         :param request: An :py:func:`~tinyrpc.RPCRequest`.
         :param caller: An optional callable used to invoke the method.
         :return: An :py:func:`~tinyrpc.RPCResponse`.
@@ -110,26 +111,25 @@ class RPCDispatcher(object):
 
     def _dispatch(self, request, caller):
         try:
-            try:
-                method = self.get_method(request.method)
-            except KeyError as e:
-                return request.error_respond(MethodNotFoundError(e))
-
-            # we found the method
-            try:
-                if caller is not None:
-                    result = caller(method, request.args, request.kwargs)
-                else:
-                    result = method(*request.args, **request.kwargs)
-            except Exception as e:
-                # an error occured within the method, return it
-                return request.error_respond(e)
-
-            # respond with result
-            return request.respond(result)
-        except Exception as e:
+            method = self.get_method(request.method)
+        except MethodNotFoundError as e:
+            return request.error_respond(e)
+        except Exception:
             # unexpected error, do not let client know what happened
             return request.error_respond(ServerError())
+
+        # we found the method
+        try:
+            if caller is not None:
+                result = caller(method, request.args, request.kwargs)
+            else:
+                result = method(*request.args, **request.kwargs)
+        except Exception as e:
+            # an error occured within the method, return it
+            return request.error_respond(e)
+
+        # respond with result
+        return request.respond(result)
 
     def get_method(self, name):
         """Retrieve a previously registered method.
@@ -139,7 +139,7 @@ class RPCDispatcher(object):
         If :py:func:`get_method` cannot find a method, every subdispatcher
         with a prefix matching the method name is checked as well.
 
-        If a method isn't found, a :py:class:`KeyError` is thrown.
+        Throw a :py:class:`tinyrpc.MethodNotFoundError` if method not found
 
         :param name: Callable to find.
         :param return: The callable.
@@ -155,7 +155,7 @@ class RPCDispatcher(object):
                     except KeyError:
                         pass
 
-        raise KeyError(name)
+        raise MethodNotFoundError(name)
 
     def public(self, name=None):
         """Convenient decorator.
@@ -202,7 +202,7 @@ class RPCDispatcher(object):
         """
         dispatch = self.__class__()
         for name, f in inspect.getmembers(
-            obj, lambda f: callable(f) and hasattr(f, '_rpc_public_name')
+                obj, lambda f: callable(f) and hasattr(f, '_rpc_public_name')
         ):
             dispatch.add_method(f, f._rpc_public_name)
 
