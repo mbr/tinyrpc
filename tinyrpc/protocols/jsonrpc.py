@@ -1,22 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,\
-               InvalidRequestError, MethodNotFoundError, ServerError,\
-               InvalidReplyError, RPCError, RPCBatchRequest, RPCBatchResponse
-
-import json
-import six
 import inspect
+import json
 import sys
+
+import six
+
+from .. import (
+    RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,
+    InvalidRequestError, MethodNotFoundError, InvalidReplyError, RPCError,
+    RPCBatchRequest, RPCBatchResponse
+)
 
 if 'jsonext' in sys.modules:
     # jsonext was imported before this file, assume the intent is that
     # it is used in place of the regular json encoder.
     import jsonext
+
     json_dumps = jsonext.dumps
 else:
     json_dumps = json.dumps
+
 
 class FixedErrorMessageMixin(object):
     def __init__(self, *args, **kwargs):
@@ -35,7 +40,6 @@ class FixedErrorMessageMixin(object):
         if hasattr(self, 'data'):
             response.data = self.data
         return response
-
 
 
 class JSONRPCParseError(FixedErrorMessageMixin, InvalidRequestError):
@@ -214,15 +218,18 @@ class JSONRPCProtocol(RPCBatchProtocol):
         self._id_counter += 1
         return self._id_counter
 
+    def request_factory(self):
+        return JSONRPCRequest()
+
     def create_batch_request(self, requests=None):
         return JSONRPCBatchRequest(requests or [])
 
     def create_request(self, method, args=None, kwargs=None, one_way=False):
         if args and kwargs:
-            raise InvalidRequestError('Does not support args and kwargs at '\
+            raise InvalidRequestError('Does not support args and kwargs at '
                                       'the same time')
 
-        request = JSONRPCRequest()
+        request = self.request_factory()
 
         if not one_way:
             request.unique_id = self._get_unique_id()
@@ -314,7 +321,8 @@ class JSONRPCProtocol(RPCBatchProtocol):
         if not isinstance(req['method'], six.string_types):
             raise JSONRPCInvalidRequestError()
 
-        request = JSONRPCRequest()
+        request = self.request_factory()
+
         request.method = str(req['method'])
         request.unique_id = req.get('id', None)
 
