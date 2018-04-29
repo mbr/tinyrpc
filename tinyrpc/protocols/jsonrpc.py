@@ -311,6 +311,9 @@ class JSONRPCProtocol(RPCBatchProtocol):
             return self._parse_subrequest(req)
 
     def _parse_subrequest(self, req):
+        if not isinstance(req, dict):
+            raise JSONRPCInvalidRequestError()
+
         for k in six.iterkeys(req):
             if not k in self._ALLOWED_REQUEST_KEYS:
                 raise JSONRPCInvalidRequestError()
