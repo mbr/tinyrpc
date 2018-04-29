@@ -4,10 +4,11 @@
 import pytest
 import _compat
 from six.moves.mock import Mock
+import six
 
 from tinyrpc.exc import RPCError
 from tinyrpc.client import RPCClient, RPCProxy
-from tinyrpc.protocols import RPCProtocol, RPCResponse, RPCErrorResponse
+from tinyrpc.protocols import RPCProtocol, RPCResponse, RPCErrorResponse, RPCRequest
 from tinyrpc.transports import ClientTransport
 
 @pytest.fixture(params=['test_method1', 'method2', 'CamelCasedMethod'])
@@ -95,6 +96,7 @@ def test_client_uses_correct_transport(client, mock_protocol, method_name,
     assert mock_transport.send_message.called
 
 
+
 def test_client_passes_correct_reply(client, mock_protocol, method_name,
                                      method_args, method_kwargs,
                                      one_way_setting, mock_transport):
@@ -117,3 +119,14 @@ def test_client_raises_error_replies(client, mock_protocol, method_name,
     if not one_way_setting:
         with pytest.raises(RPCError):
             client.call(method_name, method_args, method_kwargs, one_way_setting)
+
+
+def test_client_send_binary_message(client, mock_protocol, method_name,
+                                     method_args, method_kwargs,
+                                     one_way_setting, mock_transport):
+    req = Mock(RPCRequest)
+    req.serialize.return_value = u'unicode not acceptable'
+    mock_protocol.create_request.return_value = req
+    client.call(method_name, method_args, method_kwargs, one_way_setting)
+    assert mock_transport.send_message.called
+    assert isinstance(mock_transport.send_message.call_args[0][0], six.binary_type)
