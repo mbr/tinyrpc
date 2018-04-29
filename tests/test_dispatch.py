@@ -9,6 +9,7 @@ import inspect
 from tinyrpc.dispatch import RPCDispatcher, public
 from tinyrpc import RPCRequest, RPCBatchRequest, RPCBatchResponse
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol, JSONRPCInvalidParamsError
+from tinyrpc.exc import *
 
 @pytest.fixture
 def dispatch():
@@ -51,7 +52,7 @@ def test_function_decorating_with_paramters(dispatch):
     def foo(bar):
         pass
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MethodNotFoundError):
         dispatch.get_method('foo')
 
 
@@ -109,7 +110,7 @@ def test_object_method_register(dispatch):
     f = Foo()
     dispatch.register_instance(f)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MethodNotFoundError):
         assert dispatch.get_method('foo1')
 
     assert dispatch.get_method('foo2') == f.foo2
@@ -132,16 +133,16 @@ def test_object_method_register_with_prefix(dispatch):
     f = Foo()
     dispatch.register_instance(f, 'myprefix')
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MethodNotFoundError):
         assert dispatch.get_method('foo1')
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MethodNotFoundError):
         assert dispatch.get_method('myprefixfoo1')
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MethodNotFoundError):
         assert dispatch.get_method('foo2')
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MethodNotFoundError):
         assert dispatch.get_method('foo3')
 
     assert dispatch.get_method('myprefixfoo2') == f.foo2
@@ -204,7 +205,7 @@ def test_batch_dispatch(dispatch):
 
 
 def test_dispatch_raises_key_error(dispatch):
-    with pytest.raises(KeyError):
+    with pytest.raises(MethodNotFoundError):
         dispatch.get_method('foo')
 
 @pytest.fixture(params=[
@@ -226,17 +227,17 @@ def invoke_with(request):
 
 def test_argument_error(dispatch, invoke_with):
     method, args, kwargs, result = invoke_with
-    
+
     protocol = JSONRPCProtocol()
-    
+
     @dispatch.public
     def fn_a(a, b):
         return a-b
-    
+
     @dispatch.public
     def fn_b(*a):
         return a[0]-a[1]
-    
+
     @dispatch.public
     def fn_c(**a):
         return a['a']-a['b']
