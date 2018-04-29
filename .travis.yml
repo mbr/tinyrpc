@@ -6,6 +6,7 @@ python:
 
 install:
   - pip install -r optional_features.pip
+  - pip install .
 
 script:
   - pytest
