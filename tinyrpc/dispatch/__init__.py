@@ -152,7 +152,7 @@ class RPCDispatcher(object):
                 for sd in subdispatchers:
                     try:
                         return sd.get_method(name[len(prefix):])
-                    except KeyError:
+                    except MethodNotFoundError:
                         pass
 
         raise MethodNotFoundError(name)
