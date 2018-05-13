@@ -5,9 +5,8 @@ python:
   - "3.4"
 
 install:
-  - pip install -r optional_features.pip
-  - pip install .
+  - pip install tox-travis
 
 script:
-  - pytest
+  - tox
 
