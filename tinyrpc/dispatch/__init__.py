@@ -121,7 +121,7 @@ class RPCDispatcher(object):
         # we found the method
         try:
             if caller is not None:
-                result = caller(method, request.args, request.kwargs)
+                result = caller(method, *request.args, **request.kwargs)
             else:
                 result = method(*request.args, **request.kwargs)
         except Exception as e:
