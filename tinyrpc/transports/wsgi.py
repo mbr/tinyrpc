@@ -44,13 +44,8 @@ class WsgiServerTransport(ServerTransport):
         return self.messages.get()
 
     def send_reply(self, context, reply):
-        if six.PY2:
-            if not isinstance(reply, str):
-                raise TypeError('str expected')
-        else:
-            if not isinstance(reply, bytes):
-                raise TypeError('bytes expected')
-
+        if not isinstance(reply, str):
+            raise TypeError('str expected')
         context.put(reply)
 
     def handle(self, environ, start_response):
