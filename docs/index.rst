@@ -1,6 +1,8 @@
 tinyrpc: A modular RPC library
 ==============================
 
+documentation_badge_
+
 ``tinyrpc`` is a library for making and handling RPC calls in Python. Its
 initial scope is handling jsonrpc_, although it aims to be very well-documented
 and modular to make it easy to add support for further protocols.
@@ -154,6 +156,7 @@ Table of contents
    client
    server
    exceptions
+   modules/modules
 
 People
 ------
@@ -176,3 +179,4 @@ Contributors
 - Satoshi Kobayashi: https://github.com/satosi-k
 
 .. _jsonrpc: http://jsonrpc.org
+.. _documentation_badge: https://readthedocs.org/projects/tinyrpc/badge/?version=latest

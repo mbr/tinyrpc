@@ -34,7 +34,11 @@ class RPCClient(object):
         self.protocol = protocol
         self.transport = transport
 
-    def _send_and_handle_reply(self, req, one_way, transport=None, no_exception=False):
+    def _send_and_handle_reply(self,
+                               req,
+                               one_way,
+                               transport=None,
+                               no_exception=None):
         tport = self.transport if transport is None else transport
 
         # sends ...
@@ -48,8 +52,10 @@ class RPCClient(object):
         response = self.protocol.parse_reply(reply)
 
         if not no_exception and hasattr(response, 'error'):
-            raise RPCError('Error calling remote procedure: %s' %\
-                           response.error)
+            if hasattr(self.protocol, 'raise_error') and callable(self.protocol.raise_error):
+                self.protocol.raise_error(response.error)
+            else:
+                raise RPCError('Error calling remote procedure: %s' % response.error)
 
         return response
 
@@ -95,7 +101,9 @@ class RPCClient(object):
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs)
                 tr = r.transport.transport if len(r) == 4 else None
-                threads.append(gevent.spawn(self._send_and_handle_reply, req, False, tr, True))
+                threads.append(
+                    gevent.spawn(self._send_and_handle_reply, req, False, tr,
+                                 True))
             gevent.joinall(threads)
             return [t.value for t in threads]
         else:
@@ -103,7 +111,8 @@ class RPCClient(object):
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs)
                 tr = r.transport.transport if len(r) == 4 else None
-                threads.append(self._send_and_handle_reply(req, False, tr, True))
+                threads.append(
+                    self._send_and_handle_reply(req, False, tr, True))
             return threads
 
     def get_proxy(self, prefix='', one_way=False):

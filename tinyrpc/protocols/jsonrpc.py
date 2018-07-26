@@ -71,6 +71,13 @@ class JSONRPCServerError(FixedErrorMessageMixin, InvalidRequestError):
     jsonrpc_error_code = -32000
     message = ''
 
+class JSONRPCError(FixedErrorMessageMixin, RPCError):
+    def __init__(self, error):
+        super(JSONRPCError, self).__init__()
+        self.message = error['message']
+        self._jsonrpc_error_code = error['code']
+        if 'data' in error:
+            self.data = error['data']
 
 class JSONRPCSuccessResponse(RPCResponse):
     def _to_dict(self):
@@ -351,3 +358,19 @@ class JSONRPCProtocol(RPCBatchProtocol):
             raise JSONRPCInvalidParamsError()
         else:
             return method(*args, **kwargs)
+
+    @staticmethod
+    def raise_error(error):
+        """Recreates the exception.
+
+        Creates a :py.class:`~tinyrpc.protocols.jsonrpc.RPCErrorResponse` instance
+        and raises it.
+        This introduces the error, message and data attributes of the original
+        exception to propagate in the client code.
+
+        The :py.class:`~tinyrpc.RPCClient` will test if its protocol instance
+        supports this method and calls it or it will raise a generic error
+        message if it isn't.
+        """
+        exc = JSONRPCError(error)
+        raise exc

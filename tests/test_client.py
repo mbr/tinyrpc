@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import _compat
-from six.moves.mock import Mock
-import six
+from unittest.mock import Mock
 
 from tinyrpc.exc import RPCError
 from tinyrpc.client import RPCClient, RPCProxy
@@ -35,7 +33,6 @@ def prefix(request):
 @pytest.fixture(params=[True, False])
 def one_way_setting(request):
     return request.param
-
 
 @pytest.fixture
 def mock_client():
@@ -120,6 +117,28 @@ def test_client_raises_error_replies(client, mock_protocol, method_name,
         with pytest.raises(RPCError):
             client.call(method_name, method_args, method_kwargs, one_way_setting)
 
+def test_client_raises_indirect_error_replies(client, mock_protocol, method_name,
+                                     method_args, method_kwargs,
+                                     one_way_setting):
+    class MockException(Exception):
+        pass
+    def raise_error(error):
+        raise MockException(error)
+    error_response = RPCErrorResponse()
+    error_response.error = 'foo'
+    mock_protocol.parse_reply = Mock(return_value=error_response)
+    mock_protocol.raise_error = raise_error
+
+    if not one_way_setting:
+        with pytest.raises(MockException):
+            client.call(method_name, method_args, method_kwargs, one_way_setting)
+
+def test_client_produces_good_proxy(client, prefix, one_way_setting):
+    proxy = client.get_proxy(prefix, one_way_setting)
+    assert proxy.client == client
+    assert proxy.prefix == prefix
+    assert proxy.one_way == one_way_setting
+    assert callable(proxy.foobar)
 
 def test_client_send_binary_message(client, mock_protocol, method_name,
                                      method_args, method_kwargs,
@@ -129,4 +148,4 @@ def test_client_send_binary_message(client, mock_protocol, method_name,
     mock_protocol.create_request.return_value = req
     client.call(method_name, method_args, method_kwargs, one_way_setting)
     assert mock_transport.send_message.called
-    assert isinstance(mock_transport.send_message.call_args[0][0], six.binary_type)
+    assert isinstance(mock_transport.send_message.call_args[0][0], bytes)
