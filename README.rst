@@ -1,6 +1,8 @@
 tinyrpc: A small and modular way of handling web-related RPC
 ============================================================
 
+.. image:: https://readthedocs.org/projects/tinyrpc/badge/?version=latest
+
 .. note::
 
     Tinyrpc is being revised.
