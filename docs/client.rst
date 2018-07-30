@@ -11,6 +11,8 @@ Proxies are syntactic sugar for using clients.
 
 .. autoclass:: tinyrpc.client.RPCClient
    :members:
+   :noindex:
 
 .. autoclass:: tinyrpc.client.RPCProxy
    :members:
+   :noindex:

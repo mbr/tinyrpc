@@ -6,17 +6,21 @@ and implementing all of its members:
 
 .. autoclass:: tinyrpc.RPCProtocol
    :members:
+   :noindex:
 
 These require implementations of the following classes as well:
 
 .. autoclass:: tinyrpc.RPCRequest
    :members:
+   :noindex:
 
 .. autoclass:: tinyrpc.RPCResponse
    :members:
+   :noindex:
 
 .. autoclass:: tinyrpc.BadRequestError
    :members:
+   :noindex:
 
 Every protocol deals with multiple kinds of structures: ``data`` arguments are
 always byte strings, either messages or replies, that are sent via or received
@@ -52,12 +56,15 @@ must be chosen appropriately.
 
 .. autoclass:: tinyrpc.RPCBatchProtocol
    :members:
+   :noindex:
 
 .. autoclass:: tinyrpc.RPCBatchRequest
    :members:
+   :noindex:
 
 .. autoclass:: tinyrpc.RPCBatchResponse
    :members:
+   :noindex:
 
 
 Supported protocols
@@ -182,5 +189,6 @@ JSON-RPC
 
 .. autoclass:: tinyrpc.protocols.jsonrpc.JSONRPCProtocol
    :members:
+   :noindex:
 
 .. _jsonrpc: http://jsonrpc.org

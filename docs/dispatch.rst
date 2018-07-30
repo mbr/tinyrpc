@@ -115,8 +115,10 @@ API reference
 
 .. autoclass:: tinyrpc.dispatch.RPCDispatcher
    :members:
+   :noindex:
 
 Classes can be made to support an RPC interface without coupling it to a
 dispatcher using a decorator:
 
 .. autofunction:: tinyrpc.dispatch.public
+   :noindex:

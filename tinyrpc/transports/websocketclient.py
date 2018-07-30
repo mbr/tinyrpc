@@ -17,6 +17,7 @@ class HttpWebSocketClientTransport(ClientTransport):
     :param endpoint: The URL to connect the websocket.
     :param kwargs: Additional parameters for :py:func:`websocket.send`.
     """
+
     def __init__(self, endpoint, **kwargs):
         self.endpoint = endpoint
         self.request_kwargs = kwargs
@@ -31,5 +32,10 @@ class HttpWebSocketClientTransport(ClientTransport):
             return r
 
     def close(self):
+        """Terminate the connection.
+
+        Since WebSocket maintains an open connection over multiple calls
+        it must be closed explicitly.
+        """
         if self.ws is not None:
             self.ws.close()
