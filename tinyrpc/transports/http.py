@@ -27,9 +27,12 @@ class HttpPostClientTransport(ClientTransport):
 
     def send_message(self, message, expect_reply=True):
         if not isinstance(message, bytes):
-            raise TypeError('bytes expected')
+            raise TypeError('message must by of type bytes')
 
         r = self.post(self.endpoint, data=message, **self.request_kwargs)
 
         if expect_reply:
+            # Note that this is not strictly conforming to the standard since
+            # even notificiations may, under certain conditions, return an
+            # error message which is completely ignored by this implementation.
             return r.content

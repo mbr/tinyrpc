@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import  # needed for zmq import
-import six
 import zmq
 
 from . import ServerTransport, ClientTransport
@@ -23,10 +22,6 @@ class ZmqServerTransport(ServerTransport):
         return msg[:-1], msg[-1]
 
     def send_reply(self, context, reply):
-        if six.PY3 and isinstance(reply, six.string_types):
-            # zmq won't accept unicode strings
-            reply = reply.encode()
-
         self.socket.send_multipart(context + [reply])
 
     @classmethod
@@ -58,10 +53,6 @@ class ZmqClientTransport(ClientTransport):
         self.socket = socket
 
     def send_message(self, message, expect_reply=True):
-        if six.PY3 and isinstance(message, six.string_types):
-            # pyzmq won't accept unicode strings
-            message = message.encode()
-
         self.socket.send(message)
 
         if expect_reply:

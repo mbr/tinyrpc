@@ -52,7 +52,7 @@ class RPCRequest(object):
     def serialize(self):
         """Returns a serialization of the request.
 
-        :return: A string to be passed on to a transport.
+        :return: A bytes object to be passed on to a transport.
         """
         raise NotImplementedError()
 

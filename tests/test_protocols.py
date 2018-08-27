@@ -15,18 +15,18 @@ def protocol(request):
     raise RuntimeError('Bad protocol name in test case')
 
 
-def test_protocol_returns_strings(protocol):
+def test_protocol_returns_bytes(protocol):
     req = protocol.create_request('foo', ['bar'])
 
-    assert isinstance(req.serialize(), str)
+    assert isinstance(req.serialize(), bytes)
 
-def test_procotol_responds_strings(protocol):
+def test_procotol_responds_bytes(protocol):
     req = protocol.create_request('foo', ['bar'])
     rep = req.respond(42)
     err_rep = req.error_respond(Exception('foo'))
 
-    assert isinstance(rep.serialize(), str)
-    assert isinstance(err_rep.serialize(), str)
+    assert isinstance(rep.serialize(), bytes)
+    assert isinstance(err_rep.serialize(), bytes)
 
 
 def test_one_way(protocol):

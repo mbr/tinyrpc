@@ -16,8 +16,8 @@ from tinyrpc.protocols.jsonrpc import JSONRPCParseError, \
 
 
 def _json_equal(a, b):
-    da = json.loads(a)
-    db = json.loads(b)
+    da = json.loads(a.decode() if isinstance(a, bytes) else a)
+    db = json.loads(b.decode() if isinstance(b, bytes) else b)
 
     return da == db
 
@@ -130,6 +130,8 @@ def test_proper_construction_of_error_codes(prot, exc, code, message):
            "id": "1"}"""
     )
     reply = exc().error_respond().serialize()
+    assert isinstance(reply, bytes)
+    reply = reply.decode()
 
     err = json.loads(reply)
 
@@ -215,7 +217,7 @@ def test_out_of_order(prot):
 
 
 def test_request_generation(prot):
-    jdata = json.loads(prot.create_request('subtract', [42, 23]).serialize())
+    jdata = json.loads(prot.create_request('subtract', [42, 23]).serialize().decode())
 
     assert jdata['method'] == 'subtract'
     assert jdata['params'] == [42, 23]
@@ -476,7 +478,11 @@ def test_can_get_custom_error_messages_out(prot):
 
     response = request.error_respond(e)
 
-    data = json.loads(response.serialize())
+    jstr = response.serialize()
+    assert isinstance(jstr, bytes)
+    jstr = jstr.decode()
+
+    data = json.loads(jstr)
 
     assert data['error']['message'] == custom_msg
 
@@ -495,15 +501,18 @@ def test_missing_jsonrpc_version_on_reply(prot):
 
 def test_pass_error_data_with_standard_exception(prot):
     request = prot.create_request('foo')
-    
+
     custom_msg = 'join the army, they said. see the world, they said.'
     data = {'pi': 3.14, 'lst': ['a', 'b', 'c']}
-    
-    e = Exception(custom_msg, data)
-    
-    response = request.error_respond(e)
 
-    decoded = json.loads(response.serialize())
+    e = Exception(custom_msg, data)
+
+    response = request.error_respond(e)
+    jmsg = response.serialize()
+    assert isinstance(jmsg, bytes)
+    jmsg = jmsg.decode()
+
+    decoded = json.loads(jmsg)
     assert decoded['error']['code'] == -32000
     assert decoded['error']['message'] == custom_msg
     assert decoded['error']['data'] == data
@@ -516,8 +525,11 @@ def test_pass_error_data_with_custom_exception(prot):
     e = JSONRPCParseError(data=data)
 
     response = request.error_respond(e)
+    jmsg = response.serialize()
+    assert isinstance(jmsg, bytes)
+    jmsg = jmsg.decode()
 
-    decoded = json.loads(response.serialize())
+    decoded = json.loads(jmsg)
     assert decoded['error']['code'] == -32700
     assert decoded['error']['message'] == JSONRPCParseError.message
     assert decoded['error']['data'] == data

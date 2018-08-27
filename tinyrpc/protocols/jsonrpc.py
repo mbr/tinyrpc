@@ -5,8 +5,6 @@ import inspect
 import json
 import sys
 
-import six
-
 from .. import (
     RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,
     InvalidRequestError, MethodNotFoundError, InvalidReplyError, RPCError,
@@ -88,7 +86,7 @@ class JSONRPCSuccessResponse(RPCResponse):
         }
 
     def serialize(self):
-        return json_dumps(self._to_dict())
+        return json_dumps(self._to_dict()).encode()
 
 
 class JSONRPCErrorResponse(RPCErrorResponse):
@@ -106,11 +104,11 @@ class JSONRPCErrorResponse(RPCErrorResponse):
         return msg
 
     def serialize(self):
-        return json_dumps(self._to_dict())
+        return json_dumps(self._to_dict()).encode()
 
 
 def _get_code_message_and_data(error):
-    assert isinstance(error, (Exception, six.string_types))
+    assert isinstance(error, (Exception, str))
     data = None
     if isinstance(error, Exception):
         if hasattr(error, 'jsonrpc_error_code'):
@@ -182,7 +180,7 @@ class JSONRPCRequest(RPCRequest):
         return jdata
 
     def serialize(self):
-        return json_dumps(self._to_dict())
+        return json_dumps(self._to_dict()).encode()
 
 
 class JSONRPCBatchRequest(RPCBatchRequest):
@@ -200,12 +198,14 @@ class JSONRPCBatchRequest(RPCBatchRequest):
         return False
 
     def serialize(self):
-        return json_dumps([req._to_dict() for req in self])
+        return json_dumps([req._to_dict() for req in self]).encode()
 
 
 class JSONRPCBatchResponse(RPCBatchResponse):
     def serialize(self):
-        return json_dumps([resp._to_dict() for resp in self if resp != None])
+        return json_dumps(
+            [resp._to_dict() for resp in self if resp != None]
+        ).encode()
 
 
 class JSONRPCProtocol(RPCBatchProtocol):
@@ -248,9 +248,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
         return request
 
     def parse_reply(self, data):
-        if six.PY3 and isinstance(data, bytes):
-            # zmq won't accept unicode strings, and this is the other
-            # end; decoding non-unicode strings back into unicode
+        if isinstance(data, bytes):
             data = data.decode()
 
         try:
@@ -258,7 +256,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
         except Exception as e:
             raise InvalidReplyError(e)
 
-        for k in six.iterkeys(rep):
+        for k in rep.keys():
             if not k in self._ALLOWED_REPLY_KEYS:
                 raise InvalidReplyError('Key not allowed: %s' % k)
 
@@ -290,9 +288,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
         return response
 
     def parse_request(self, data):
-        if six.PY3 and isinstance(data, bytes):
-            # zmq won't accept unicode strings, and this is the other
-            # end; decoding non-unicode strings back into unicode
+        if isinstance(data, bytes):
             data = data.decode()
 
         try:
@@ -321,19 +317,19 @@ class JSONRPCProtocol(RPCBatchProtocol):
         if not isinstance(req, dict):
             raise JSONRPCInvalidRequestError()
 
-        for k in six.iterkeys(req):
+        for k in req.keys():
             if not k in self._ALLOWED_REQUEST_KEYS:
                 raise JSONRPCInvalidRequestError()
 
         if req.get('jsonrpc', None) != self.JSON_RPC_VERSION:
             raise JSONRPCInvalidRequestError()
 
-        if not isinstance(req['method'], six.string_types):
+        if not isinstance(req['method'], str):
             raise JSONRPCInvalidRequestError()
 
         request = self.request_factory()
 
-        request.method = str(req['method'])
+        request.method = req['method']
         request.unique_id = req.get('id', None)
 
         params = req.get('params', None)
@@ -363,12 +359,12 @@ class JSONRPCProtocol(RPCBatchProtocol):
     def raise_error(error):
         """Recreates the exception.
 
-        Creates a :py.class:`~tinyrpc.protocols.jsonrpc.RPCErrorResponse` instance
+        Creates a :py:class:`~tinyrpc.protocols.jsonrpc.RPCErrorResponse` instance
         and raises it.
         This introduces the error, message and data attributes of the original
         exception to propagate in the client code.
 
-        The :py.class:`~tinyrpc.RPCClient` will test if its protocol instance
+        The :py:class:`~tinyrpc.RPCClient` will test if its protocol instance
         supports this method and calls it or it will raise a generic error
         message if it isn't.
         """

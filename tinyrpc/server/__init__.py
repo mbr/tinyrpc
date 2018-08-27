@@ -12,29 +12,29 @@ class RPCServer(object):
     :param protocol: The :py:class:`~tinyrpc.RPCProtocol` to use.
     :param dispatcher: The :py:class:`~tinyrpc.dispatch.RPCDispatcher` to use.
     """
-    
+
     trace = None
     """Trace incoming and outgoing messages.
-    
+
     When this attribute is set to a callable this callable will be called directly
     after a message has been received and immediately after a reply is sent.
     The callable should accept three positional parameters:
     * *direction*: string, either '-->' for incoming or '<--' for outgoing data.
     * *context*: the context returned by :py:meth:`~tinyrpc.transport.RPCTransport.receive_message`.
     * *message*: the message string itself.
-    
+
     Example::
-    
+
         def my_trace(direction, context, message):
             logger.debug('%s%s', direction, message)
-        
+
         server = RPCServer(transport, protocol, dispatcher)
         server.trace = my_trace
         server.serve_forever
-        
+
     will log all incoming and outgoing traffic of the RPC service.
     """
-    
+
     def __init__(self, transport, protocol, dispatcher):
         self.transport = transport
         self.protocol = protocol
@@ -54,7 +54,7 @@ class RPCServer(object):
         """Handle a single request.
 
         Polls the transport for a new message.
-        
+
         After a new message has arrived :py:meth:`_spawn` is called with a handler
         function and arguments to handle the request.
 
@@ -67,7 +67,7 @@ class RPCServer(object):
         context, message = self.transport.receive_message()
         if callable(self.trace):
             self.trace('-->', context, message)
-        
+
         # assuming protocol is threadsafe and dispatcher is theadsafe, as
         # long as its immutable
 
@@ -78,7 +78,7 @@ class RPCServer(object):
                 response = e.error_respond()
             else:
                 response = self.dispatcher.dispatch(
-                    request, 
+                    request,
                     getattr(self.protocol, '_caller', None)
                 )
 

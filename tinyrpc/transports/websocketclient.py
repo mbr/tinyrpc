@@ -25,7 +25,7 @@ class HttpWebSocketClientTransport(ClientTransport):
 
     def send_message(self, message, expect_reply=True):
         if not isinstance(message, bytes):
-            raise TypeError('bytes expected')
+            raise TypeError('message must by of type bytes')
         self.ws.send(message)
         r = self.ws.recv()
         if expect_reply:

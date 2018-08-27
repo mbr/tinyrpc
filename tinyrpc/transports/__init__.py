@@ -8,9 +8,16 @@ class ServerTransport(object):
         """Receive a message from the transport.
 
         Blocks until another message has been received. May return a context
-        opaque to clients that should be passed on
+        opaque to clients that should be passed on to
         :py:func:`~tinyrpc.transport.ServerTransport.send_reply` to identify
         the client later on.
+
+        The message must be treated as a binary datum since only the protocol
+        level will know how to interpret the message.
+        However, some transports may need to encode the message in some way
+        in order to be able to successfully transport the message. It is the
+        responsibility of the transport layer at the opposite side to properly
+        decode the message.
 
         :return: A tuple consisting of ``(context, message)``.
         """
@@ -23,12 +30,16 @@ class ServerTransport(object):
         from the original
         :py:func:`~tinyrpc.transport.Transport.receive_message` call.
 
-        Messages must be strings, it is up to the sender to convert the
-        beforehand. A non-string value raises a :py:exc:`TypeError`.
+        The reply must be treated as a binary datum since only the protocol
+        level will know how to construct the reply.
+        However, some transports may need to encode the reply in some way
+        in order to be able to successfully transport the reply. It is the
+        responsibility of the transport layer at the opposite side to properly
+        decode the reply.
 
         :param context: A context returned by
                         :py:func:`~tinyrpc.transport.ServerTransport.receive_message`.
-        :param reply: A string to send back as the reply.
+        :param reply: A binary datum to send back as the reply.
         """
         raise NotImplementedError
 
@@ -41,12 +52,16 @@ class ClientTransport(object):
 
         Sends a message to the connected server.
 
-        Messages must be strings, it is up to the sender to convert the
-        beforehand. A non-string value raises a :py:exc:`TypeError`.
+        The message must be treated as a binary datum since only the protocol
+        level will know how to interpret the message.
+        However, some transports may need to encode the message in some way
+        in order to be able to successfully transport the message. It is the
+        responsibility of the transport layer at the opposite side to properly
+        decode the message.
 
         This function will block until one reply has been received.
 
-        :param message: A string to send.
-        :return: A string containing the server reply.
+        :param message: A binary datum to send.
+        :return: A binary datum containing the server reply.
         """
         raise NotImplementedError
