@@ -144,6 +144,8 @@ def test_notification_yields_None_response(prot):
 
     req = prot.parse_request(data)
 
+    assert req.one_way == True
+
     # updates should never cause retries
     assert req.respond(True) == None
 

@@ -140,23 +140,29 @@ def _get_code_message_and_data(error):
 
 
 class JSONRPCRequest(RPCRequest):
+    def __init__(self):
+        self.one_way = False
+        self.args = []
+        self.kwargs = {}
+        self.unique_id = None
+
     def error_respond(self, error):
         if self.unique_id is None:
             return None
 
         response = JSONRPCErrorResponse()
+        response.unique_id = None if self.one_way else self.unique_id
 
         code, msg, data = _get_code_message_and_data(error)
 
         response.error = msg
-        response.unique_id = self.unique_id
         response._jsonrpc_error_code = code
         if data:
             response.data = data
         return response
 
     def respond(self, result):
-        if self.unique_id is None:
+        if self.one_way or self.unique_id is None:
             return None
 
         response = JSONRPCSuccessResponse()
@@ -175,7 +181,7 @@ class JSONRPCRequest(RPCRequest):
             jdata['params'] = self.args
         if self.kwargs:
             jdata['params'] = self.kwargs
-        if hasattr(self, 'unique_id') and self.unique_id is not None:
+        if not self.one_way and hasattr(self, 'unique_id') and self.unique_id is not None:
             jdata['id'] = self.unique_id
         return jdata
 
@@ -192,7 +198,7 @@ class JSONRPCBatchRequest(RPCBatchRequest):
         for request in self:
             if isinstance(request, Exception):
                 return True
-            if request.unique_id != None:
+            if not request.one_way and request.unique_id != None:
                 return True
 
         return False
@@ -237,6 +243,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
                                       'the same time')
 
         request = self.request_factory()
+        request.one_way = one_way
 
         if not one_way:
             request.unique_id = self._get_unique_id()
@@ -330,7 +337,9 @@ class JSONRPCProtocol(RPCBatchProtocol):
         request = self.request_factory()
 
         request.method = req['method']
-        request.unique_id = req.get('id', None)
+        request.one_way = 'id' not in req
+        if not request.one_way:
+            request.unique_id = req['id']
 
         params = req.get('params', None)
         if params is not None:
