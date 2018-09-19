@@ -64,11 +64,14 @@ class CGIServerTransport(ServerTransport):
         """
 
         # context isn't used with cgi
+        # The cgi module will convert to binary.
+        # Using sys.stdout.buffer.write() fails as stdout is on occasion monkey patched
+        # to AsyncFile which doesn't support the buffer attribute.
         print("Status: 200 OK")
         print("Content-Type: application/json")
         print("Cache-Control: no-cache")
         print("Pragma: no-cache")
         print("Content-Length: %d" % len(reply))
         print()
-        print(reply)
+        print(reply.decode())
 
