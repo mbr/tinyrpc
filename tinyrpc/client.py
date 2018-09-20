@@ -5,6 +5,7 @@ import sys
 from collections import namedtuple
 
 from .exc import RPCError
+from .protocols import RPCErrorResponse
 
 RPCCall = namedtuple('RPCCall', 'method args kwargs')
 """Defines the elements of a RPC call.
@@ -42,7 +43,7 @@ class RPCClient(object):
         tport = self.transport if transport is None else transport
 
         # sends ...
-        reply = tport.send_message(req.serialize().encode('utf-8'))
+        reply = tport.send_message(req.serialize())
 
         if one_way:
             # ... and be done
@@ -51,7 +52,7 @@ class RPCClient(object):
         # ... or process the reply
         response = self.protocol.parse_reply(reply)
 
-        if not no_exception and hasattr(response, 'error'):
+        if not no_exception and isinstance(response, RPCErrorResponse):
             if hasattr(self.protocol, 'raise_error') and callable(self.protocol.raise_error):
                 self.protocol.raise_error(response.error)
             else:
