@@ -1,3 +1,6 @@
+from .exc import RPCError
+
+
 class RPCRequest(object):
     def __init__(self):
         self.unique_id = None
@@ -103,6 +106,12 @@ class RPCResponse(object):
 
 
 class RPCErrorResponse(RPCResponse):
+    """RPC error reponse class.
+
+    Base class for all deriving responses.
+
+    Has an attribute error containing the fields 'message' and 'code' where
+    at least 'message' is required to contain a value."""
     pass
 
 
@@ -130,6 +139,13 @@ class RPCProtocol(object):
     generation of these may or may not be thread safe, depending on the
     protocol. Ideally, only once instance of RPCProtocol should be used per
     client."""
+
+    raises_errors = True
+    """If True, this protocol instance will raise an RPCError exception.
+
+    On receipt of an RPCErrorResponse instance an RPCError exception is raised.
+    When this flag is False the RPCErrorReponse object is returned to the caller
+    which is then responsible for handling the error."""
 
     def create_request(self, method, args=None, kwargs=None, one_way=False):
         """Creates a new RPCRequest object.
@@ -160,6 +176,12 @@ class RPCProtocol(object):
         :return: An instanced response.
         """
         raise NotImplementedError()
+
+    def _raise_error(self, error):
+        """Converts an RPCErrorResponse into an exception and raises it."""
+        raise RPCError(
+            'Error calling remote procedure: %s' % error.error['message']
+        )
 
 
 class RPCBatchProtocol(RPCProtocol):

@@ -69,6 +69,7 @@ class JSONRPCServerError(FixedErrorMessageMixin, InvalidRequestError):
     jsonrpc_error_code = -32000
     message = ''
 
+
 class JSONRPCError(FixedErrorMessageMixin, RPCError):
     def __init__(self, error):
         super(JSONRPCError, self).__init__()
@@ -76,6 +77,7 @@ class JSONRPCError(FixedErrorMessageMixin, RPCError):
         self._jsonrpc_error_code = error['code']
         if 'data' in error:
             self.data = error['data']
+
 
 class JSONRPCSuccessResponse(RPCResponse):
     def _to_dict(self):
@@ -181,7 +183,8 @@ class JSONRPCRequest(RPCRequest):
             jdata['params'] = self.args
         if self.kwargs:
             jdata['params'] = self.kwargs
-        if not self.one_way and hasattr(self, 'unique_id') and self.unique_id is not None:
+        if not self.one_way and hasattr(
+                self, 'unique_id') and self.unique_id is not None:
             jdata['id'] = self.unique_id
         return jdata
 
@@ -209,9 +212,9 @@ class JSONRPCBatchRequest(RPCBatchRequest):
 
 class JSONRPCBatchResponse(RPCBatchResponse):
     def serialize(self):
-        return json_dumps(
-            [resp._to_dict() for resp in self if resp != None]
-        ).encode()
+        return json_dumps([resp._to_dict()
+                           for resp in self
+                           if resp != None]).encode()
 
 
 class JSONRPCProtocol(RPCBatchProtocol):
@@ -239,8 +242,10 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
     def create_request(self, method, args=None, kwargs=None, one_way=False):
         if args and kwargs:
-            raise InvalidRequestError('Does not support args and kwargs at '
-                                      'the same time')
+            raise InvalidRequestError(
+                'Does not support args and kwargs at '
+                'the same time'
+            )
 
         request = self.request_factory()
         request.one_way = one_way
@@ -283,9 +288,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
         if 'error' in rep:
             response = JSONRPCErrorResponse()
-            error = rep['error']
-            response.error = error['message']
-            response._jsonrpc_error_code = error['code']
+            response.error = rep['error']
         else:
             response = JSONRPCSuccessResponse()
             response.result = rep.get('result', None)
@@ -365,7 +368,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
             return method(*args, **kwargs)
 
     @staticmethod
-    def raise_error(error):
+    def _raise_error(error):
         """Recreates the exception.
 
         Creates a :py:class:`~tinyrpc.protocols.jsonrpc.RPCErrorResponse` instance
@@ -377,5 +380,5 @@ class JSONRPCProtocol(RPCBatchProtocol):
         supports this method and calls it or it will raise a generic error
         message if it isn't.
         """
-        exc = JSONRPCError(error)
+        exc = JSONRPCError(error.error)
         raise exc
