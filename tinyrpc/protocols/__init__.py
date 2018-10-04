@@ -1,4 +1,4 @@
-from .exc import RPCError
+from ..exc import RPCError
 
 
 class RPCRequest(object):
