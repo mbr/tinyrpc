@@ -360,12 +360,12 @@ class JSONRPCProtocol(RPCBatchProtocol):
         # when provided with the address of a custom dispatcher.
         # Used to generate a customized error message when the
         # function signature doesn't match the parameter list.
-        try:
-            inspect.getcallargs(method, *args, **kwargs)
-        except TypeError:
-            raise JSONRPCInvalidParamsError()
-        else:
-            return method(*args, **kwargs)
+        if hasattr(method, '__code__'):
+            try:
+                inspect.getcallargs(method, *args, **kwargs)
+            except TypeError:
+                raise JSONRPCInvalidParamsError()
+        return method(*args, **kwargs)
 
     @staticmethod
     def _raise_error(error):
