@@ -1,5 +1,6 @@
 .cache
 .tox
+.idea
 __pycache__
 *.pyc
 *egg-info

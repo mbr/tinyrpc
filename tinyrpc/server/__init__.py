@@ -77,10 +77,7 @@ class RPCServer(object):
             except RPCError as e:
                 response = e.error_respond()
             else:
-                response = self.dispatcher.dispatch(
-                    request,
-                    getattr(self.protocol, '_caller', None)
-                )
+                response = self.dispatcher.dispatch(request)
 
             # send reply
             if response is not None:

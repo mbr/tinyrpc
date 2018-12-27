@@ -8,7 +8,7 @@ import sys
 from .. import (
     RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,
     InvalidRequestError, MethodNotFoundError, InvalidReplyError, RPCError,
-    RPCBatchRequest, RPCBatchResponse
+    RPCBatchRequest, RPCBatchResponse, InvalidParamsError
 )
 
 if 'jsonext' in sys.modules:
@@ -126,6 +126,9 @@ def _get_code_message_and_data(error):
         elif isinstance(error, MethodNotFoundError):
             code = JSONRPCMethodNotFoundError.jsonrpc_error_code
             msg = JSONRPCMethodNotFoundError.message
+        elif isinstance(error, InvalidParamsError):
+            code = JSONRPCInvalidParamsError.jsonrpc_error_code
+            msg = JSONRPCInvalidParamsError.message
         else:
             # allow exception message to propagate
             code = JSONRPCServerError.jsonrpc_error_code
@@ -354,18 +357,6 @@ class JSONRPCProtocol(RPCBatchProtocol):
                 raise JSONRPCInvalidParamsError()
 
         return request
-
-    def _caller(self, method, args, kwargs):
-        # custom dispatcher called by RPCDispatcher._dispatch()
-        # when provided with the address of a custom dispatcher.
-        # Used to generate a customized error message when the
-        # function signature doesn't match the parameter list.
-        if hasattr(method, '__code__'):
-            try:
-                inspect.getcallargs(method, *args, **kwargs)
-            except TypeError:
-                raise JSONRPCInvalidParamsError()
-        return method(*args, **kwargs)
 
     @staticmethod
     def _raise_error(error):

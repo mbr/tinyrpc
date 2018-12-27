@@ -535,17 +535,3 @@ def test_pass_error_data_with_custom_exception(prot):
     assert decoded['error']['code'] == -32700
     assert decoded['error']['message'] == JSONRPCParseError.message
     assert decoded['error']['data'] == data
-
-def test_call_argument_validation(prot):
-    def f(a,b):
-        return a+b
-
-    assert 3 == prot._caller(f, [1, 2], {})
-    with pytest.raises(JSONRPCInvalidParamsError):
-        prot._caller(f, [1], {})
-    assert type(prot._caller(dir, [], {})) == list
-#    if not hasattr(dir, '__code__'):
-#        with pytest.raises(JSONRPCInvalidParamsError):
-#            prot._caller(dir, [], {})
-#    else:
-#        assert prot._caller(dir, [], {}) == list

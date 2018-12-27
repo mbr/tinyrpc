@@ -210,14 +210,15 @@ def test_dispatch_raises_key_error(dispatch):
 
 @pytest.fixture(params=[
     ('fn_a', [4, 6], {}, -2),
-    ('fn_a', [4], {}, JSONRPCInvalidParamsError),
+    ('fn_a', [4], {}, InvalidParamsError),
+    # InvalidParamsError instead of JSONRPCInvalidParamsError due to mocking
     ('fn_a', [], {'a':4, 'b':6}, -2),
     ('fn_a', [4], {'b':6}, -2),
     ('fn_b', [4, 6], {}, -2),
-    ('fn_b', [], {'a':4, 'b':6}, JSONRPCInvalidParamsError),
+    ('fn_b', [], {'a':4, 'b':6}, InvalidParamsError),
     ('fn_b', [4], {}, IndexError),
     # a[1] doesn't exist, can't be detected beforehand
-    ('fn_c', [4, 6], {}, JSONRPCInvalidParamsError),
+    ('fn_c', [4, 6], {}, InvalidParamsError),
     ('fn_c', [], {'a':4, 'b':6}, -2),
     ('fn_c', [], {'a':4}, KeyError)
     # a['b'] doesn't exist, can't be detected beforehand
@@ -246,8 +247,18 @@ def test_argument_error(dispatch, invoke_with):
     mock_request.args = args
     mock_request.kwargs = kwargs
     mock_request.method = method
-    dispatch._dispatch(mock_request, getattr(protocol, '_caller', None))
+    dispatch._dispatch(mock_request)
     if inspect.isclass(result) and issubclass(result, Exception):
         assert type(mock_request.error_respond.call_args[0][0]) == result
     else:
         mock_request.respond.assert_called_with(result)
+
+def test_call_argument_validation(dispatch):
+    def f(a,b):
+        return a+b
+
+    dispatch.validate_parameters(f, [1, 2], {})
+    with pytest.raises(InvalidParamsError):
+        dispatch.validate_parameters(f, [1], {})
+    dispatch.validate_parameters(dir, [], {})
+    # should skip validation, will produce error otherwise
