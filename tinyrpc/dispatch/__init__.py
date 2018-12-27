@@ -119,10 +119,6 @@ class RPCDispatcher(object):
         all its children in order and collecting the results, then returning an
         :py:class:`~tinyrpc.RPCBatchResponse` with the results.
 
-        To allow for custom processing around calling the method (i.e. custom
-        error handling), the optional parameter ``caller`` may be provided with
-        a callable. When present invoking the method is deferred to this callable.
-
         :param request: The request containing the function to be called and its parameters.
         :type request: ~tinyrpc.protocols.RPCRequest
         :return: The result produced by calling the requested function.
