@@ -66,6 +66,39 @@ class RPCDispatcher(object):
         self.method_map = {}
         self.subdispatchers = {}
 
+    def public(self, name=None):
+        """Convenient decorator.
+
+        Allows easy registering of functions to this dispatcher. Example:
+
+        .. code-block:: python
+
+            dispatch = RPCDispatcher()
+
+            @dispatch.public
+            def foo(bar):
+                # ...
+
+            class Baz(object):
+                def not_exposed(self):
+                    # ...
+
+                @dispatch.public(name='do_something')
+                def visible_method(arg1)
+                    # ...
+
+        :param str name: Name to register callable with.
+        """
+        if callable(name):
+            self.add_method(name)
+            return name
+
+        def _(f):
+            self.add_method(f, name=name)
+            return f
+
+        return _
+
     def add_subdispatch(self, dispatcher, prefix=''):
         """Adds a subdispatcher, possibly in its own namespace.
 
@@ -95,6 +128,51 @@ class RPCDispatcher(object):
             raise exc.RPCError('Name %s already registered')
 
         self.method_map[name] = f
+
+    def get_method(self, name):
+        """Retrieve a previously registered method.
+
+        Checks if a method matching ``name`` has been registered.
+
+        If :py:func:`get_method` cannot find a method, every subdispatcher
+        with a prefix matching the method name is checked as well.
+
+        :param str name: Function to find.
+        :returns: The callable implementing the function.
+        :rtype: callable
+        :raises: :py:exc:`~tinyrpc.exc.MethodNotFoundError`
+        """
+        if name in self.method_map:
+            return self.method_map[name]
+
+        for prefix, subdispatchers in self.subdispatchers.items():
+            if name.startswith(prefix):
+                for sd in subdispatchers:
+                    try:
+                        return sd.get_method(name[len(prefix):])
+                    except exc.MethodNotFoundError:
+                        pass
+
+        raise exc.MethodNotFoundError(name)
+
+    def register_instance(self, obj, prefix=''):
+        """Create new subdispatcher and register all public object methods on
+        it.
+
+        To be used in conjunction with the :py:func:`public`
+        decorator (*not* :py:func:`RPCDispatcher.public`).
+
+        :param obj: The object whose public methods should be made available.
+        :type obj: object
+        :param str prefix: A prefix for the new subdispatcher.
+        """
+        dispatch = self.__class__()
+        for name, f in inspect.getmembers(
+                obj, lambda f: callable(f) and hasattr(f, '_rpc_public_name')):
+            dispatch.add_method(f, f._rpc_public_name)
+
+        # add to dispatchers
+        self.add_subdispatch(dispatch, prefix)
 
     def dispatch(self, request):
         """Fully handle request.
@@ -181,86 +259,11 @@ class RPCDispatcher(object):
     validator = validate_parameters
     """Dispatched function parameter validatation.
 
-    By default this property is set to :py:func:`validate_parameters`.
+    :type: callable
+    
+    By default this attribute is set to :py:func:`validate_parameters`.
     The value can be set to any callable implementing the same interface
     as :py:func:`validate_parameters` or to `None` to disable validation
     entirely.
     """
 
-    def get_method(self, name):
-        """Retrieve a previously registered method.
-
-        Checks if a method matching ``name`` has been registered.
-
-        If :py:func:`get_method` cannot find a method, every subdispatcher
-        with a prefix matching the method name is checked as well.
-
-        :param str name: Function to find.
-        :returns: The callable implementing the function.
-        :rtype: callable
-        :raises: :py:exc:`~tinyrpc.exc.MethodNotFoundError`
-        """
-        if name in self.method_map:
-            return self.method_map[name]
-
-        for prefix, subdispatchers in self.subdispatchers.items():
-            if name.startswith(prefix):
-                for sd in subdispatchers:
-                    try:
-                        return sd.get_method(name[len(prefix):])
-                    except exc.MethodNotFoundError:
-                        pass
-
-        raise exc.MethodNotFoundError(name)
-
-    def public(self, name=None):
-        """Convenient decorator.
-
-        Allows easy registering of functions to this dispatcher. Example:
-
-        .. code-block:: python
-
-            dispatch = RPCDispatcher()
-
-            @dispatch.public
-            def foo(bar):
-                # ...
-
-            class Baz(object):
-                def not_exposed(self):
-                    # ...
-
-                @dispatch.public(name='do_something')
-                def visible_method(arg1)
-                    # ...
-
-        :param str name: Name to register callable with.
-        """
-        if callable(name):
-            self.add_method(name)
-            return name
-
-        def _(f):
-            self.add_method(f, name=name)
-            return f
-
-        return _
-
-    def register_instance(self, obj, prefix=''):
-        """Create new subdispatcher and register all public object methods on
-        it.
-
-        To be used in conjunction with the :py:func:`public`
-        decorator (*not* :py:func:`RPCDispatcher.public`).
-
-        :param obj: The object whose public methods should be made available.
-        :type obj: object
-        :param str prefix: A prefix for the new subdispatcher.
-        """
-        dispatch = self.__class__()
-        for name, f in inspect.getmembers(
-                obj, lambda f: callable(f) and hasattr(f, '_rpc_public_name')):
-            dispatch.add_method(f, f._rpc_public_name)
-
-        # add to dispatchers
-        self.add_subdispatch(dispatch, prefix)

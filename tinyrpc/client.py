@@ -53,7 +53,7 @@ class RPCClient(object):
         if not no_exception and isinstance(response, RPCErrorResponse):
             if hasattr(self.protocol, 'raise_error') and callable(
                     self.protocol.raise_error):
-                self.protocol.raise_error(response.error)
+                response = self.protocol.raise_error(response.error)
             else:
                 raise RPCError(
                     'Error calling remote procedure: %s' % response.error

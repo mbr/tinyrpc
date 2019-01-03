@@ -123,10 +123,8 @@ def test_client_raises_error_replies(
     mock_protocol.parse_reply = Mock(return_value=error_response)
 
     if not one_way_setting:
-        with pytest.raises(RPCError):
-            client.call(
-                method_name, method_args, method_kwargs, one_way_setting
-            )
+        client.call(method_name, method_args, method_kwargs, one_way_setting)
+        mock_protocol.raise_error.assert_called_with('foo')
 
 
 def test_client_raises_indirect_error_replies(

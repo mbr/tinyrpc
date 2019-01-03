@@ -250,3 +250,5 @@ intersphinx_mapping = {
     'http://docs.python-requests.org/en/latest/': None,
     'http://werkzeug.pocoo.org/docs/': None,
 }
+
+autoclass_content = "both"
