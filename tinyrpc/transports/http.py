@@ -12,11 +12,12 @@ class HttpPostClientTransport(ClientTransport):
     Requires :py:mod:`requests`. Submits messages to a server using the body of
     an ``HTTP`` ``POST`` request. Replies are taken from the responses body.
 
-    :param endpoint: The URL to send ``POST`` data to.
-    :param post_method: allows to replace `requests.post` with another method,
+    :param str endpoint: The URL to send ``POST`` data to.
+    :param callable post_method: allows to replace `requests.post` with another method,
         e.g. the post method of a `requests.Session()` instance.
-    :param kwargs: Additional parameters for :py:func:`requests.post`.
+    :param dict kwargs: Additional parameters for :py:func:`requests.post`.
     """
+
     def __init__(self, endpoint, post_method=None, **kwargs):
         self.endpoint = endpoint
         self.request_kwargs = kwargs
@@ -32,7 +33,7 @@ class HttpPostClientTransport(ClientTransport):
         r = self.post(self.endpoint, data=message, **self.request_kwargs)
 
         if expect_reply:
-            # Note that this is not strictly conforming to the standard since
-            # even notificiations may, under certain conditions, return an
+            # Note that this is not strictly conforming to the (JSON RPC) standard since
+            # even notifications may, under certain conditions, return an
             # error message which is completely ignored by this implementation.
             return r.content

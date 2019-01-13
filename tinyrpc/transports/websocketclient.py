@@ -5,6 +5,7 @@ import geventwebsocket as websocket
 
 from . import ClientTransport
 
+
 class HttpWebSocketClientTransport(ClientTransport):
     """HTTP WebSocket based client transport.
 
@@ -14,8 +15,8 @@ class HttpWebSocketClientTransport(ClientTransport):
     The connection is establish on the ``__init__`` because the protocol is connection oriented,
     you need to close the connection calling the close method.
 
-    :param endpoint: The URL to connect the websocket.
-    :param kwargs: Additional parameters for :py:func:`websocket.send`.
+    :param str endpoint: The URL to connect the websocket.
+    :param dict kwargs: Additional parameters for :py:func:`websocket.send`.
     """
 
     def __init__(self, endpoint, **kwargs):

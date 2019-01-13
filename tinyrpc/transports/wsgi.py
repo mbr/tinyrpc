@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#import six
-#from six.moves import queue as Queue
 import queue as Queue
 
 from werkzeug.wrappers import Response, Request
@@ -52,8 +50,7 @@ class WsgiServerTransport(ServerTransport):
 
         The transport will serve a request by reading the message and putting
         it into an internal buffer. It will then block until another
-        concurrently running function sends a reply using
-        :py:func:`~tinyrpc.transports.WsgiServerTransport.send_reply`.
+        concurrently running function sends a reply using :py:meth:`send_reply`.
 
         The reply will then be sent to the client being handled and handle will
         return.
@@ -86,4 +83,4 @@ class WsgiServerTransport(ServerTransport):
             # nothing else supported at the moment
             response = Response('Only POST supported', 405)
 
-        return response(environ, start_response)
+        # return response(environ, start_response)

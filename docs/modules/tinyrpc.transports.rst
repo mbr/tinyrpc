@@ -1,6 +1,15 @@
 tinyrpc.transports package
 ==========================
 
+Module contents
+---------------
+
+.. automodule:: tinyrpc.transports
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
 Submodules
 ----------
 
@@ -11,6 +20,7 @@ tinyrpc.transports.callback module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 tinyrpc.transports.cgi module
 -----------------------------
@@ -19,6 +29,7 @@ tinyrpc.transports.cgi module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 tinyrpc.transports.http module
 ------------------------------
@@ -27,6 +38,7 @@ tinyrpc.transports.http module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 tinyrpc.transports.websocket module
 -----------------------------------
@@ -35,6 +47,7 @@ tinyrpc.transports.websocket module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 tinyrpc.transports.websocketclient module
 -----------------------------------------
@@ -43,6 +56,7 @@ tinyrpc.transports.websocketclient module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 tinyrpc.transports.wsgi module
 ------------------------------
@@ -51,6 +65,7 @@ tinyrpc.transports.wsgi module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 tinyrpc.transports.zmq module
 -----------------------------
@@ -59,12 +74,5 @@ tinyrpc.transports.zmq module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
-
-Module contents
----------------
-
-.. automodule:: tinyrpc.transports
-    :members:
-    :undoc-members:
-    :show-inheritance:
