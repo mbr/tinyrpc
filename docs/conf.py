@@ -249,6 +249,7 @@ intersphinx_mapping = {
     'https://pyzmq.readthedocs.io/en/latest/': None,
     'http://docs.python-requests.org/en/latest/': None,
     'http://werkzeug.pocoo.org/docs/': None,
+    'http://www.gevent.org/': None,
 }
 
 autoclass_content = "both"

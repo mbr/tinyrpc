@@ -4,6 +4,8 @@
 class RPCError(Exception):
     """Base class for all excetions thrown by :py:mod:`tinyrpc`."""
 
+    def error_respond(self):
+        raise NotImplementedError()
 
 class BadRequestError(RPCError):
     """Base class for all errors that caused the processing of a request to
