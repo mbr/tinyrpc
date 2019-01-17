@@ -83,4 +83,4 @@ class WsgiServerTransport(ServerTransport):
             # nothing else supported at the moment
             response = Response('Only POST supported', 405)
 
-        # return response(environ, start_response)
+        return response(environ, start_response)
