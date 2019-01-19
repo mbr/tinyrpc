@@ -13,7 +13,7 @@ tinyrpc: A small and modular way of handling web-related RPC
     The current version will enter maintenance mode.
     I will keep it alive until Python2 is discontinued.
     It can be installed from pip using its version number
-    e.g. ``pip install tinyrpc==0.9.1``.
+    e.g. ``pip install tinyrpc==0.9.3``.
 
     The main line of development will start with version 1.0.0.
     It will not try to remain compatible with the 0.9.x version.
