@@ -48,9 +48,14 @@ The protocol class(es) are responsible for two tasks:
 Dispatcher
 ----------
 
-The dispatcher performs the actual method calling determining with method to call and how to
+:doc:`dispatch` performs the actual method calling determining with method to call and how to
 pass it the parameters.
 The result of the method call, or the exception if the call failed is assembled and made available
 to the protocol for serialization.
+
+Client and Server
+-----------------
+
+The client and server classes tie all components together to provide the application interface.
 
 .. _jsonrpc: http://jsonrpc.org

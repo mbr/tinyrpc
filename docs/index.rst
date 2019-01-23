@@ -21,6 +21,7 @@ Table of contents
     structure
     dispatch
     protocols
+    jsonrpc
     transports
     client
     server
