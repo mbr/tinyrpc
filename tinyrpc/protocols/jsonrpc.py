@@ -544,23 +544,27 @@ class JSONRPCProtocol(RPCBatchProtocol):
             if not k in self._ALLOWED_REPLY_KEYS:
                 raise InvalidReplyError('Key not allowed: %s' % k)
 
-        if not 'jsonrpc' in rep:
+        if 'jsonrpc' not in rep:
             raise InvalidReplyError('Missing jsonrpc (version) in response.')
 
         if rep['jsonrpc'] != self.JSON_RPC_VERSION:
             raise InvalidReplyError('Wrong JSONRPC version')
 
-        if not 'id' in rep:
+        if 'id' not in rep:
             raise InvalidReplyError('Missing id in response')
 
-        if ('error' in rep) == ('result' in rep):
+        if ('error' in rep) and ('result' in rep):
             raise InvalidReplyError(
                 'Reply must contain exactly one of result and error.'
             )
 
         if 'error' in rep:
             response = JSONRPCErrorResponse()
-            response.error = rep['error']
+            error = rep['error']
+            response.error = error["message"]
+            response._jsonrpc_error_code = error["code"]
+            if "data" in error:
+                response.data = error["data"]
         else:
             response = JSONRPCSuccessResponse()
             response.result = rep.get('result', None)
