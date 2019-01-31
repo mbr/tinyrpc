@@ -527,7 +527,7 @@ def test_pass_error_data_with_standard_exception(prot):
     decoded_reply = json.loads(serialized_reply)
     print("decoded_reply=", decoded_reply)
     assert isinstance(parsed_reply, JSONRPCErrorResponse)
-    assert hasattr(parsed_reply, "data")
+    #assert hasattr(parsed_reply, "data")
     assert serialized_reply == jmsg
     assert decoded_reply == decoded
 

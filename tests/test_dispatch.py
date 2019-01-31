@@ -31,7 +31,7 @@ def mock_request(method='subtract', args=None, kwargs=None):
     return mock_request
 
 
-def test_function_decorating_without_paramters(dispatch):
+def test_function_decorating_without_parameters(dispatch):
     @dispatch.public
     def foo(bar):
         pass
@@ -39,7 +39,7 @@ def test_function_decorating_without_paramters(dispatch):
     assert dispatch.get_method('foo') == foo
 
 
-def test_function_decorating_with_empty_paramters(dispatch):
+def test_function_decorating_with_empty_parameters(dispatch):
     @dispatch.public()
     def foo(bar):
         pass
@@ -47,7 +47,7 @@ def test_function_decorating_with_empty_paramters(dispatch):
     assert dispatch.get_method('foo') == foo
 
 
-def test_function_decorating_with_paramters(dispatch):
+def test_function_decorating_with_parameters(dispatch):
     @dispatch.public(name='baz')
     def foo(bar):
         pass
