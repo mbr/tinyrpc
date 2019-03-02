@@ -42,7 +42,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'tinyrpc'
-copyright = u'2013 - 2018, Marc Brinkmann'
+copyright = u'2013 - 2019, Marc Brinkmann, Leo Noordergraaf'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -92,12 +92,19 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+#html_theme = 'default'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #html_theme_options = {}
+html_theme_options = {
+    'prev_next_buttons_location': 'both',
+    'collapse_navigation': True,
+    'sticky_navigation': True,
+    'navigation_depth': 4
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -185,7 +192,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'tinyrpc.tex', u'tinyrpc Documentation',
-   u'Marc Brinkmann', 'manual'),
+   u'Marc Brinkmann, Leo Noordergraaf', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -215,7 +222,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'tinyrpc', u'tinyrpc Documentation',
-     [u'Marc Brinkmann'], 1)
+     [u'Marc Brinkmann, Leo Noordergraaf'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -229,7 +236,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'tinyrpc', u'tinyrpc Documentation',
-   u'Marc Brinkmann', 'tinyrpc', 'One line description of project.',
+   u'Marc Brinkmann, Leo Noordergraaf', 'tinyrpc', 'One line description of project.',
    'Miscellaneous'),
 ]
 

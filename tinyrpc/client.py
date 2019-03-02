@@ -89,7 +89,7 @@ class RPCClient(object):
         In that case the RPC calls defined by ``requests`` is performed in
         parallel otherwise the methods are called sequentially.
 
-        :param requests: A listof either RPCCall or RPCCallTo elements.
+        :param requests: A listof either :py:class:`~tinyrpc.client.RPCCall` or :py:class:`~tinyrpc.client.RPCCallTo` elements.
                          When RPCCallTo is used each element defines a transport.
                          Otherwise the default transport set when RPCClient is
                          created is used.

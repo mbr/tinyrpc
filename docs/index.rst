@@ -25,8 +25,6 @@ Table of contents
     transports
     client
     server
-    exceptions
-    modules/modules
 
 Installation
 ------------
