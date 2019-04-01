@@ -314,9 +314,9 @@ class JSONRPCRequest(RPCRequest):
     def __init__(self):
         self.one_way = False
         """Request or Notification.
-        
+
         :type: bool
-        
+
         This flag indicates if the client expects to receive a reply (request: ``one_way = False``)
         or not (notification: ``one_way = True``).
 

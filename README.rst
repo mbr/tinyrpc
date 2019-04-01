@@ -6,24 +6,15 @@ tinyrpc: A small and modular way of handling web-related RPC
 .. image:: https://travis-ci.org/mbr/tinyrpc.svg?branch=master
     :target: https://travis-ci.org/mbr/tinyrpc
 
-.. note::
+Note
+----
 
-    Tinyrpc is being revised.
+Tinyrpc has been revised.
 
-    The current version will enter maintenance mode.
-    I will keep it alive until Python2 is discontinued.
-    It can be installed from pip using its version number
-    e.g. ``pip install tinyrpc==0.9.3``.
-
-    The main line of development will start with version 1.0.0.
-    It will not try to remain compatible with the 0.9.x version.
-    It will support Python3 only.
-
-    Main goals for version 1.0.0 are:
-
-    - good Python3 support.
-    - restructure the code to eliminate unnecessary dependencies.
-    - rework and extend the documentation with more examples.
+The current version will support Python3 only.
+Have a look at the 0.9.x version if you need Python2 support.
+Python2 support will be dropped completely when Python2 retires,
+somewhere in 2020.
 
 Motivation
 ----------
@@ -32,16 +23,65 @@ As of this writing (in Jan 2013) there are a few jsonrpc_ libraries already out
 there on PyPI_, most of them handling one specific use case (e.g. json via
 WSGI, using Twisted, or TCP-sockets).
 
-None of the libraries, however, made it easy to reuse the jsonrpc_-parsing bits
+None of the libraries, however, makes it easy to reuse the jsonrpc_-parsing bits
 and substitute a different transport (i.e. going from json_ via TCP_ to an
 implementation using WebSockets_ or 0mq_).
 
 In the end, all these libraries have their own dispatching interfaces and a
-custom implementation of handling jsonrpc_.
+custom implementation of handling jsonrpc_.  Today (march 2019) that hasn't changed.
 
 ``tinyrpc`` aims to do better by dividing the problem into cleanly
 interchangeable parts that allow easy addition of new transport methods, RPC
 protocols or dispatchers.
+
+Example:
+
+To create a server process receiving and handling JSONRPC requests do:
+
+.. code-block:: python
+
+    import gevent
+    import gevent.wsgi
+    import gevent.queue
+    from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
+    from tinyrpc.transports.wsgi import WsgiServerTransport
+    from tinyrpc.server.gevent import RPCServerGreenlets
+    from tinyrpc.dispatch import RPCDispatcher
+
+    dispatcher = RPCDispatcher()
+    transport = WsgiServerTransport(queue_class=gevent.queue.Queue)
+
+    # start wsgi server as a background-greenlet
+    wsgi_server = gevent.wsgi.WSGIServer(('127.0.0.1', 5000), transport.handle)
+    gevent.spawn(wsgi_server.serve_forever)
+
+    rpc_server = RPCServerGreenlets(transport, JSONRPCProtocol(), dispatcher)
+
+    @dispatcher.public
+    def reverse_string(s):
+        return s[::-1]
+
+    # in the main greenlet, run our rpc_server
+    rpc_server.serve_forever()
+
+The corresponding client code looks like:
+
+.. code-block:: python
+
+    from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
+    from tinyrpc.transports.http import HttpPostClientTransport
+    from tinyrpc import RPCClient
+
+    rpc_client = RPCClient(
+        JSONRPCProtocol(),
+        HttpPostClientTransport('http://127.0.0.1:5000/'))
+
+    remote_server = rpc_client.get_proxy()
+
+    # call a method called 'reverse_string' with a single string argument
+    result = remote_server.reverse_string('Hello, World!')
+
+    print "Server answered:", result
 
 Documentation
 -------------
