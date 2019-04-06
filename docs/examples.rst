@@ -28,14 +28,14 @@ installed):
    # call a method called 'reverse_string' with a single string argument
    result = str_server.reverse_string('Simple is better.')
 
-    print "Server answered:", result
+   print("Server answered:", result)
 
 This call can be answered by a server implemented as follows:
 
 .. code-block:: python
 
    import gevent
-   import gevent.wsgi
+   import gevent.pywsgi
    import gevent.queue
 
    from tinyrpc.server.gevent import RPCServerGreenlets
@@ -47,7 +47,7 @@ This call can be answered by a server implemented as follows:
    transport = WsgiServerTransport(queue_class=gevent.queue.Queue)
 
    # start wsgi server as a background-greenlet
-   wsgi_server = gevent.wsgi.WSGIServer(('127.0.0.1', 80), transport.handle)
+   wsgi_server = gevent.pywsgi.WSGIServer(('127.0.0.1', 80), transport.handle)
    gevent.spawn(wsgi_server.serve_forever)
 
    rpc_server = RPCServerGreenlets(
@@ -90,7 +90,7 @@ instantiation of the transport:
   # call a method called 'reverse_string' with a single string argument
   result = str_server.reverse_string('Hello, World!')
 
-  print "Server answered:", result
+  print("Server answered:", result)
 
 
 Matching server:
