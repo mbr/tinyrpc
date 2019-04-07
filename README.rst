@@ -41,7 +41,7 @@ To create a server process receiving and handling JSONRPC requests do:
 .. code-block:: python
 
     import gevent
-    import gevent.wsgi
+    import gevent.pywsgi
     import gevent.queue
     from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
     from tinyrpc.transports.wsgi import WsgiServerTransport
@@ -52,7 +52,7 @@ To create a server process receiving and handling JSONRPC requests do:
     transport = WsgiServerTransport(queue_class=gevent.queue.Queue)
 
     # start wsgi server as a background-greenlet
-    wsgi_server = gevent.wsgi.WSGIServer(('127.0.0.1', 5000), transport.handle)
+    wsgi_server = gevent.pywsgi.WSGIServer(('127.0.0.1', 5000), transport.handle)
     gevent.spawn(wsgi_server.serve_forever)
 
     rpc_server = RPCServerGreenlets(transport, JSONRPCProtocol(), dispatcher)
@@ -81,7 +81,7 @@ The corresponding client code looks like:
     # call a method called 'reverse_string' with a single string argument
     result = remote_server.reverse_string('Hello, World!')
 
-    print "Server answered:", result
+    print("Server answered:", result)
 
 Documentation
 -------------
