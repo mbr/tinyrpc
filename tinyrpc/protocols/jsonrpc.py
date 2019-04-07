@@ -164,11 +164,17 @@ class JSONRPCError(FixedErrorMessageMixin, RPCError):
     """
 
     def __init__(self, error):
-        super(JSONRPCError, self).__init__()
-        self.message = error['message']
-        self._jsonrpc_error_code = error['code']
-        if 'data' in error:
-            self.data = error['data']
+        if isinstance(error, JSONRPCErrorResponse):
+            super(JSONRPCError, self).__init__(error.error)
+            self._jsonrpc_error_code = error._jsonrpc_error_code
+            if hasattr(error, 'data'):
+                self.data = error.data
+        else:
+            super(JSONRPCError, self).__init__()
+            self.message = error['message']
+            self._jsonrpc_error_code = error['code']
+            if 'data' in error:
+                self.data = error['data']
 
 
 class JSONRPCSuccessResponse(RPCResponse):
@@ -658,7 +664,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
             The exception object will contain ``message``, ``code`` and optionally a
             ``data`` property.
         """
-        exc = JSONRPCError(error.error)
+        exc = JSONRPCError(error)
         if self.raises_errors:
-            raise ex
-        raise exc
+            raise exc
+        return exc
