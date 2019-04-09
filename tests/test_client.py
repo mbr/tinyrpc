@@ -124,7 +124,12 @@ def test_client_raises_error_replies(
 
     if not one_way_setting:
         client.call(method_name, method_args, method_kwargs, one_way_setting)
-        mock_protocol.raise_error.assert_called_with('foo')
+        assert mock_protocol.raise_error.call_args is not None
+        args, kwargs = mock_protocol.raise_error.call_args
+        assert isinstance(args[0], RPCErrorResponse)
+        assert args[0].error == 'foo'
+        print(mock_protocol.mock_calls)
+#        mock_protocol.raise_error.assert_called_with('foo')
 
 
 def test_client_raises_indirect_error_replies(
