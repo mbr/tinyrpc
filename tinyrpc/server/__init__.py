@@ -95,7 +95,7 @@ class RPCServer(object):
             except tinyrpc.exc.RPCError as e:
                 response = e.error_respond()
             else:
-                response = self.dispatcher.dispatch(request)
+                response = self.dispatcher.dispatch(request, getattr(self.protocol, '_caller', None))
 
             # send reply
             if response is not None:

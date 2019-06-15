@@ -247,7 +247,38 @@ def test_argument_error(dispatch, invoke_with):
     mock_request.args = args
     mock_request.kwargs = kwargs
     mock_request.method = method
-    dispatch._dispatch(mock_request)
+    dispatch._dispatch(mock_request, getattr(protocol, '_caller', None))
+    if inspect.isclass(result) and issubclass(result, Exception):
+        assert type(mock_request.error_respond.call_args[0][0]) == result
+    else:
+        mock_request.respond.assert_called_with(result)
+
+def test_bound_method_argument_error(dispatch, invoke_with):
+    method, args, kwargs, result = invoke_with
+
+    protocol = JSONRPCProtocol()
+
+    class Test:
+        c = 0
+        @public
+        def fn_a(self, a, b):
+            return a-b+self.c
+
+        @public
+        def fn_b(self, *a):
+            return a[0]-a[1]+self.c
+
+        @public
+        def fn_c(self, **a):
+            return a['a']-a['b']+self.c
+
+    test=Test()
+    dispatch.register_instance(test)
+    mock_request = Mock(RPCRequest)
+    mock_request.args = args
+    mock_request.kwargs = kwargs
+    mock_request.method = method
+    dispatch._dispatch(mock_request, getattr(protocol, '_caller', None))
     if inspect.isclass(result) and issubclass(result, Exception):
         assert type(mock_request.error_respond.call_args[0][0]) == result
     else:
@@ -262,3 +293,13 @@ def test_call_argument_validation(dispatch):
         dispatch.validate_parameters(f, [1], {})
     dispatch.validate_parameters(dir, [], {})
     # should skip validation, will produce error otherwise
+
+def test_bound_method_validation(dispatch):
+    class Test:
+        def f(self, a, b):
+            return a+b
+    inst = Test()
+
+    dispatch.validate_parameters(inst.f, [1, 2], {})
+    with pytest.raises(InvalidParamsError):
+        dispatch.validate_parameters(inst.f, [1], {})

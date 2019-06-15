@@ -668,3 +668,8 @@ class JSONRPCProtocol(RPCBatchProtocol):
         if self.raises_errors:
             raise exc
         return exc
+
+    def _caller(self, method, args, kwargs):
+        # Custom dispatcher called by RPCDispatcher._dispatch().
+        # Override this when you need to call the method with additional parameters for example.
+        return method(*args, **kwargs)

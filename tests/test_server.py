@@ -43,10 +43,10 @@ def dispatcher(response):
 def test_handle_message(transport, protocol, dispatcher):
     server = RPCServer(transport, protocol, dispatcher)
     server.receive_one_message()
-    
+
     transport.receive_message.assert_called()
     protocol.parse_request.assert_called_with(RECMSG)
-    dispatcher.dispatch.assert_called_with(PARMSG)
+    dispatcher.dispatch.assert_called_with(PARMSG, None)
     dispatcher.dispatch().serialize.assert_called()
     transport.send_reply.assert_called_with(CONTEXT, SERMSG)
 
@@ -57,4 +57,3 @@ def test_handle_message_callback(transport, protocol, dispatcher):
 
     assert server.trace.call_args_list == [call('-->', CONTEXT, RECMSG), call('<--', CONTEXT, SERMSG)]
     server.trace.assert_called()
-    

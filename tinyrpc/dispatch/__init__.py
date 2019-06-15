@@ -174,7 +174,7 @@ class RPCDispatcher(object):
         # add to dispatchers
         self.add_subdispatch(dispatch, prefix)
 
-    def dispatch(self, request):
+    def dispatch(self, request, caller=None):
         """Fully handle request.
 
         The dispatch method determines which method to call, calls it and
@@ -186,7 +186,7 @@ class RPCDispatcher(object):
         If a method isn't found, a :py:exc:`~tinyrpc.exc.MethodNotFoundError`
         response will be returned. If any error occurs outside of the requested
         method, a :py:exc:`~tinyrpc.exc.ServerError` without any error
-        information will be returend.
+        information will be returned.
 
         If the method is found and called but throws an exception, the
         exception thrown is used as a response instead. This is the only case
@@ -199,6 +199,8 @@ class RPCDispatcher(object):
 
         :param request: The request containing the function to be called and its parameters.
         :type request: ~tinyrpc.protocols.RPCRequest
+        :param caller: An optional callable used to invoke the method.
+        :type caller: callable
         :return: The result produced by calling the requested function.
         :rtype: ~tinyrpc.protocols.RPCResponse
         :raises ~exc.MethodNotFoundError: If the requested function is not published.
@@ -210,7 +212,7 @@ class RPCDispatcher(object):
             raised by the called function itself or :py:exc:`~tinyrpc.exc.MethodNotFoundError`.
         """
         if hasattr(request, 'create_batch_response'):
-            results = [self._dispatch(req) for req in request]
+            results = [self._dispatch(req, caller) for req in request]
 
             response = request.create_batch_response()
             if response is not None:
@@ -218,9 +220,9 @@ class RPCDispatcher(object):
 
             return response
         else:
-            return self._dispatch(request)
+            return self._dispatch(request, caller)
 
-    def _dispatch(self, request):
+    def _dispatch(self, request, caller):
         try:
             method = self.get_method(request.method)
         except exc.MethodNotFoundError as e:
@@ -233,7 +235,10 @@ class RPCDispatcher(object):
         try:
             if self.validator is not None:
                 self.validator(method, request.args, request.kwargs)
-            result = method(*request.args, **request.kwargs)
+            if caller is not None:
+                result = caller(method, request.args, request.kwargs)
+            else:
+                result = method(*request.args, **request.kwargs)
         except Exception as e:
             # an error occurred within the method, return it
             return request.error_respond(e)
