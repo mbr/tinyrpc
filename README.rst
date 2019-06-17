@@ -6,7 +6,7 @@ tinyrpc: A small and modular way of handling web-related RPC
 .. image:: https://travis-ci.org/mbr/tinyrpc.svg?branch=master
     :target: https://travis-ci.org/mbr/tinyrpc
 .. image:: https://badge.fury.io/py/tinyrpc.svg
-    :target: https://badge.fury.io/py/tinyrpc
+    :target: https://pypi.org/project/tinyrpc/
 
 Note
 ----
