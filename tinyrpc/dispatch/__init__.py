@@ -37,13 +37,13 @@ def public(name=None):
                 # ...
 
             @public('do_something')
-            def visible_method(arg1):
+            def visible_method(self, arg1):
                 # ...
 
         baz = Baz()
         dispatch = RPCDispatcher()
         dispatch.register_instance(baz, 'bazzies`)
-        # Baz.visible_method is now callable via RPC as bazzies.do_something
+        # Baz.visible_method is now callable via RPC as bazzies.do_something('hello')
 
     ``@public`` is a shortcut for ``@public()``.
     """

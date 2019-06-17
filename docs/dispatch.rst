@@ -55,7 +55,7 @@ Using prefixes and instance registration:
 
 The code above declares an RPC interface for ``SomeWebsite`` objects,
 consisting of two visible methods: ``get_user_info(user)`` and
-``get_user_comment(commend_id)``.
+``get_user_comment(comment_id)``.
 
 These can be used with a dispatcher now:
 
