@@ -109,6 +109,40 @@ available with :py:func:`~tinyrpc.dispatch.RPCDispatcher.dispatch`:
    # response can be directly processed back to the client, all Exceptions have
    # been handled already
 
+Class, static and unbound method dispatching
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Although you will only rarely use these method types they *do* work and here we show you how.
+
+Class methods do not have `self` as the initial parameter but rather a reference to their class.
+You may want to use such methods to instantiate class instances.
+
+.. code-block:: python
+
+    class ShowClassMethod:
+        @classmethod
+        @public
+        def func(cls, a, b):
+            return a-b
+
+Note the ordering of the decorators.
+Ordering them differently will not work.
+You call dispatch to the `func` method just as you would dispatch to any other method.
+
+Static methods have neither a class nor instance reference as first parameter:
+
+.. code-block:: python
+
+    class ShowStaticMethod:
+        @staticmethod
+        @public
+        def func(a, b):
+            return a-b
+
+Again the ordering of the decorators is critical and you dispatch them as any other method.
+
+Finally it is possible to dispatch to unbound methods but I strongly advise against it.
+If you really want to do that see the tests to learn how. Everyone else should use static methods instead.
 
 API reference
 -------------
