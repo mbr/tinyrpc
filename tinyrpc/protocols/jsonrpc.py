@@ -182,7 +182,7 @@ class JSONRPCSuccessResponse(RPCResponse):
 
     Contains the fields of a normal (i.e. a non-error) response message.
 
-    .. py:attribute:: id
+    .. py:attribute:: unique_id
 
         Correlation ID to match request and response.
         A JSON RPC response *must* have a defined matching id attribute.
@@ -220,7 +220,7 @@ class JSONRPCErrorResponse(RPCErrorResponse):
 
     Contains the fields of an error response message.
 
-    .. py:attribute:: id
+    .. py:attribute:: unique_id
 
         Correlation ID to match request and response.
         ``None`` is a valid ID when the error cannot be matched to a particular request.
