@@ -63,7 +63,7 @@ class RPCDispatcher(object):
             name = f.__name__
 
         if name in self.method_map:
-            raise RPCError('Name %s already registered')
+            raise RPCError('Name \'{}\' already registered'.format(name))
 
         self.method_map[name] = f
 
