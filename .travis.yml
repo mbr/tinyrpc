@@ -1,8 +1,15 @@
 language: python
 
 python:
-  - "2.7"
-  - "3.4"
+  - 3.4
+#  - 3.5 Mock doesn't support assert_called in this version
+  - 3.6
+
+matrix:
+    include:
+        - python: 3.7
+          dist: xenial
+          sudo: true
 
 install:
   - pip install tox-travis

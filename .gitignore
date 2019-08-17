@@ -1,6 +1,13 @@
 .cache
 .tox
+.idea
 __pycache__
 *.pyc
 *egg-info
 docs/_build
+.coverage
+.pytest_cache
+_env
+build/
+dist/
+htmlcov/

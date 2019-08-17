@@ -12,12 +12,13 @@ from tinyrpc.protocols.jsonrpc import JSONRPCParseError, \
                                       JSONRPCInvalidRequestError, \
                                       JSONRPCMethodNotFoundError, \
                                       JSONRPCInvalidParamsError, \
-                                      JSONRPCInternalError
+                                      JSONRPCInternalError,\
+                                      JSONRPCErrorResponse
 
 
 def _json_equal(a, b):
-    da = json.loads(a)
-    db = json.loads(b)
+    da = json.loads(a.decode() if isinstance(a, bytes) else a)
+    db = json.loads(b.decode() if isinstance(b, bytes) else b)
 
     return da == db
 
@@ -130,6 +131,8 @@ def test_proper_construction_of_error_codes(prot, exc, code, message):
            "id": "1"}"""
     )
     reply = exc().error_respond().serialize()
+    assert isinstance(reply, bytes)
+    reply = reply.decode()
 
     err = json.loads(reply)
 
@@ -141,6 +144,8 @@ def test_notification_yields_None_response(prot):
     data = """{"jsonrpc": "2.0", "method": "update", "params": [1,2,3,4,5]}"""
 
     req = prot.parse_request(data)
+
+    assert req.one_way == True
 
     # updates should never cause retries
     assert req.respond(True) == None
@@ -215,7 +220,7 @@ def test_out_of_order(prot):
 
 
 def test_request_generation(prot):
-    jdata = json.loads(prot.create_request('subtract', [42, 23]).serialize())
+    jdata = json.loads(prot.create_request('subtract', [42, 23]).serialize().decode())
 
     assert jdata['method'] == 'subtract'
     assert jdata['params'] == [42, 23]
@@ -476,7 +481,11 @@ def test_can_get_custom_error_messages_out(prot):
 
     response = request.error_respond(e)
 
-    data = json.loads(response.serialize())
+    jstr = response.serialize()
+    assert isinstance(jstr, bytes)
+    jstr = jstr.decode()
+
+    data = json.loads(jstr)
 
     assert data['error']['message'] == custom_msg
 
@@ -495,20 +504,35 @@ def test_missing_jsonrpc_version_on_reply(prot):
 
 def test_pass_error_data_with_standard_exception(prot):
     request = prot.create_request('foo')
-    
+
     custom_msg = 'join the army, they said. see the world, they said.'
     data = {'pi': 3.14, 'lst': ['a', 'b', 'c']}
-    
-    e = Exception(custom_msg, data)
-    
-    response = request.error_respond(e)
 
-    decoded = json.loads(response.serialize())
+    e = Exception(custom_msg, data)
+
+    response = request.error_respond(e)
+    jmsg = response.serialize()
+    assert isinstance(jmsg, bytes)
+    jmsg = jmsg.decode()
+
+    decoded = json.loads(jmsg)
+    print("decoded=", decoded)
     assert decoded['error']['code'] == -32000
     assert decoded['error']['message'] == custom_msg
     assert decoded['error']['data'] == data
 
+    # on the client side, when reply is parsed
+    parsed_reply = prot.parse_reply(jmsg)
+    serialized_reply = parsed_reply.serialize().decode("utf-8")
+    decoded_reply = json.loads(serialized_reply)
+    print("decoded_reply=", decoded_reply)
+    assert isinstance(parsed_reply, JSONRPCErrorResponse)
+    assert hasattr(parsed_reply, "data")
+    assert serialized_reply == jmsg
+    assert decoded_reply == decoded
+
 def test_pass_error_data_with_custom_exception(prot):
+    # type: (JSONRPCProtocol) -> None
     request = prot.create_request('foo')
 
     data = {'pi': 3.14, 'lst': ['a', 'b', 'c']}
@@ -516,8 +540,23 @@ def test_pass_error_data_with_custom_exception(prot):
     e = JSONRPCParseError(data=data)
 
     response = request.error_respond(e)
+    jmsg = response.serialize()
+    assert isinstance(jmsg, bytes)
+    jmsg = jmsg.decode()
 
-    decoded = json.loads(response.serialize())
+    decoded = json.loads(jmsg)
+    print("decoded=", decoded)
     assert decoded['error']['code'] == -32700
     assert decoded['error']['message'] == JSONRPCParseError.message
     assert decoded['error']['data'] == data
+
+    # on the client side, when reply is parsed
+    parsed_reply = prot.parse_reply(jmsg)
+    serialized_reply = parsed_reply.serialize().decode("utf-8")
+    decoded_reply = json.loads(serialized_reply)
+    print("decoded_reply=", decoded_reply)
+    assert isinstance(parsed_reply, JSONRPCErrorResponse)
+    assert hasattr(parsed_reply, "data")
+    assert serialized_reply == jmsg
+    assert decoded_reply == decoded
+

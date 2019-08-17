@@ -10,7 +10,16 @@ Clients needs to be instantiated with a protocol and a transport to function.
 Proxies are syntactic sugar for using clients.
 
 .. autoclass:: tinyrpc.client.RPCClient
-   :members:
+    :members:
+    :show-inheritance:
+    :noindex:
 
 .. autoclass:: tinyrpc.client.RPCProxy
-   :members:
+    :members:
+    :show-inheritance:
+    :noindex:
+
+.. automodule:: tinyrpc.client
+    :members: RPCCall, RPCCallTo
+    :show-inheritance:
+    :noindex:

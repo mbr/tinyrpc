@@ -210,14 +210,15 @@ def test_dispatch_raises_key_error(dispatch):
 
 @pytest.fixture(params=[
     ('fn_a', [4, 6], {}, -2),
-    ('fn_a', [4], {}, JSONRPCInvalidParamsError),
+    ('fn_a', [4], {}, InvalidParamsError),
+    # InvalidParamsError instead of JSONRPCInvalidParamsError due to mocking
     ('fn_a', [], {'a':4, 'b':6}, -2),
     ('fn_a', [4], {'b':6}, -2),
     ('fn_b', [4, 6], {}, -2),
-    ('fn_b', [], {'a':4, 'b':6}, JSONRPCInvalidParamsError),
+    ('fn_b', [], {'a':4, 'b':6}, InvalidParamsError),
     ('fn_b', [4], {}, IndexError),
     # a[1] doesn't exist, can't be detected beforehand
-    ('fn_c', [4, 6], {}, JSONRPCInvalidParamsError),
+    ('fn_c', [4, 6], {}, InvalidParamsError),
     ('fn_c', [], {'a':4, 'b':6}, -2),
     ('fn_c', [], {'a':4}, KeyError)
     # a['b'] doesn't exist, can't be detected beforehand
@@ -251,3 +252,184 @@ def test_argument_error(dispatch, invoke_with):
         assert type(mock_request.error_respond.call_args[0][0]) == result
     else:
         mock_request.respond.assert_called_with(result)
+
+def test_call_argument_validation(dispatch):
+    def f(a,b):
+        return a+b
+
+    dispatch.validate_parameters(f, [1, 2], {})
+    with pytest.raises(InvalidParamsError):
+        dispatch.validate_parameters(f, [1], {})
+    dispatch.validate_parameters(dir, [], {})
+    # should skip validation, will produce error otherwise
+
+def test_bound_method_argument_error(dispatch, invoke_with):
+    method, args, kwargs, result = invoke_with
+
+    protocol = JSONRPCProtocol()
+
+    class Test:
+        c = 0
+        @public
+        def fn_a(self, a, b):
+            return a-b+self.c
+
+        @public
+        def fn_b(self, *a):
+            return a[0]-a[1]+self.c
+
+        @public
+        def fn_c(self, **a):
+            return a['a']-a['b']+self.c
+
+    test=Test()
+    dispatch.register_instance(test)
+    mock_request = Mock(RPCRequest)
+    mock_request.args = args
+    mock_request.kwargs = kwargs
+    mock_request.method = method
+    dispatch._dispatch(mock_request, getattr(protocol, '_caller', None))
+    if inspect.isclass(result) and issubclass(result, Exception):
+        assert type(mock_request.error_respond.call_args[0][0]) == result
+    else:
+        mock_request.respond.assert_called_with(result)
+
+def test_bound_method_validation(dispatch):
+    class Test:
+        def f(self, a, b):
+            return a+b
+    inst = Test()
+
+    dispatch.validate_parameters(inst.f, [1, 2], {})
+    with pytest.raises(InvalidParamsError):
+        dispatch.validate_parameters(inst.f, [1], {})
+
+def test_unbound_method_argument_error(dispatch, invoke_with):
+    method, args, kwargs, result = invoke_with
+
+    protocol = JSONRPCProtocol()
+
+    class Test:
+        c = 0
+        @public
+        def fn_a(a, b):
+            return a-b
+
+        @public
+        def fn_b(*a):
+            return a[0]-a[1]
+
+        @public
+        def fn_c(**a):
+            return a['a']-a['b']
+
+    dispatch.register_instance(Test)
+    mock_request = Mock(RPCRequest)
+    mock_request.args = args
+    mock_request.kwargs = kwargs
+    mock_request.method = method
+    dispatch._dispatch(mock_request, getattr(protocol, '_caller', None))
+    if inspect.isclass(result) and issubclass(result, Exception):
+        assert type(mock_request.error_respond.call_args[0][0]) == result
+    else:
+        mock_request.respond.assert_called_with(result)
+
+def test_unbound_method_validation(dispatch):
+    class Test:
+        def f(a, b):
+            return a+b
+
+    dispatch.validate_parameters(Test.f, [1, 2], {})
+    with pytest.raises(InvalidParamsError):
+        dispatch.validate_parameters(Test.f, [1], {})
+
+def test_static_method_argument_error(dispatch, invoke_with):
+    method, args, kwargs, result = invoke_with
+
+    protocol = JSONRPCProtocol()
+
+    class Test:
+        c = 0
+        @staticmethod
+        @public
+        def fn_a(a, b):
+            return a-b
+
+        @staticmethod
+        @public
+        def fn_b(*a):
+            return a[0]-a[1]
+
+        @staticmethod
+        @public
+        def fn_c(**a):
+            return a['a']-a['b']
+
+    test=Test()
+    dispatch.register_instance(test)
+    mock_request = Mock(RPCRequest)
+    mock_request.args = args
+    mock_request.kwargs = kwargs
+    mock_request.method = method
+    dispatch._dispatch(mock_request, getattr(protocol, '_caller', None))
+    if inspect.isclass(result) and issubclass(result, Exception):
+        assert type(mock_request.error_respond.call_args[0][0]) == result
+    else:
+        mock_request.respond.assert_called_with(result)
+
+def test_static_method_validation(dispatch):
+    class Test:
+        @staticmethod
+        def f(a, b):
+            return a+b
+    inst = Test()
+
+    dispatch.validate_parameters(inst.f, [1, 2], {})
+    with pytest.raises(InvalidParamsError):
+        dispatch.validate_parameters(inst.f, [1], {})
+
+def test_class_method_argument_error(dispatch, invoke_with):
+    method, args, kwargs, result = invoke_with
+
+    protocol = JSONRPCProtocol()
+
+    class Test:
+        c = 0
+        @classmethod
+        @public
+        def fn_a(cls, a, b):
+            return a-b-cls.c
+
+        @classmethod
+        @public
+        def fn_b(cls, *a):
+            return a[0]-a[1]-cls.c
+
+        @classmethod
+        @public
+        def fn_c(cls, **a):
+            return a['a']-a['b']-cls.c
+
+    test=Test()
+    dispatch.register_instance(test)
+    mock_request = Mock(RPCRequest)
+    mock_request.args = args
+    mock_request.kwargs = kwargs
+    mock_request.method = method
+    dispatch._dispatch(mock_request, getattr(protocol, '_caller', None))
+    if inspect.isclass(result) and issubclass(result, Exception):
+        assert type(mock_request.error_respond.call_args[0][0]) == result
+    else:
+        mock_request.respond.assert_called_with(result)
+
+def test_class_method_validation(dispatch):
+    class Test:
+        @classmethod
+        def f(cls, a, b):
+            return a+b
+    inst = Test()
+
+    dispatch.validate_parameters(inst.f, [1, 2], {})
+    with pytest.raises(InvalidParamsError):
+        dispatch.validate_parameters(inst.f, [1], {})
+

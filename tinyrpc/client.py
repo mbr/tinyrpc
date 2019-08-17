@@ -5,6 +5,7 @@ import sys
 from collections import namedtuple
 
 from .exc import RPCError
+from .protocols import RPCErrorResponse
 
 RPCCall = namedtuple('RPCCall', 'method args kwargs')
 """Defines the elements of a RPC call.
@@ -34,11 +35,13 @@ class RPCClient(object):
         self.protocol = protocol
         self.transport = transport
 
-    def _send_and_handle_reply(self, req, one_way, transport=None, no_exception=False):
+    def _send_and_handle_reply(
+            self, req, one_way, transport=None, no_exception=None
+    ):
         tport = self.transport if transport is None else transport
 
         # sends ...
-        reply = tport.send_message(req.serialize().encode('utf-8'))
+        reply = tport.send_message(req.serialize())
 
         if one_way:
             # ... and be done
@@ -47,9 +50,14 @@ class RPCClient(object):
         # ... or process the reply
         response = self.protocol.parse_reply(reply)
 
-        if not no_exception and hasattr(response, 'error'):
-            raise RPCError('Error calling remote procedure: %s' %\
-                           response.error)
+        if not no_exception and isinstance(response, RPCErrorResponse):
+            if hasattr(self.protocol, 'raise_error') and callable(
+                    self.protocol.raise_error):
+                response = self.protocol.raise_error(response)
+            else:
+                raise RPCError(
+                    'Error calling remote procedure: %s' % response.error
+                )
 
         return response
 
@@ -81,7 +89,7 @@ class RPCClient(object):
         In that case the RPC calls defined by ``requests`` is performed in
         parallel otherwise the methods are called sequentially.
 
-        :param requests: A listof either RPCCall or RPCCallTo elements.
+        :param requests: A listof either :py:class:`~tinyrpc.client.RPCCall` or :py:class:`~tinyrpc.client.RPCCallTo` elements.
                          When RPCCallTo is used each element defines a transport.
                          Otherwise the default transport set when RPCClient is
                          created is used.
@@ -95,7 +103,11 @@ class RPCClient(object):
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs)
                 tr = r.transport.transport if len(r) == 4 else None
-                threads.append(gevent.spawn(self._send_and_handle_reply, req, False, tr, True))
+                threads.append(
+                    gevent.spawn(
+                        self._send_and_handle_reply, req, False, tr, True
+                    )
+                )
             gevent.joinall(threads)
             return [t.value for t in threads]
         else:
@@ -103,7 +115,9 @@ class RPCClient(object):
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs)
                 tr = r.transport.transport if len(r) == 4 else None
-                threads.append(self._send_and_handle_reply(req, False, tr, True))
+                threads.append(
+                    self._send_and_handle_reply(req, False, tr, True)
+                )
             return threads
 
     def get_proxy(self, prefix='', one_way=False):
@@ -146,9 +160,6 @@ class RPCProxy(object):
         name ``name`` on the client associated with the proxy.
         """
         proxy_func = lambda *args, **kwargs: self.client.call(
-                         self.prefix + name,
-                         args,
-                         kwargs,
-                         one_way=self.one_way
-                     )
+            self.prefix + name, args, kwargs, one_way=self.one_way
+        )
         return proxy_func
