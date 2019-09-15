@@ -12,6 +12,7 @@ Tinyrpc will detect the presence of jsonext and use it automatically.
 
 import json
 import sys
+from typing import Dict, Any, Union, Optional, List, Tuple, Callable
 
 from .. import (
     RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,
@@ -90,15 +91,14 @@ class FixedErrorMessageMixin(object):
 
     .. _error codes: https://www.jsonrpc.org/specification#error_object
     """
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         if not args:
             args = [self.message]
         if 'data' in kwargs:
             self.data = kwargs.pop('data')
         super(FixedErrorMessageMixin, self).__init__(*args, **kwargs)
 
-    def error_respond(self):
+    def error_respond(self) -> 'JSONRPCErrorResponse':
         """Converts the error to an error response object.
 
         :return: An error response object ready to be serialized and sent to the client.
@@ -162,8 +162,9 @@ class JSONRPCError(FixedErrorMessageMixin, RPCError):
         * message (str): the error description.
         * data (any): if present, the data attribute of the error
     """
-
-    def __init__(self, error):
+    def __init__(
+            self, error: Union['JSONRPCErrorResponse', Dict[str, Any]]
+    ) -> None:
         if isinstance(error, JSONRPCErrorResponse):
             super(JSONRPCError, self).__init__(error.error)
             self._jsonrpc_error_code = error._jsonrpc_error_code
@@ -178,7 +179,7 @@ class JSONRPCError(FixedErrorMessageMixin, RPCError):
 
 
 class JSONRPCSuccessResponse(RPCResponse):
-    """Collects the attributes of a succesful response message.
+    """Collects the attributes of a successful response message.
 
     Contains the fields of a normal (i.e. a non-error) response message.
 
@@ -196,7 +197,6 @@ class JSONRPCSuccessResponse(RPCResponse):
 
         :type: Any type that can be serialized by the protocol.
     """
-
     def _to_dict(self):
         return {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
@@ -204,7 +204,7 @@ class JSONRPCSuccessResponse(RPCResponse):
             'result': self.result
         }
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         """Returns a serialization of the response.
 
         Converts the response into a bytes object that can be passed to and by the transport layer.
@@ -256,7 +256,6 @@ class JSONRPCErrorResponse(RPCErrorResponse):
 
     .. _standard: https://www.jsonrpc.org/specification#error_object
     """
-
     def _to_dict(self):
         msg = {
             'jsonrpc': JSONRPCProtocol.JSON_RPC_VERSION,
@@ -270,7 +269,7 @@ class JSONRPCErrorResponse(RPCErrorResponse):
             msg['error']['data'] = self.data
         return msg
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         """Returns a serialization of the error.
 
         Converts the response into a bytes object that can be passed to and by the transport layer.
@@ -281,7 +280,8 @@ class JSONRPCErrorResponse(RPCErrorResponse):
         return json_dumps(self._to_dict()).encode()
 
 
-def _get_code_message_and_data(error):
+def _get_code_message_and_data(error: Union[Exception, str]
+                               ) -> Tuple[int, str, Any]:
     assert isinstance(error, (Exception, str))
     data = None
     if isinstance(error, Exception):
@@ -317,7 +317,9 @@ def _get_code_message_and_data(error):
 
 
 class JSONRPCRequest(RPCRequest):
+    """Defines a JSON RPC request."""
     def __init__(self):
+        super().__init__()
         self.one_way = False
         """Request or Notification.
 
@@ -368,17 +370,17 @@ class JSONRPCRequest(RPCRequest):
         The contents of this dict are the keyword parameters for the :py:attr:`method` called.
         It is eventually called as ``method(**kwargs)``.
         """
-
-    def error_respond(self, error):
+    def error_respond(self, error: Union[Exception, str]
+                      ) -> Optional['JSONRPCErrorResponse']:
         """Create an error response to this request.
 
         When processing the request produces an error condition this method can be used to
         create the error response object.
 
         :param error: Specifies what error occurred.
-        :type error: str or Exception
+        :type error: Exception or str
         :returns: An error response object that can be serialized and sent to the client.
-        :rtype: :py:class:`JSONRPCErrorResponse`
+        :rtype: ;py:class:`JSONRPCErrorResponse`
         """
         if self.unique_id is None:
             return None
@@ -394,7 +396,7 @@ class JSONRPCRequest(RPCRequest):
             response.data = data
         return response
 
-    def respond(self, result):
+    def respond(self, result: Any) -> Optional['JSONRPCSuccessResponse']:
         """Create a response to this request.
 
         When processing the request completed successfully this method can be used to
@@ -429,7 +431,7 @@ class JSONRPCRequest(RPCRequest):
             jdata['id'] = self.unique_id
         return jdata
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         """Returns a serialization of the request.
 
         Converts the request into a bytes object that can be sent to the server.
@@ -441,7 +443,13 @@ class JSONRPCRequest(RPCRequest):
 
 
 class JSONRPCBatchRequest(RPCBatchRequest):
-    def create_batch_response(self):
+    """Defines a JSON RPC batch request."""
+    def create_batch_response(self) -> Optional['JSONRPCBatchResponse']:
+        """Produces a batch response object if a response is expected.
+
+        :return: A batch response if needed
+        :rtype: :py:class:`JSONRPCBatchResponse`
+        """
         if self._expects_response():
             return JSONRPCBatchResponse()
 
@@ -449,20 +457,41 @@ class JSONRPCBatchRequest(RPCBatchRequest):
         for request in self:
             if isinstance(request, Exception):
                 return True
-            if not request.one_way and request.unique_id != None:
+            if not request.one_way and request.unique_id is not None:
                 return True
 
         return False
 
-    def serialize(self):
+    def serialize(self) -> bytes:
+        """Returns a serialization of the request.
+
+        Converts the request into a bytes object that can be passed to and by the transport layer.
+
+        :return: A bytes object to be passed on to a transport.
+        :rtype: bytes
+        """
         return json_dumps([req._to_dict() for req in self]).encode()
 
 
 class JSONRPCBatchResponse(RPCBatchResponse):
-    def serialize(self):
-        return json_dumps([resp._to_dict()
-                           for resp in self
-                           if resp != None]).encode()
+    """Multiple responses from a batch request. See
+    :py:class:`JSONRPCBatchRequest` on how to handle.
+
+    Items in a batch response need to be
+    :py:class:`JSONRPCResponse` instances or None, meaning no reply should be
+    generated for the request.
+    """
+    def serialize(self) -> bytes:
+        """Returns a serialization of the batch response.
+
+        Converts the response into a bytes object that can be passed to and by the transport layer.
+
+        :return: A bytes object to be passed on to a transport.
+        :rtype: bytes
+        """
+        return json_dumps([
+            resp._to_dict() for resp in self if resp is not None
+        ]).encode()
 
 
 class JSONRPCProtocol(RPCBatchProtocol):
@@ -474,15 +503,15 @@ class JSONRPCProtocol(RPCBatchProtocol):
     _ALLOWED_REPLY_KEYS = sorted(['id', 'jsonrpc', 'error', 'result'])
     _ALLOWED_REQUEST_KEYS = sorted(['id', 'jsonrpc', 'method', 'params'])
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super(JSONRPCProtocol, self).__init__(*args, **kwargs)
         self._id_counter = 0
 
-    def _get_unique_id(self):
+    def _get_unique_id(self) -> int:
         self._id_counter += 1
         return self._id_counter
 
-    def request_factory(self):
+    def request_factory(self) -> 'JSONRPCRequest':
         """Factory for request objects.
 
         Allows derived classes to use requests derived from :py:class:`JSONRPCRequest`.
@@ -491,10 +520,28 @@ class JSONRPCProtocol(RPCBatchProtocol):
         """
         return JSONRPCRequest()
 
-    def create_batch_request(self, requests=None):
+    def create_batch_request(
+            self,
+            requests: Union['JSONRPCRequest', List['JSONRPCRequest']] = None
+    ) -> 'JSONRPCBatchRequest':
+        """Create a new :py:class:`JSONRPCBatchRequest` object.
+
+        Called by the client when constructing a request.
+
+        :param requests: A list of requests.
+        :type requests: :py:class:`list` or :py:class:`JSONRPCRequest`
+        :return: A new request instance.
+        :rtype: :py:class:`JSONRPCBatchRequest`
+        """
         return JSONRPCBatchRequest(requests or [])
 
-    def create_request(self, method, args=None, kwargs=None, one_way=False):
+    def create_request(
+            self,
+            method: str,
+            args: List[Any] = None,
+            kwargs: Dict[str, Any] = None,
+            one_way: bool = False
+    ) -> 'JSONRPCRequest':
         """Creates a new :py:class:`JSONRPCRequest` object.
 
         Called by the client when constructing a request.
@@ -504,7 +551,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
         :param list args: The positional arguments to call the method with.
         :param dict kwargs: The keyword arguments to call the method with.
         :param bool one_way: The request is an update, i.e. it does not expect a reply.
-        :return: A new request instance.
+        :return: A new request instance
         :rtype: :py:class:`JSONRPCRequest`
         :raises InvalidRequestError: when ``args`` and ``kwargs`` are both defined.
         """
@@ -526,8 +573,10 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
         return request
 
-    def parse_reply(self, data):
-        """Deserializes and validates a response.
+    def parse_reply(
+            self, data: bytes
+    ) -> Union['JSONRPCSuccessResponse', 'JSONRPCErrorResponse']:
+        """De-serializes and validates a response.
 
         Called by the client to reconstruct the serialized :py:class:`JSONRPCResponse`.
 
@@ -547,7 +596,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
             raise InvalidReplyError(e)
 
         for k in rep.keys():
-            if not k in self._ALLOWED_REPLY_KEYS:
+            if k not in self._ALLOWED_REPLY_KEYS:
                 raise InvalidReplyError('Key not allowed: %s' % k)
 
         if 'jsonrpc' not in rep:
@@ -579,8 +628,9 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
         return response
 
-    def parse_request(self, data):
-        """Deserializes and validates a request.
+    def parse_request(self, data: bytes
+                      ) -> Union['JSONRPCRequest', 'JSONRPCBatchRequest']:
+        """De-serializes and validates a request.
 
         Called by the server to reconstruct the serialized :py:class:`JSONRPCRequest`.
 
@@ -621,7 +671,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
             raise JSONRPCInvalidRequestError()
 
         for k in req.keys():
-            if not k in self._ALLOWED_REQUEST_KEYS:
+            if k not in self._ALLOWED_REQUEST_KEYS:
                 raise JSONRPCInvalidRequestError()
 
         if req.get('jsonrpc', None) != self.JSON_RPC_VERSION:
@@ -648,7 +698,9 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
         return request
 
-    def raise_error(self, error):
+    def raise_error(
+            self, error: Union['JSONRPCErrorResponse', Dict[str, Any]]
+    ) -> 'JSONRPCError':
         """Recreates the exception.
 
         Creates a :py:class:`~tinyrpc.protocols.jsonrpc.JSONRPCError` instance
@@ -656,7 +708,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
         This allows the error, message and data attributes of the original
         exception to propagate into the client code.
 
-        The :py:attr:`~tinyrpc.protocols.RPCProtocol.raises_error` flag controls if the exception obejct is
+        The :py:attr:`~tinyrpc.protocols.RPCProtocol.raises_error` flag controls if the exception object is
         raised or returned.
 
         :returns: the exception object if it is not allowed to raise it.
@@ -669,7 +721,9 @@ class JSONRPCProtocol(RPCBatchProtocol):
             raise exc
         return exc
 
-    def _caller(self, method, args, kwargs):
+    def _caller(
+            self, method: Callable, args: List[Any], kwargs: Dict[str, Any]
+    ) -> Any:
         # Custom dispatcher called by RPCDispatcher._dispatch().
         # Override this when you need to call the method with additional parameters for example.
         return method(*args, **kwargs)

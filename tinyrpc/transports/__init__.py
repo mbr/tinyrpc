@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from typing import Any, Tuple
 
 
 class ServerTransport(object):
@@ -10,8 +11,7 @@ class ServerTransport(object):
     exchanged between client and server using the :py:class:`ServerTransport`
     and :py:class:`ClientTransport` classes.
     """
-
-    def receive_message(self):
+    def receive_message(self) -> Tuple[Any, bytes]:
         """Receive a message from the transport.
 
         Blocks until a message has been received.
@@ -34,7 +34,7 @@ class ServerTransport(object):
         """
         raise NotImplementedError()
 
-    def send_reply(self, context, reply):
+    def send_reply(self, context: Any, reply: bytes) -> None:
         """Sends a reply to a client.
 
         The client is usually identified by passing ``context`` as returned
@@ -56,8 +56,7 @@ class ClientTransport(object):
     Requests and replies encoded by the protocol component are
     exchanged between client and server using the :py:class:`ServerTransport`
     and :py:class:`ClientTransport` classes.    """
-
-    def send_message(self, message, expect_reply=True):
+    def send_message(self, message: bytes, expect_reply: bool = True) -> bytes:
         """Send a message to the server and possibly receive a reply.
 
         Sends a message to the connected server.

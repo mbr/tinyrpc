@@ -3,9 +3,8 @@
 
 import os
 import sys
-import json
-import cgi
 import urllib.parse as urlparse
+from typing import Any, Tuple
 
 from . import ServerTransport
 
@@ -22,8 +21,7 @@ class CGIServerTransport(ServerTransport):
     A POST request provides the entire JSON-RPC request in the body of the HTTP
     request.
     """
-
-    def receive_message(self):
+    def receive_message(self) -> Tuple[Any, bytes]:
         """Receive a message from the transport.
 
         Blocks until a message has been received. May return a context
@@ -45,7 +43,7 @@ class CGIServerTransport(ServerTransport):
         # context isn't used with cgi
         return None, request_json
 
-    def send_reply(self, context, reply):
+    def send_reply(self, context: Any, reply: bytes) -> None:
         """Sends a reply to a client.
 
         The client is usually identified by passing ``context`` as returned

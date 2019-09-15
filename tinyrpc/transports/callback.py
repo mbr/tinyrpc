@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
+from typing import Callable, Tuple, Any
 
 from . import ServerTransport
 
@@ -26,13 +26,14 @@ class CallbackServerTransport(ServerTransport):
 
         :param bytes reply: The response to the request.
     """
-
-    def __init__(self, reader, writer):
+    def __init__(
+            self, reader: Callable[[], bytes], writer: Callable[[bytes], None]
+    ) -> None:
         super(CallbackServerTransport, self).__init__()
         self.reader = reader
         self.writer = writer
 
-    def receive_message(self):
+    def receive_message(self) -> Tuple[Any, bytes]:
         """Receive a message from the transport.
 
         Uses the callback function :py:attr:`reader` to obtain a :py:class:`bytes` ``message``.
@@ -43,7 +44,7 @@ class CallbackServerTransport(ServerTransport):
         """
         return None, self.reader()
 
-    def send_reply(self, context, reply):
+    def send_reply(self, context: Any, reply: bytes):
         """Sends a reply to a client.
 
         The client is usually identified by passing ``context`` as returned

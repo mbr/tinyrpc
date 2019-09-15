@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import  # needed for zmq import
+
+from typing import Tuple, Any
+
 import zmq
 
 from . import ServerTransport, ClientTransport
@@ -14,18 +17,18 @@ class ZmqServerTransport(ServerTransport):
                    endpoint.
     """
 
-    def __init__(self, socket):
+    def __init__(self, socket: zmq.Socket) -> None:
         self.socket = socket
 
-    def receive_message(self):
+    def receive_message(self) -> Tuple[Any, bytes]:
         msg = self.socket.recv_multipart()
         return msg[:-1], msg[-1]
 
-    def send_reply(self, context, reply):
+    def send_reply(self, context: Any, reply: bytes) -> None:
         self.socket.send_multipart(context + [reply])
 
     @classmethod
-    def create(cls, zmq_context, endpoint):
+    def create(cls, zmq_context: zmq.Context, endpoint: str) -> 'ZmqServerTransport':
         """Create new server transport.
 
         Instead of creating the socket yourself, you can call this function and
@@ -49,17 +52,17 @@ class ZmqClientTransport(ClientTransport):
                    server socket.
     """
 
-    def __init__(self, socket):
+    def __init__(self, socket: zmq.Socket) -> None:
         self.socket = socket
 
-    def send_message(self, message, expect_reply=True):
+    def send_message(self, message: bytes, expect_reply: bool = True) -> bytes:
         self.socket.send(message)
 
         if expect_reply:
             return self.socket.recv()
 
     @classmethod
-    def create(cls, zmq_context, endpoint):
+    def create(cls, zmq_context: zmq.Context, endpoint: str) -> 'ZmqClientTransport':
         """Create new client transport.
 
         Instead of creating the socket yourself, you can call this function and

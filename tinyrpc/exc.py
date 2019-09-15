@@ -1,44 +1,46 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from abc import ABC
 
-class RPCError(Exception):
-    """Base class for all excetions thrown by :py:mod:`tinyrpc`."""
 
+class RPCError(Exception, ABC):
+    """Base class for all exceptions thrown by :py:mod:`tinyrpc`."""
     def error_respond(self):
+        """Converts the error to an error response object.
+
+        :returns: An error response instance or ``None`` if the protocol decides to drop the error silently.
+        :rtype: :py:class:`~tinyrpc.protocols.RPCErrorResponse`
+        """
         raise NotImplementedError()
 
-class BadRequestError(RPCError):
+
+class BadRequestError(RPCError, ABC):
     """Base class for all errors that caused the processing of a request to
     abort before a request object could be instantiated."""
 
-    def error_respond(self):
-        """Create :py:class:`~tinyrpc.RPCErrorResponse` to respond the error.
 
-        :return: A error responce instance or ``None``, if the protocol decides
-                 to drop the error silently."""
-        raise RuntimeError('Not implemented')
-
-
-class BadReplyError(RPCError):
+class BadReplyError(RPCError, ABC):
     """Base class for all errors that caused processing of a reply to abort
     before it could be turned in a response object."""
 
 
-class InvalidRequestError(BadRequestError):
+class InvalidRequestError(BadRequestError, ABC):
     """A request made was malformed (i.e. violated the specification) and could
     not be parsed."""
 
 
-class InvalidReplyError(BadReplyError):
+class InvalidReplyError(BadReplyError, ABC):
     """A reply received was malformed (i.e. violated the specification) and
     could not be parsed into a response."""
 
 
-class MethodNotFoundError(RPCError):
+class MethodNotFoundError(RPCError, ABC):
     """The desired method was not found."""
 
-class InvalidParamsError(RPCError):
+
+class InvalidParamsError(RPCError, ABC):
     """The provided parameters do not match those of the desired method."""
 
-class ServerError(RPCError):
-    """An internal error in the RPC system occured."""
+
+class ServerError(RPCError, ABC):
+    """An internal error in the RPC system occurred."""

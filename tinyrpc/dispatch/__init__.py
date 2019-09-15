@@ -10,43 +10,45 @@ to the caller.
 """
 
 import inspect
+from typing import Callable, Any, Dict, List, Union
 
+from tinyrpc import RPCRequest, RPCResponse, RPCBatchRequest, RPCBatchResponse
 from .. import exc
 
 
-def public(name=None):
+def public(name: str = None) -> Callable:
+    # noinspection SpellCheckingInspection
     """Decorator. Mark a method as eligible for registration by a dispatcher.
 
-    The dispatchers :py:func:`~tinyrpc.dispatch.RPCDispatcher.register_instance` function
-    will do the actual registration of the marked method.
+        The dispatchers :py:func:`~tinyrpc.dispatch.RPCDispatcher.register_instance` function
+        will do the actual registration of the marked method.
 
-    The difference with :py:func:`~tinyrpc.dispatch.RPCDispatcher.public` is that this decorator does
-    not register with a dispatcher, therefore binding the marked methods with a dispatcher is delayed
-    until runtime.
-    It also becomes possible to bind with multiple dispatchers.
+        The difference with :py:func:`~tinyrpc.dispatch.RPCDispatcher.public` is that this decorator does
+        not register with a dispatcher, therefore binding the marked methods with a dispatcher is delayed
+        until runtime.
+        It also becomes possible to bind with multiple dispatchers.
 
-    :param name: The name to register the function with.
-    :type name: str or None
+        :param name: The name to register the function with.
 
-    Example:
+        Example:
 
-    .. code-block:: python
+        .. code-block:: python
 
-        def class Baz(object):
-            def not_exposed(self);
-                # ...
+            def class Baz(object):
+                def not_exposed(self);
+                    # ...
 
-            @public('do_something')
-            def visible_method(self, arg1):
-                # ...
+                @public('do_something')
+                def visible_method(self, arg1):
+                    # ...
 
-        baz = Baz()
-        dispatch = RPCDispatcher()
-        dispatch.register_instance(baz, 'bazzies`)
-        # Baz.visible_method is now callable via RPC as bazzies.do_something('hello')
+            baz = Baz()
+            dispatch = RPCDispatcher()
+            dispatch.register_instance(baz, 'bazzies`)
+            # Baz.visible_method is now callable via RPC as bazzies.do_something('hello')
 
-    ``@public`` is a shortcut for ``@public()``.
-    """
+        ``@public`` is a shortcut for ``@public()``.
+        """
     if callable(name):
         f = name
         f._rpc_public_name = f.__name__
@@ -61,12 +63,11 @@ def public(name=None):
 
 class RPCDispatcher(object):
     """Stores name-to-method mappings."""
-
-    def __init__(self):
+    def __init__(self) -> None:
         self.method_map = {}
         self.subdispatchers = {}
 
-    def public(self, name=None):
+    def public(self, name: str = None) -> Callable:
         """Convenient decorator.
 
         Allows easy registering of functions to this dispatcher. Example:
@@ -99,7 +100,7 @@ class RPCDispatcher(object):
 
         return _
 
-    def add_subdispatch(self, dispatcher, prefix=''):
+    def add_subdispatch(self, dispatcher: 'RPCDispatcher', prefix: str = ''):
         """Adds a subdispatcher, possibly in its own namespace.
 
         :param dispatcher: The dispatcher to add as a subdispatcher.
@@ -109,7 +110,7 @@ class RPCDispatcher(object):
         """
         self.subdispatchers.setdefault(prefix, []).append(dispatcher)
 
-    def add_method(self, f, name=None):
+    def add_method(self, f: Callable, name: str = None) -> None:
         """Add a method to the dispatcher.
 
         :param f: Callable to be added.
@@ -129,7 +130,7 @@ class RPCDispatcher(object):
 
         self.method_map[name] = f
 
-    def get_method(self, name):
+    def get_method(self, name: str) -> Callable:
         """Retrieve a previously registered method.
 
         Checks if a method matching ``name`` has been registered.
@@ -155,7 +156,7 @@ class RPCDispatcher(object):
 
         raise exc.MethodNotFoundError(name)
 
-    def register_instance(self, obj, prefix=''):
+    def register_instance(self, obj: object, prefix: str = '') -> None:
         """Create new subdispatcher and register all public object methods on
         it.
 
@@ -166,7 +167,7 @@ class RPCDispatcher(object):
         :type obj: object
         :param str prefix: A prefix for the new subdispatcher.
         """
-        dispatch = self.__class__()
+        dispatch = self.__class__()  # type: 'RPCDispatcher'
         for name, f in inspect.getmembers(
                 obj, lambda f: callable(f) and hasattr(f, '_rpc_public_name')):
             dispatch.add_method(f, f._rpc_public_name)
@@ -174,7 +175,11 @@ class RPCDispatcher(object):
         # add to dispatchers
         self.add_subdispatch(dispatch, prefix)
 
-    def dispatch(self, request, caller=None):
+    def dispatch(
+            self,
+            request: Union[RPCRequest, RPCBatchRequest],
+            caller: Callable = None
+    ) -> Union[RPCResponse, RPCBatchResponse]:
         """Fully handle request.
 
         The dispatch method determines which method to call, calls it and
@@ -198,11 +203,11 @@ class RPCDispatcher(object):
         :py:class:`~tinyrpc.RPCBatchResponse` with the results.
 
         :param request: The request containing the function to be called and its parameters.
-        :type request: ~tinyrpc.protocols.RPCRequest
+        :type request: ~tinyrpc.protocols.RPCRequest or ~tinyrpc.protocols.RPCBatchRequest
         :param caller: An optional callable used to invoke the method.
         :type caller: callable
         :return: The result produced by calling the requested function.
-        :rtype: ~tinyrpc.protocols.RPCResponse
+        :rtype: ~tinyrpc.protocols.RPCResponse or ~tinyrpc.protocols.RPCBatchResponse
         :raises ~exc.MethodNotFoundError: If the requested function is not published.
         :raises ~exc.ServerError: If some other error occurred.
 
@@ -246,8 +251,17 @@ class RPCDispatcher(object):
         # respond with result
         return request.respond(result)
 
-    def validate_parameters(self, method, args, kwargs):
+    @staticmethod
+    def validate_parameters(
+            method: Callable, args: List[Any], kwargs: Dict[str, Any]
+    ) -> None:
         """Verify that `*args` and `**kwargs` are appropriate parameters for `method`.
+
+        .. Warning::
+
+            This function has changed to a static function.
+            This will make it easier to replace it with a regular function instead of having to
+            subclass only to replace it.
 
         :param method: A callable.
         :param args: List of positional arguments for `method`
@@ -262,7 +276,7 @@ class RPCDispatcher(object):
                 raise exc.InvalidParamsError()
 
     validator = validate_parameters
-    """Dispatched function parameter validatation.
+    """Dispatched function parameter validation.
 
     :type: callable
     
@@ -271,4 +285,3 @@ class RPCDispatcher(object):
     as :py:func:`validate_parameters` or to `None` to disable validation
     entirely.
     """
-

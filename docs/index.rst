@@ -25,6 +25,7 @@ Table of contents
     transports
     client
     server
+    exceptions
 
 Installation
 ------------

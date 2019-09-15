@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import queue as Queue
+from typing import Tuple, Any
 
 from werkzeug.wrappers import Response, Request
 
@@ -13,7 +14,7 @@ class WsgiServerTransport(ServerTransport):
 
     Requires :py:mod:`werkzeug`.
 
-    Due to the nature of WSGI, this transport has a few pecularities: It must
+    Due to the nature of WSGI, this transport has a few peculiarities: It must
     be run in a thread, greenlet or some other form of concurrent execution
     primitive.
 
@@ -32,17 +33,21 @@ class WsgiServerTransport(ServerTransport):
     :param allow_origin: The ``Access-Control-Allow-Origin`` header. Defaults
                          to ``*`` (so change it if you need actual security).
     """
-    def __init__(self, max_content_length=4096, queue_class=Queue.Queue,
-                       allow_origin='*'):
+    def __init__(
+            self,
+            max_content_length: int = 4096,
+            queue_class: Queue.Queue = Queue.Queue,
+            allow_origin: str = '*'
+    ):
         self._queue_class = queue_class
         self.messages = queue_class()
         self.max_content_length = max_content_length
         self.allow_origin = allow_origin
 
-    def receive_message(self):
+    def receive_message(self) -> Tuple[Any, bytes]:
         return self.messages.get()
 
-    def send_reply(self, context, reply):
+    def send_reply(self, context: Any, reply: bytes):
         context.put(reply)
 
     def handle(self, environ, start_response):
@@ -59,10 +64,12 @@ class WsgiServerTransport(ServerTransport):
         request.max_content_length = self.max_content_length
 
         access_control_headers = {
-            'Access-Control-Allow-Methods': 'POST',
-            'Access-Control-Allow-Origin': self.allow_origin,
-            'Access-Control-Allow-Headers': \
-                'Content-Type, X-Requested-With, Accept, Origin'
+            'Access-Control-Allow-Methods':
+            'POST',
+            'Access-Control-Allow-Origin':
+            self.allow_origin,
+            'Access-Control-Allow-Headers':
+            'Content-Type, X-Requested-With, Accept, Origin'
         }
 
         if request.method == 'OPTIONS':

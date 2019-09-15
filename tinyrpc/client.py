@@ -3,12 +3,14 @@
 
 import sys
 from collections import namedtuple
+from typing import List, Any, Dict, Callable, Optional
 
+from .transports import ClientTransport
 from .exc import RPCError
-from .protocols import RPCErrorResponse
+from .protocols import RPCErrorResponse, RPCProtocol, RPCRequest, RPCResponse, RPCBatchResponse
 
 RPCCall = namedtuple('RPCCall', 'method args kwargs')
-"""Defines the elements of a RPC call.
+"""Defines the elements of an RPC call.
 
 RPCCall is used with :py:meth:`~tinyrpc.client.RPCClient.call_all`
 to provide the list of requests to be processed. Each request contains the
@@ -27,17 +29,23 @@ class RPCClient(object):
     """Client for making RPC calls to connected servers.
 
     :param protocol: An :py:class:`~tinyrpc.RPCProtocol` instance.
-    :param transport: A :py:class:`~tinyrpc.transports.ClientTransport`
-                      instance.
+    :type protocol: RPCProtocol
+    :param transport: The data transport mechanism
+    :type transport: ClientTransport
     """
-
-    def __init__(self, protocol, transport):
+    def __init__(
+            self, protocol: RPCProtocol, transport: ClientTransport
+    ) -> None:
         self.protocol = protocol
         self.transport = transport
 
     def _send_and_handle_reply(
-            self, req, one_way, transport=None, no_exception=None
-    ):
+            self,
+            req: RPCRequest,
+            one_way: bool = False,
+            transport: ClientTransport = None,
+            no_exception: bool = False
+    ) -> Optional[RPCResponse]:
         tport = self.transport if transport is None else transport
 
         # sends ...
@@ -61,16 +69,20 @@ class RPCClient(object):
 
         return response
 
-    def call(self, method, args, kwargs, one_way=False):
+    def call(
+            self, method: str, args: List, kwargs: Dict, one_way: bool = False
+    ) -> Any:
         """Calls the requested method and returns the result.
 
-        If an error occured, an :py:class:`~tinyrpc.exc.RPCError` instance
+        If an error occurred, an :py:class:`~tinyrpc.exc.RPCError` instance
         is raised.
 
-        :param method: Name of the method to call.
-        :param args: Arguments to pass to the method.
-        :param kwargs: Keyword arguments to pass to the method.
-        :param one_way: Whether or not a reply is desired.
+        :param str method: Name of the method to call.
+        :param list args: Arguments to pass to the method.
+        :param dict kwargs: Keyword arguments to pass to the method.
+        :param bool one_way: Whether or not a reply is desired.
+        :return: The result of the call
+        :rtype: any
         """
         req = self.protocol.create_request(method, args, kwargs, one_way)
 
@@ -81,15 +93,16 @@ class RPCClient(object):
 
         return rep.result
 
-    def call_all(self, requests):
+    def call_all(self, requests: List[RPCCall]) -> List[Any]:
         """Calls the methods in the request in parallel.
 
         When the :py:mod:`gevent` module is already loaded it is assumed to be
         correctly initialized, including monkey patching if necessary.
-        In that case the RPC calls defined by ``requests`` is performed in
+        In that case the RPC calls defined by ``requests`` are performed in
         parallel otherwise the methods are called sequentially.
 
-        :param requests: A listof either :py:class:`~tinyrpc.client.RPCCall` or :py:class:`~tinyrpc.client.RPCCallTo` elements.
+        :param requests: A list of either :py:class:`~tinyrpc.client.RPCCall` or :py:class:`~tinyrpc.client.RPCCallTo`
+                         elements.
                          When RPCCallTo is used each element defines a transport.
                          Otherwise the default transport set when RPCClient is
                          created is used.
@@ -120,15 +133,16 @@ class RPCClient(object):
                 )
             return threads
 
-    def get_proxy(self, prefix='', one_way=False):
+    def get_proxy(self, prefix: str = '', one_way: bool = False) -> 'RPCProxy':
         """Convenience method for creating a proxy.
 
         :param prefix: Passed on to :py:class:`~tinyrpc.client.RPCProxy`.
         :param one_way: Passed on to :py:class:`~tinyrpc.client.RPCProxy`.
-        :return: :py:class:`~tinyrpc.client.RPCProxy` instance."""
+        :return: :py:class:`~tinyrpc.client.RPCProxy` instance.
+        """
         return RPCProxy(self, prefix, one_way)
 
-    def batch_call(self, calls):
+    def batch_call(self, calls: List[RPCCallTo]) -> RPCBatchResponse:
         """Experimental, use at your own peril."""
         req = self.protocol.create_batch_request()
 
@@ -149,13 +163,14 @@ class RPCProxy(object):
     :param one_way: Passed to every call of
                     :py:func:`~tinyrpc.client.call`.
     """
-
-    def __init__(self, client, prefix='', one_way=False):
+    def __init__(
+            self, client: RPCClient, prefix: str = '', one_way: bool = False
+    ) -> None:
         self.client = client
         self.prefix = prefix
         self.one_way = one_way
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Callable:
         """Returns a proxy function that, when called, will call a function
         name ``name`` on the client associated with the proxy.
         """

@@ -4,14 +4,15 @@
 
 Defines the abstract base classes from which a protocol definition must be constructed.
 """
+from abc import ABC
+from typing import Any, List, Dict, Union, Optional
 
-from .. import exc
+from tinyrpc import exc
 
 
 class RPCRequest(object):
     """Defines a generic RPC request."""
-
-    def __init__(self):
+    def __init__(self) -> None:
         self.unique_id = None
         """Correlation ID used to match request and response.
         
@@ -57,24 +58,23 @@ class RPCRequest(object):
         The contents of this dict are the keyword parameters for the :py:attr:`method` called.
         It is eventually called as ``method(**kwargs)``.
         """
-
-    def error_respond(self, error):
+    def error_respond(self, error: Union[Exception, str]
+                      ) -> Optional['RPCErrorResponse']:
         """Creates an error response.
 
         Create a response indicating that the request was parsed correctly,
-        but an error has occured trying to fulfill it.
+        but an error has occurred trying to fulfill it.
 
         This is an abstract method that must be overridden in a derived class.
 
         :param error: An exception or a string describing the error.
         :type error: Exception or str
-
         :return: A response or ``None`` to indicate that no error should be sent out.
-        :rtype: :py:class:`RPCErrorResponse` or None
+        :rtype: :py:class:`RPCErrorResponse`
         """
         raise NotImplementedError()
 
-    def respond(self, result):
+    def respond(self, result: Any) -> Optional['RPCResponse']:
         """Create a response.
 
         Call this to return the result of a successful method invocation.
@@ -88,11 +88,11 @@ class RPCRequest(object):
         :type result: Any type that can be serialized by the protocol.
 
         :return: A response or ``None`` to indicate this request does not expect a response.
-        :rtype: :py:class:`RPCResponse` or None
+        :rtype: :py:class:`RPCResponse`
         """
         raise NotImplementedError()
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         """Returns a serialization of the request.
 
         Converts the request into a bytes object that can be passed to and by the transport layer.
@@ -118,18 +118,17 @@ class RPCBatchRequest(list):
     :py:class:`~tinyrpc.exc.BadRequestError`, which indicates that there has been
     an error in parsing the request.
     """
-
-    def create_batch_response(self):
+    def create_batch_response(self) -> Optional['RPCBatchResponse']:
         """Creates a response suitable for responding to this request.
 
         This is an abstract method that must be overridden in a derived class.
 
         :return: An :py:class:`RPCBatchResponse` or None if no response is expected.
-        :rtype: :py:class:`RPCBatchResponse` or None
+        :rtype: :py:class:`RPCBatchResponse`
         """
         raise NotImplementedError()
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         """Returns a serialization of the request.
 
         Converts the request into a bytes object that can be passed to and by the transport layer.
@@ -142,10 +141,10 @@ class RPCBatchRequest(list):
         raise NotImplementedError()
 
 
-class RPCResponse(object):
+class RPCResponse(ABC):
     """Defines a generic RPC response.
 
-    Base class for all deriving responses.
+    Base class for all responses.
 
     .. py:attribute:: id
 
@@ -167,15 +166,13 @@ class RPCResponse(object):
 
         :type: :py:class:`~tinyrpc.exc.RPCError`
     """
-
-    def __init__(self):
+    def __init__(self) -> None:
         self.unique_id = None
         """Correlation ID used to match request and response.
 
         :type: int or str or None
         """
-
-    def serialize(self):
+    def serialize(self) -> bytes:
         """Returns a serialization of the response.
 
         Converts the response into a bytes object that can be passed to and by the transport layer.
@@ -188,8 +185,8 @@ class RPCResponse(object):
         raise NotImplementedError()
 
 
-class RPCErrorResponse(RPCResponse):
-    """RPC error reponse class.
+class RPCErrorResponse(RPCResponse, ABC):
+    """RPC error response class.
 
     Base class for all deriving responses.
 
@@ -211,8 +208,7 @@ class RPCBatchResponse(list):
     :py:class:`RPCResponse` instances or None, meaning no reply should
     generated for the request.
     """
-
-    def serialize(self):
+    def serialize(self) -> bytes:
         """Returns a serialization of the batch response.
 
         Converts the response into a bytes object that can be passed to and by the transport layer.
@@ -225,7 +221,7 @@ class RPCBatchResponse(list):
         raise NotImplementedError()
 
 
-class RPCProtocol(object):
+class RPCProtocol(ABC):
     """Abstract base class for all protocol implementations."""
 
     supports_out_of_order = False
@@ -243,13 +239,18 @@ class RPCProtocol(object):
     """If True, this protocol instance will raise an RPCError exception.
 
     On receipt of an RPCErrorResponse instance an RPCError exception is raised.
-    When this flag is False the RPCErrorReponse object is returned to the caller
+    When this flag is False the RPCErrorResponse object is returned to the caller
     which is then responsible for handling the error.
     
     :type: bool
     """
-
-    def create_request(self, method, args=None, kwargs=None, one_way=False):
+    def create_request(
+            self,
+            method: str,
+            args: List[Any] = None,
+            kwargs: Dict[str, Any] = None,
+            one_way: bool = False
+    ) -> 'RPCRequest':
         """Creates a new :py:class:`RPCRequest` object.
 
         Called by the client when constructing a request.
@@ -260,13 +261,13 @@ class RPCProtocol(object):
         :param list args: The positional arguments to call the method with.
         :param dict kwargs: The keyword arguments to call the method with.
         :param bool one_way: The request is an update, i.e. it does not expect a reply.
-        :return: A new request instance.
+        :return: A new request instance
         :rtype: :py:class:`RPCRequest`
         """
         raise NotImplementedError()
 
-    def parse_request(self, data):
-        """Deserializes and validates a request.
+    def parse_request(self, data: bytes) -> 'RPCRequest':
+        """De-serializes and validates a request.
 
         Called by the server to reconstruct the serialized :py:class:`RPCRequest`.
 
@@ -277,8 +278,8 @@ class RPCProtocol(object):
         """
         raise NotImplementedError()
 
-    def parse_reply(self, data):
-        """Deserializes and validates a response.
+    def parse_reply(self, data: bytes) -> 'RPCResponse':
+        """De-serializes and validates a response.
 
         Called by the client to reconstruct the serialized :py:class:`RPCResponse`.
 
@@ -289,7 +290,7 @@ class RPCProtocol(object):
         """
         raise NotImplementedError()
 
-    def raise_error(self, error):
+    def raise_error(self, error: 'RPCErrorResponse') -> exc.RPCError:
         """Raises the exception in the client.
 
         Called by the client to convert the :py:class:`RPCErrorResponse` into an Exception
@@ -300,20 +301,25 @@ class RPCProtocol(object):
         :rtype: :py:exc:`~tinyrpc.exc.RPCError` when :py:attr:`raises_errors` is False.
         :raises: :py:exc:`~tinyrpc.exc.RPCError` when :py:attr:`raises_errors` is True.
         """
-        ex = exc.RPCError('Error calling remote procedure: %s' % error.error['message'])
+        ex = exc.RPCError(
+            'Error calling remote procedure: %s' % error.error['message']
+        )
         if self.raises_errors:
             raise ex
         return ex
 
 
-class RPCBatchProtocol(RPCProtocol):
-    def create_batch_request(self, requests=None):
+class RPCBatchProtocol(RPCProtocol, ABC):
+    """Abstract base class for all batch protocol implementations."""
+    def create_batch_request(
+            self, requests: List['RPCRequest'] = None
+    ) -> 'RPCBatchRequest':
         """Create a new :py:class:`RPCBatchRequest` object.
 
         Called by the client when constructing a request.
 
         :param requests: A list of requests.
-        :type requests: :py:class:`list` of :py:class:`RPCRequest`
+        :type requests: :py:class:`list` or :py:class:`RPCRequest`
         :return: A new request instance.
         :rtype: :py:class:`RPCBatchRequest`
         """

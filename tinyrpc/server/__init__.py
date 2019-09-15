@@ -7,7 +7,12 @@ Defines and implements a single-threaded, single-process, synchronous server.
 
 # FIXME: needs (more) unittests
 # FIXME: needs checks for out-of-order, concurrency, etc as attributes
+from typing import Any, Callable
+
 import tinyrpc.exc
+from tinyrpc import RPCProtocol
+from tinyrpc.dispatch import RPCDispatcher
+from tinyrpc.transports import ServerTransport
 
 
 class RPCServer(object):
@@ -52,14 +57,16 @@ class RPCServer(object):
     not the interpreted meaning of that data.
     It is therefore possible that the binary stream is unreadable without further translation.
     """
-
-    def __init__(self, transport, protocol, dispatcher):
+    def __init__(
+            self, transport: ServerTransport, protocol: RPCProtocol,
+            dispatcher: RPCDispatcher
+    ):
         self.transport = transport
         self.protocol = protocol
         self.dispatcher = dispatcher
         self.trace = None
 
-    def serve_forever(self):
+    def serve_forever(self) -> None:
         """Handle requests forever.
 
         Starts the server loop; continuously calling :py:meth:`receive_one_message`
@@ -68,7 +75,7 @@ class RPCServer(object):
         while True:
             self.receive_one_message()
 
-    def receive_one_message(self):
+    def receive_one_message(self) -> None:
         """Handle a single request.
 
         Polls the transport for a new message.
@@ -86,16 +93,19 @@ class RPCServer(object):
         if callable(self.trace):
             self.trace('-->', context, message)
 
-        # assuming protocol is threadsafe and dispatcher is theadsafe, as
+        # assuming protocol is thread-safe and dispatcher is thread-safe, as
         # long as its immutable
 
-        def handle_message(context, message):
+        def handle_message(context: Any, message: bytes) -> None:
+            """Parse, process and reply a single request."""
             try:
                 request = self.protocol.parse_request(message)
             except tinyrpc.exc.RPCError as e:
                 response = e.error_respond()
             else:
-                response = self.dispatcher.dispatch(request, getattr(self.protocol, '_caller', None))
+                response = self.dispatcher.dispatch(
+                    request, getattr(self.protocol, '_caller', None)
+                )
 
             # send reply
             if response is not None:
@@ -106,7 +116,7 @@ class RPCServer(object):
 
         self._spawn(handle_message, context, message)
 
-    def _spawn(self, func, *args, **kwargs):
+    def _spawn(self, func: Callable, *args, **kwargs):
         """Spawn a handler function.
 
         This function is overridden in subclasses to provide concurrency.
