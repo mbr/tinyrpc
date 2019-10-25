@@ -368,6 +368,23 @@ def test_jsonrpc_spec_v2_example6(prot):
     )
 
 
+def test_jsonrpc_spec_v2_example6_with_request_id(prot):
+    try:
+        prot.parse_request(
+            """{"jsonrpc": "2.0", "id": 42, "method": 1, "params": "bar"}""")
+        assert False  # parsing must fail
+    except JSONRPCInvalidRequestError as error:
+        e = error
+
+    response = e.error_respond()
+
+    assert _json_equal(
+            """{"jsonrpc": "2.0", "error": {"code": -32600, "message":
+            "Invalid Request"}, "id": 42}""",
+            response.serialize()
+    )
+
+
 def test_jsonrpc_spec_v2_example7(prot):
     try:
         prot.parse_request("""[
@@ -559,4 +576,3 @@ def test_pass_error_data_with_custom_exception(prot):
     assert hasattr(parsed_reply, "data")
     assert serialized_reply == jmsg
     assert decoded_reply == decoded
-
