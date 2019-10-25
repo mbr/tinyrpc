@@ -94,6 +94,7 @@ class FixedErrorMessageMixin(object):
     def __init__(self, *args, **kwargs) -> None:
         if not args:
             args = [self.message]
+        self.request_id = kwargs.pop('request_id', None)
         if 'data' in kwargs:
             self.data = kwargs.pop('data')
         super(FixedErrorMessageMixin, self).__init__(*args, **kwargs)
@@ -107,7 +108,7 @@ class FixedErrorMessageMixin(object):
         response = JSONRPCErrorResponse()
 
         response.error = self.message
-        response.unique_id = None
+        response.unique_id = self.request_id
         response._jsonrpc_error_code = self.jsonrpc_error_code
         if hasattr(self, 'data'):
             response.data = self.data
@@ -658,7 +659,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
                 except RPCError as e:
                     requests.append(e)
                 except Exception as e:
-                    requests.append(JSONRPCInvalidRequestError())
+                    requests.append(JSONRPCInvalidRequestError(request_id=subreq.get("id")))
 
             if not requests:
                 raise JSONRPCInvalidRequestError()
@@ -672,13 +673,13 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
         for k in req.keys():
             if k not in self._ALLOWED_REQUEST_KEYS:
-                raise JSONRPCInvalidRequestError()
+                raise JSONRPCInvalidRequestError(request_id=req.get("id"))
 
         if req.get('jsonrpc', None) != self.JSON_RPC_VERSION:
-            raise JSONRPCInvalidRequestError()
+            raise JSONRPCInvalidRequestError(request_id=req.get("id"))
 
         if not isinstance(req['method'], str):
-            raise JSONRPCInvalidRequestError()
+            raise JSONRPCInvalidRequestError(request_id=req.get("id"))
 
         request = self.request_factory()
 
@@ -694,7 +695,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
             elif isinstance(params, dict):
                 request.kwargs = req['params']
             else:
-                raise JSONRPCInvalidParamsError()
+                raise JSONRPCInvalidParamsError(request_id=req.get("id"))
 
         return request
 
