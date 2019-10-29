@@ -5,7 +5,7 @@ Example
 -------
 
 The following example shows how to use the
-:py:class:`~tinyrpc.protcols.jsonrpc.JSONRPCProtocol` class in a custom
+:py:class:`~tinyrpc.protocols.jsonrpc.JSONRPCProtocol` class in a custom
 application, without using any other components:
 
 Server
@@ -205,8 +205,8 @@ Adding custom exceptions
     application specific error codes.
 
 To add custom errors you need to combine an :py:class:`Exception` subclass
-with the :py:class:`FixedErrorMessageMixin` class to create your exception
-object which you can raise.
+with the :py:class:`~tinyrpc.protocols.jsonrpc.FixedErrorMessageMixin` class to
+create your exception object which you can raise.
 
 So a version of the reverse string example that dislikes palindromes could
 look like:
@@ -239,7 +239,7 @@ an optional ``data`` property. This property is now available for your use.
 
 There are two ways that you can use to pass additional data with an :py:class:`Exception`.
 It depends whether your application generates regular exceptions or exceptions derived
-from :py:class:`FixedErrorMessageMixin`.
+from :py:class:`~tinyrpc.protocols.jsonrpc.FixedErrorMessageMixin`.
 
 When using ordinary exceptions you normally pass a single parameter (an error message)
 to the :py:class:`Exception` constructor.
@@ -262,7 +262,7 @@ This will produce the reply message::
         }
     }
 
-When using :py:class:`FixedErrorMessageMixin` based exceptions the data is passed using
+When using :py:class:`~tinyrpc.protocols.jsonrpc.FixedErrorMessageMixin` based exceptions the data is passed using
 a keyword parameter.
 
 .. code-block:: python

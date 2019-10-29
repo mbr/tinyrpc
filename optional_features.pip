@@ -6,3 +6,5 @@ websocket-client
 gevent-websocket
 pyzmq
 jsonext
+msgpack
+

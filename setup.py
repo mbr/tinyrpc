@@ -25,6 +25,7 @@ setup(
     extras_require={
         'gevent': ['gevent'],
         'httpclient': ['requests', 'websocket-client', 'gevent-websocket'],
+        'msgpack': ['msgpack'],
         'websocket': ['gevent-websocket'],
         'wsgi': ['werkzeug'],
         'zmq': ['pyzmq'],
