@@ -54,6 +54,9 @@ Protocol exceptions
 -------------------
 Each protocol provides its own concrete implementations of these exceptions.
 
+JSON-RPC
+^^^^^^^^
+
 .. autoclass:: tinyrpc.protocols.jsonrpc.JSONRPCParseError
     :members:
     :show-inheritance:
@@ -93,6 +96,54 @@ Each protocol provides its own concrete implementations of these exceptions.
 This last exception is a client side exception designed to represent the server side error in the client.
 
 .. autoclass:: tinyrpc.protocols.jsonrpc.JSONRPCError
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+    :noindex:
+
+
+MSGPACK-RPC
+^^^^^^^^^^^
+
+.. autoclass:: tinyrpc.protocols.msgpackrpc.MSGPACKRPCParseError
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+    :noindex:
+
+.. autoclass:: tinyrpc.protocols.msgpackrpc.MSGPACKRPCInvalidRequestError
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+    :noindex:
+
+.. autoclass:: tinyrpc.protocols.msgpackrpc.MSGPACKRPCMethodNotFoundError
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+    :noindex:
+
+.. autoclass:: tinyrpc.protocols.msgpackrpc.MSGPACKRPCInvalidParamsError
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+    :noindex:
+
+.. autoclass:: tinyrpc.protocols.msgpackrpc.MSGPACKRPCInternalError
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+    :noindex:
+
+.. autoclass:: tinyrpc.protocols.msgpackrpc.MSGPACKRPCServerError
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+    :noindex:
+
+This last exception is a client side exception designed to represent the server side error in the client.
+
+.. autoclass:: tinyrpc.protocols.msgpackrpc.MSGPACKRPCError
     :members:
     :show-inheritance:
     :member-order: bysource

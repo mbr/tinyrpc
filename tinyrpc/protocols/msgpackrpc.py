@@ -126,7 +126,7 @@ def _get_code_and_message(error):
 
 
 class MSGPACKRPCRequest(RPCRequest):
-    """Defines a MSGPACK RPC request."""
+    """Defines a MSGPACK-RPC request."""
 
     def __init__(self):
         super().__init__()
@@ -263,12 +263,13 @@ class MSGPACKRPCProtocol(RPCProtocol):
         """Creates a new :py:class:`MSGPACKRPCRequest` object.
 
         Called by the client when constructing a request.
-        MSGPACK RPC allows only the ``args`` argument to be set; keyword
+        MSGPACK-RPC allows only the ``args`` argument to be set; keyword
         arguments are not supported.
 
         :param str method: The method name to invoke.
         :param list args: The positional arguments to call the method with.
-        :param dict kwargs: The keyword arguments to call the method with.
+        :param dict kwargs: The keyword arguments to call the method with; must
+            be ``None`` as the protocol does not support keyword arguments.
         :param bool one_way: The request is an update, i.e. it does not expect a reply.
         :return: A new request instance
         :rtype: :py:class:`MSGPACKRPCRequest`

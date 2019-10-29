@@ -7,7 +7,7 @@ In ``tinyrpc`` all components (transport, protocol and dispatcher) that together
 RPC service are independently replacable.
 
 Although its initial scope is handling jsonrpc_ it is easy to add further protocols or
-add additional transports.
+add additional transports (one such example is msgpackrpc_, which is now fully supported).
 If so desired it is even possible to replace the default method dispatcher.
 
 
@@ -22,6 +22,7 @@ Table of contents
     dispatch
     protocols
     jsonrpc
+    msgpackrpc
     transports
     client
     server
@@ -59,6 +60,8 @@ Available extras are:
 | httpclient | HttpPostClientTransport, HttpWebSocketClientTransport |
 +------------+-------------------------------------------------------+
 | jsonext    | optional in JSONRPCProtocol                           |
++------------+-------------------------------------------------------+
+| msgpack    | required by MSGPACKRPCProtocol                        |
 +------------+-------------------------------------------------------+
 | websocket  | WSServerTransport, HttpWebSocketClientTransport       |
 +------------+-------------------------------------------------------+
@@ -104,6 +107,7 @@ Maintainer
     I then volunteered to become its maintainer.
 
 .. _jsonrpc: http://jsonrpc.org
+.. _msgpackrpc: https://github.com/msgpack-rpc/msgpack-rpc/blob/master/spec.md
 .. _PyPI: http://pypi.python.org
 .. _json: http://www.json.org/
 .. _TCP: http://en.wikipedia.org/wiki/Transmission_Control_Protocol
