@@ -124,6 +124,8 @@ Available extras are:
 +------------+-------------------------------------------------------+
 | httpclient | HttpPostClientTransport, HttpWebSocketClientTransport |
 +------------+-------------------------------------------------------+
+| msgpack    | implements MSGPACKRPCProtocol                         |
++------------+-------------------------------------------------------+
 | jsonext    | optional in JSONRPCProtocol                           |
 +------------+-------------------------------------------------------+
 | websocket  | WSServerTransport                                     |
@@ -132,6 +134,12 @@ Available extras are:
 +------------+-------------------------------------------------------+
 | zmq        | ZmqServerTransport, ZmqClientTransport                |
 +------------+-------------------------------------------------------+
+
+New in:
+-------
+
+.. versionadded:: 1.0.4
+    The MSGPACK RPC protocol.
 
 .. _jsonrpc: http://www.jsonrpc.org/
 .. _PyPI: http://pypi.python.org
