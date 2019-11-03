@@ -135,11 +135,11 @@ Available extras are:
 | zmq        | ZmqServerTransport, ZmqClientTransport                |
 +------------+-------------------------------------------------------+
 
-New in:
--------
+New in version 1.0.4
+--------------------
 
-.. versionadded:: 1.0.4
-    The MSGPACK RPC protocol.
+Tinyrpc now supports the MSGPACK RPC protocol in addition to JSON-RPC.
+
 
 .. _jsonrpc: http://www.jsonrpc.org/
 .. _PyPI: http://pypi.python.org
