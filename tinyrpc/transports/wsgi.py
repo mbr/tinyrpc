@@ -72,6 +72,10 @@ class WsgiServerTransport(ServerTransport):
             'Content-Type, X-Requested-With, Accept, Origin'
         }
 
+        post_headers = {
+            'Content-Type': 'application/json'
+        }
+
         if request.method == 'OPTIONS':
             response = Response(headers=access_control_headers)
 
@@ -84,8 +88,11 @@ class WsgiServerTransport(ServerTransport):
 
             self.messages.put((context, msg))
 
+            # collect and combine all headers
+            response_headers = dict(**access_control_headers, **post_headers)
+
             # ...and send the reply
-            response = Response(context.get(), headers=access_control_headers)
+            response = Response(context.get(), headers=response_headers)
         else:
             # nothing else supported at the moment
             response = Response('Only POST supported', 405)
