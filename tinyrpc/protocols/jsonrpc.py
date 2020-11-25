@@ -569,8 +569,10 @@ class JSONRPCProtocol(RPCBatchProtocol):
             request.unique_id = self._get_unique_id()
 
         request.method = method
-        request.args = args
-        request.kwargs = kwargs
+        if args is not None:
+            request.args = args
+        if kwargs is not None:
+            request.kwargs = kwargs
 
         return request
 
