@@ -1,6 +1,30 @@
 tinyrpc: A small and modular way of handling web-related RPC
 ============================================================
 
+.. image:: https://readthedocs.org/projects/tinyrpc/badge/?version=latest
+    :target: https://tinyrpc.readthedocs.io/en/latest
+.. image:: https://travis-ci.org/mbr/tinyrpc.svg?branch=master
+    :target: https://travis-ci.org/mbr/tinyrpc
+
+.. note::
+
+    Tinyrpc is being revised.
+
+    The current version will enter maintenance mode.
+    I will keep it alive until Python2 is discontinued.
+    It can be installed from pip using its version number
+    e.g. ``pip install tinyrpc==0.9.3``.
+
+    The main line of development will start with version 1.0.0.
+    It will not try to remain compatible with the 0.9.x version.
+    It will support Python3 only.
+
+    Main goals for version 1.0.0 are:
+
+    - good Python3 support.
+    - restructure the code to eliminate unnecessary dependencies.
+    - rework and extend the documentation with more examples.
+
 Motivation
 ----------
 

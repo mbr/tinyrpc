@@ -4,6 +4,8 @@
 class RPCError(Exception):
     """Base class for all excetions thrown by :py:mod:`tinyrpc`."""
 
+    def error_respond(self):
+        raise NotImplementedError()
 
 class BadRequestError(RPCError):
     """Base class for all errors that caused the processing of a request to
@@ -35,6 +37,8 @@ class InvalidReplyError(BadReplyError):
 class MethodNotFoundError(RPCError):
     """The desired method was not found."""
 
+class InvalidParamsError(RPCError):
+    """The provided parameters do not match those of the desired method."""
 
 class ServerError(RPCError):
     """An internal error in the RPC system occured."""

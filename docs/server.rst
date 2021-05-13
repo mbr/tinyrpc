@@ -7,6 +7,7 @@ transports, protocols and dispatchers to form a complete RPC system.
 
 .. automodule:: tinyrpc.server
    :members:
+   :noindex:
 
 .. py:class:: tinyrpc.server.gevent.RPCServerGreenlets
 

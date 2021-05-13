@@ -46,7 +46,7 @@ def test_handle_message(transport, protocol, dispatcher):
     
     transport.receive_message.assert_called()
     protocol.parse_request.assert_called_with(RECMSG)
-    dispatcher.dispatch.assert_called_with(PARMSG, None)
+    dispatcher.dispatch.assert_called_with(PARMSG)
     dispatcher.dispatch().serialize.assert_called()
     transport.send_reply.assert_called_with(CONTEXT, SERMSG)
 

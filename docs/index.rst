@@ -1,178 +1,112 @@
 tinyrpc: A modular RPC library
 ==============================
 
-``tinyrpc`` is a library for making and handling RPC calls in Python. Its
-initial scope is handling jsonrpc_, although it aims to be very well-documented
-and modular to make it easy to add support for further protocols.
+``tinyrpc`` is a framework for constructing remote procedure call (RPC) services in Python.
 
-A feature is support of multiple transports (or none at all) and providing
-clever syntactic sugar for writing dispatchers.
+In ``tinyrpc`` all components (transport, protocol and dispatcher) that together make an
+RPC service are independently replacable.
 
-Quickstart examples
--------------------
-
-The source contains all of these examples in a working fashion in the examples
-subfolder.
-
-HTTP based
-~~~~~~~~~~
-
-A client making JSONRPC calls via HTTP (this requires :py:mod:`requests` to be
-installed):
-
-.. code-block:: python
-
-   from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
-   from tinyrpc.transports.http import HttpPostClientTransport
-   from tinyrpc import RPCClient
-
-   rpc_client = RPCClient(
-       JSONRPCProtocol(),
-       HttpPostClientTransport('http://example.org/jsonrpc/2.0/')
-   )
-
-   time_server = rpc_client.get_proxy()
-
-   # ...
-
-   # call a method called 'get_time_in' with a single string argument
-   time_in_berlin = time_server.get_time_in('Europe/Berlin')
-
-These can be answered by a server implemented as follows:
-
-.. code-block:: python
-
-   import gevent
-   import gevent.wsgi
-   import gevent.queue
-   from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
-   from tinyrpc.transports.wsgi import WsgiServerTransport
-   from tinyrpc.server.gevent import RPCServerGreenlets
-   from tinyrpc.dispatch import RPCDispatcher
-
-   dispatcher = RPCDispatcher()
-   transport = WsgiServerTransport(queue_class=gevent.queue.Queue)
-
-   # start wsgi server as a background-greenlet
-   wsgi_server = gevent.wsgi.WSGIServer(('127.0.0.1', 80), transport.handle)
-   gevent.spawn(wsgi_server.serve_forever)
-
-   rpc_server = RPCServerGreenlets(
-       transport,
-       JSONRPCProtocol(),
-       dispatcher
-   )
-
-   @dispatcher.public
-   def reverse_string(s):
-       return s[::-1]
-
-   # in the main greenlet, run our rpc_server
-   rpc_server.serve_forever()
-
-
-0mq
-~~~
-
-An example using :py:mod:`zmq` is very similiar, differing only in the
-instantiation of the transport:
-
-.. code-block:: python
-
-  import zmq
-
-  from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
-  from tinyrpc.transports.zmq import ZmqClientTransport
-  from tinyrpc import RPCClient
-
-  ctx = zmq.Context()
-
-  rpc_client = RPCClient(
-      JSONRPCProtocol(),
-      ZmqClientTransport.create(ctx, 'tcp://127.0.0.1:5001')
-  )
-
-  remote_server = rpc_client.get_proxy()
-
-  # call a method called 'reverse_string' with a single string argument
-  result = remote_server.reverse_string('Hello, World!')
-
-  print "Server answered:", result
-
-
-Matching server:
-
-.. code-block:: python
-
-   import zmq
-
-   from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
-   from tinyrpc.transports.zmq import ZmqServerTransport
-   from tinyrpc.server import RPCServer
-   from tinyrpc.dispatch import RPCDispatcher
-
-   ctx = zmq.Context()
-   dispatcher = RPCDispatcher()
-   transport = ZmqServerTransport.create(ctx, 'tcp://127.0.0.1:5001')
-
-   rpc_server = RPCServer(
-       transport,
-       JSONRPCProtocol(),
-       dispatcher
-   )
-
-   @dispatcher.public
-   def reverse_string(s):
-       return s[::-1]
-
-   rpc_server.serve_forever()
-
-
-
-Further examples
-----------------
-
-In :doc:`protocols`, you can find client and server examples on how
-to use just the protocol parsing parts of ``tinyrpc``.
-
-The :py:class:`~tinyrpc.dispatch.RPCDispatcher` should be useful on its own (or
-at least easily replaced with one of your choosing), see :doc:`dispatch` for
-details.
-
+Although its initial scope is handling jsonrpc_ it is easy to add further protocols or
+add additional transports.
+If so desired it is even possible to replace the default method dispatcher.
 
 
 Table of contents
 -----------------
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   structure
-   protocols
-   dispatch
-   transports
-   client
-   server
-   exceptions
+    examples
+    structure
+    dispatch
+    protocols
+    jsonrpc
+    transports
+    client
+    server
+    exceptions
+    modules/modules
+
+Installation
+------------
+
+.. code-block:: sh
+
+   pip install tinyrpc
+
+will install ``tinyrpc`` with its default dependencies.
+
+Optional dependencies
++++++++++++++++++++++
+
+Depending on the protocols and transports you want to use additional dependencies
+are required. You can instruct pip to install these dependencies by specifying
+extras to the basic install command.
+
+.. code-block:: sh
+
+   pip install tinyrpc[httpclient, wsgi]
+
+will install ``tinyrpc`` with dependencies for the httpclient and wsgi transports.
+
+Available extras are:
+
++------------+-------------------------------------------------------+
+| Option     |  Needed to use objects of class                       |
++============+=======================================================+
+| gevent     | optional in RPCClient, required by RPCServerGreenlets |
++------------+-------------------------------------------------------+
+| httpclient | HttpPostClientTransport, HttpWebSocketClientTransport |
++------------+-------------------------------------------------------+
+| jsonext    | optional in JSONRPCProtocol                           |
++------------+-------------------------------------------------------+
+| websocket  | WSServerTransport, HttpWebSocketClientTransport       |
++------------+-------------------------------------------------------+
+| wsgi       | WsgiServerTransport                                   |
++------------+-------------------------------------------------------+
+| zmq        | ZmqServerTransport, ZmqClientTransport                |
++------------+-------------------------------------------------------+
 
 People
 ------
 
 Creator
-~~~~~~~
++++++++
 
 - Marc Brinkmann: https://github.com/mbr
 
+    As of this writing (in Jan 2013) there are a few jsonrpc_ libraries already out
+    there on PyPI_, most of them handling one specific use case (e.g. json via
+    WSGI, using Twisted, or TCP-sockets).
+
+    None of the libraries, however, made it easy to reuse the jsonrpc_-parsing bits
+    and substitute a different transport (i.e. going from json_ via TCP_ to an
+    implementation using WebSockets_ or 0mq_).
+
+    In the end, all these libraries have their own dispatching interfaces and a
+    custom implementation of handling jsonrpc_.
+
+    ``tinyrpc`` aims to do better by dividing the problem into cleanly
+    interchangeable parts that allow easy addition of new transport methods, RPC
+    protocols or dispatchers.
+
 Maintainer
-~~~~~~~~~~
+++++++++++
 
 - Leo Noordergraaf: https://github.com/lnoor
 
-Contributors
-~~~~~~~~~~~~
+    Looking for a Python jsonrpc_ library I found ``tinyrpc``.
+    I was immediately taken by its modular concept and construction.
 
-- Guilherme Salgado: https://github.com/gsalgado
-- jnnk: https://github.com/jnnk
-- Satoshi Kobayashi: https://github.com/satosi-k
+    After creating a couple transports and trying to get them integrated in tinyrpc,
+    I learned that Marc got involved with other projects and that maintaining
+    ``tinyrpc`` became too much a burden.
+    I then volunteered to become its maintainer.
 
 .. _jsonrpc: http://jsonrpc.org
+.. _PyPI: http://pypi.python.org
+.. _json: http://www.json.org/
+.. _TCP: http://en.wikipedia.org/wiki/Transmission_Control_Protocol
+.. _WebSockets: http://en.wikipedia.org/wiki/WebSocket
+.. _0mq: http://www.zeromq.org/

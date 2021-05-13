@@ -1,40 +1,58 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""Server definition.
 
-# FIXME: needs unittests
+Defines and implements a single-threaded, single-process, synchronous server.
+"""
+
+# FIXME: needs (more) unittests
 # FIXME: needs checks for out-of-order, concurrency, etc as attributes
-from tinyrpc.exc import RPCError
+import tinyrpc.exc
+
 
 class RPCServer(object):
     """High level RPC server.
 
-    :param transport: The :py:class:`~tinyrpc.transports.RPCTransport` to use.
-    :param protocol: The :py:class:`~tinyrpc.RPCProtocol` to use.
-    :param dispatcher: The :py:class:`~tinyrpc.dispatch.RPCDispatcher` to use.
+    The server is completely generic only assuming some form of RPC communication is intended.
+    Protocol, data transport and method dispatching are injected into the server object.
+
+    :param transport: The data transport mechanism to use.
+    :param protocol: The RPC protocol to use.
+    :param dispatcher: The dispatching mechanism to use.
+    :type transport: :py:class:`~tinyrpc.transports.ServerTransport`
+    :type protocol: :py:class:`~tinyrpc.protocols.RPCProtocol`
+    :type dispatcher: :py:class:`~tinyrpc.dispatch.RPCDispatcher`
     """
-    
+
     trace = None
     """Trace incoming and outgoing messages.
-    
+
     When this attribute is set to a callable this callable will be called directly
     after a message has been received and immediately after a reply is sent.
     The callable should accept three positional parameters:
-    * *direction*: string, either '-->' for incoming or '<--' for outgoing data.
-    * *context*: the context returned by :py:meth:`~tinyrpc.transport.RPCTransport.receive_message`.
-    * *message*: the message string itself.
     
-    Example::
+    :param str direction: Either '-->' for incoming or '<--' for outgoing data.
+    :param any context: The context returned by :py:meth:`~tinyrpc.transports.ServerTransport.receive_message`.
+    :param bytes message: The message itself.
+
+    Example:
     
+    .. code-block:: python
+
         def my_trace(direction, context, message):
             logger.debug('%s%s', direction, message)
-        
+
         server = RPCServer(transport, protocol, dispatcher)
         server.trace = my_trace
-        server.serve_forever
-        
+        server.serve_forever()
+
     will log all incoming and outgoing traffic of the RPC service.
-    """
     
+    Note that the ``message`` will be the data stream that is transported,
+    not the interpreted meaning of that data.
+    It is therefore possible that the binary stream is unreadable without further translation.
+    """
+
     def __init__(self, transport, protocol, dispatcher):
         self.transport = transport
         self.protocol = protocol
@@ -44,7 +62,7 @@ class RPCServer(object):
     def serve_forever(self):
         """Handle requests forever.
 
-        Starts the server loop continuously calling :py:meth:`receive_one_message`
+        Starts the server loop; continuously calling :py:meth:`receive_one_message`
         to process the next incoming request.
         """
         while True:
@@ -54,33 +72,30 @@ class RPCServer(object):
         """Handle a single request.
 
         Polls the transport for a new message.
-        
+
         After a new message has arrived :py:meth:`_spawn` is called with a handler
         function and arguments to handle the request.
 
         The handler function will try to decode the message using the supplied
         protocol, if that fails, an error response will be sent. After decoding
-        the message, the dispatcher will be asked to handle the resultung
+        the message, the dispatcher will be asked to handle the resulting
         request and the return value (either an error or a result) will be sent
         back to the client using the transport.
         """
         context, message = self.transport.receive_message()
         if callable(self.trace):
             self.trace('-->', context, message)
-        
+
         # assuming protocol is threadsafe and dispatcher is theadsafe, as
         # long as its immutable
 
         def handle_message(context, message):
             try:
                 request = self.protocol.parse_request(message)
-            except RPCError as e:
+            except tinyrpc.exc.RPCError as e:
                 response = e.error_respond()
             else:
-                response = self.dispatcher.dispatch(
-                    request, 
-                    getattr(self.protocol, '_caller', None)
-                )
+                response = self.dispatcher.dispatch(request)
 
             # send reply
             if response is not None:

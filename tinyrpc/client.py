@@ -5,12 +5,13 @@ import sys
 from collections import namedtuple
 
 from .exc import RPCError
+from .protocols import RPCErrorResponse
 
 RPCCall = namedtuple('RPCCall', 'method args kwargs')
 """Defines the elements of a RPC call.
 
 RPCCall is used with :py:meth:`~tinyrpc.client.RPCClient.call_all`
-to provide the list of requests to be processed. Each request contains the 
+to provide the list of requests to be processed. Each request contains the
 elements defined in this tuple.
 """
 
@@ -34,7 +35,9 @@ class RPCClient(object):
         self.protocol = protocol
         self.transport = transport
 
-    def _send_and_handle_reply(self, req, one_way, transport=None, no_exception=False):
+    def _send_and_handle_reply(
+            self, req, one_way, transport=None, no_exception=None
+    ):
         tport = self.transport if transport is None else transport
 
         # sends ...
@@ -47,9 +50,14 @@ class RPCClient(object):
         # ... or process the reply
         response = self.protocol.parse_reply(reply)
 
-        if not no_exception and hasattr(response, 'error'):
-            raise RPCError('Error calling remote procedure: %s' %\
-                           response.error)
+        if not no_exception and isinstance(response, RPCErrorResponse):
+            if hasattr(self.protocol, 'raise_error') and callable(
+                    self.protocol.raise_error):
+                response = self.protocol.raise_error(response.error)
+            else:
+                raise RPCError(
+                    'Error calling remote procedure: %s' % response.error
+                )
 
         return response
 
@@ -75,12 +83,12 @@ class RPCClient(object):
 
     def call_all(self, requests):
         """Calls the methods in the request in parallel.
-        
+
         When the :py:mod:`gevent` module is already loaded it is assumed to be
         correctly initialized, including monkey patching if necessary.
         In that case the RPC calls defined by ``requests`` is performed in
         parallel otherwise the methods are called sequentially.
-        
+
         :param requests: A listof either RPCCall or RPCCallTo elements.
                          When RPCCallTo is used each element defines a transport.
                          Otherwise the default transport set when RPCClient is
@@ -88,14 +96,18 @@ class RPCClient(object):
         :return: A list with replies matching the order of the requests.
         """
         threads = []
-        
+
         if 'gevent' in sys.modules:
             # assume that gevent is available and functional, make calls in parallel
             import gevent
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs)
                 tr = r.transport.transport if len(r) == 4 else None
-                threads.append(gevent.spawn(self._send_and_handle_reply, req, False, tr, True))
+                threads.append(
+                    gevent.spawn(
+                        self._send_and_handle_reply, req, False, tr, True
+                    )
+                )
             gevent.joinall(threads)
             return [t.value for t in threads]
         else:
@@ -103,9 +115,11 @@ class RPCClient(object):
             for r in requests:
                 req = self.protocol.create_request(r.method, r.args, r.kwargs)
                 tr = r.transport.transport if len(r) == 4 else None
-                threads.append(self._send_and_handle_reply(req, False, tr, True))
+                threads.append(
+                    self._send_and_handle_reply(req, False, tr, True)
+                )
             return threads
-        
+
     def get_proxy(self, prefix='', one_way=False):
         """Convenience method for creating a proxy.
 
@@ -146,9 +160,6 @@ class RPCProxy(object):
         name ``name`` on the client associated with the proxy.
         """
         proxy_func = lambda *args, **kwargs: self.client.call(
-                         self.prefix + name,
-                         args,
-                         kwargs,
-                         one_way=self.one_way
-                     )
+            self.prefix + name, args, kwargs, one_way=self.one_way
+        )
         return proxy_func

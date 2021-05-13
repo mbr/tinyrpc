@@ -114,7 +114,9 @@ API reference
 -------------
 
 .. autoclass:: tinyrpc.dispatch.RPCDispatcher
-   :members:
+    :members:
+    :show-inheritance:
+    :member-order: bysource
 
 Classes can be made to support an RPC interface without coupling it to a
 dispatcher using a decorator:

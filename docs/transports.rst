@@ -7,9 +7,11 @@ strings. All transports need to support two different interfaces:
 
 .. autoclass:: tinyrpc.transports.ServerTransport
    :members:
+   :noindex:
 
 .. autoclass:: tinyrpc.transports.ClientTransport
    :members:
+   :noindex:
 
 Note that these transports are of relevance when using ``tinyrpc``-built in
 facilities. They can be coopted for any other purpose, if you simply need
@@ -32,9 +34,11 @@ Based on :py:mod:`zmq`, supports 0mq based sockets. Highly recommended:
 
 .. autoclass:: tinyrpc.transports.zmq.ZmqServerTransport
    :members:
+   :noindex:
 
 .. autoclass:: tinyrpc.transports.zmq.ZmqClientTransport
    :members:
+   :noindex:
 
 HTTP
 ~~~~
@@ -43,12 +47,13 @@ There is only an HTTP client, no server (use WSGI instead).
 
 .. autoclass:: tinyrpc.transports.http.HttpPostClientTransport
    :members:
+   :noindex:
 
 .. note:: To set a timeout on your client transport provide a ``timeout``
     keyword parameter like::
-   
+
         transport = HttpPostClientTransport(endpoint, timeout=0.1)
-            
+
     It will result in a ``requests.exceptions.Timeout`` exception when a
     timeout occurs.
 
@@ -57,15 +62,18 @@ WSGI
 
 .. autoclass:: tinyrpc.transports.wsgi.WsgiServerTransport
    :members:
+   :noindex:
 
 CGI
 ~~~
 
 .. autoclass:: tinyrpc.transports.cgi.CGIServerTransport
    :members:
+   :noindex:
 
 Callback
 ~~~~~~~~
 
 .. autoclass:: tinyrpc.transports.callback.CallbackServerTransport
    :members:
+   :noindex:

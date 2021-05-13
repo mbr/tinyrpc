@@ -6,19 +6,33 @@ from six.moves.mock import Mock, MagicMock
 import pytest
 import inspect
 
-from tinyrpc.dispatch import RPCDispatcher, public
+from tinyrpc.dispatch.async_dispatch import AsyncioRPCDispatcher, public
 from tinyrpc import RPCRequest, RPCBatchRequest, RPCBatchResponse
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol, JSONRPCInvalidParamsError
 from tinyrpc.exc import *
+import asyncio
 
-@pytest.fixture
+
+def create_successful_future(result, loop):
+    future = asyncio.Future()
+    future.set_result(result)
+    return future
+
+
+def create_failed_future(exception, loop):
+    future = asyncio.Future()
+    future.set_exception(exception)
+    return future
+
+
+@pytest.fixture()
 def dispatch():
-    return RPCDispatcher()
+    return AsyncioRPCDispatcher()
 
 
 @pytest.fixture()
 def subdispatch():
-    return RPCDispatcher()
+    return AsyncioRPCDispatcher()
 
 
 @pytest.fixture()
@@ -30,9 +44,15 @@ def mock_request(method='subtract', args=None, kwargs=None):
 
     return mock_request
 
+@pytest.fixture()
+def event_loop():
+    return asyncio.get_event_loop()
+
+
 
 def test_function_decorating_without_parameters(dispatch):
     @dispatch.public
+    @asyncio.coroutine
     def foo(bar):
         pass
 
@@ -41,6 +61,7 @@ def test_function_decorating_without_parameters(dispatch):
 
 def test_function_decorating_with_empty_parameters(dispatch):
     @dispatch.public()
+    @asyncio.coroutine
     def foo(bar):
         pass
 
@@ -49,6 +70,7 @@ def test_function_decorating_with_empty_parameters(dispatch):
 
 def test_function_decorating_with_parameters(dispatch):
     @dispatch.public(name='baz')
+    @asyncio.coroutine
     def foo(bar):
         pass
 
@@ -61,10 +83,12 @@ def test_function_decorating_with_parameters(dispatch):
 
 def test_subdispatchers(dispatch, subdispatch):
     @dispatch.public()
+    @asyncio.coroutine
     def foo(bar):
         pass
 
     @subdispatch.public(name='foo')
+    @asyncio.coroutine
     def subfoo(bar):
         pass
 
@@ -76,14 +100,17 @@ def test_subdispatchers(dispatch, subdispatch):
 
 def test_object_method_marking():
     class Foo(object):
+        @asyncio.coroutine
         def foo1(self):
             pass
 
         @public
+        @asyncio.coroutine
         def foo2(self):
             pass
 
         @public(name='baz')
+        @asyncio.coroutine
         def foo3(self):
             pass
 
@@ -96,14 +123,17 @@ def test_object_method_marking():
 
 def test_object_method_register(dispatch):
     class Foo(object):
+        @asyncio.coroutine
         def foo1(self):
             pass
 
         @public
+        @asyncio.coroutine
         def foo2(self):
             pass
 
         @public(name='baz')
+        @asyncio.coroutine
         def foo3(self):
             pass
 
@@ -119,14 +149,17 @@ def test_object_method_register(dispatch):
 
 def test_object_method_register_with_prefix(dispatch):
     class Foo(object):
+        @asyncio.coroutine
         def foo1(self):
             pass
 
         @public
+        @asyncio.coroutine
         def foo2(self):
             pass
 
         @public(name='baz')
+        @asyncio.coroutine
         def foo3(self):
             pass
 
@@ -149,38 +182,40 @@ def test_object_method_register_with_prefix(dispatch):
     assert dispatch.get_method('myprefixbaz') == f.foo3
 
 
-def test_dispatch_calls_method_and_responds(dispatch, mock_request):
+def test_dispatch_calls_method_and_responds(dispatch, mock_request, event_loop):
     m = Mock()
-    m.subtract = Mock(return_value=-2)
+    future = create_successful_future(-2, event_loop)
+    m.subtract = asyncio.coroutine(Mock(return_value=future))
 
     dispatch.add_method(m.subtract, 'subtract')
-    response = dispatch.dispatch(mock_request)
+    response = event_loop.run_until_complete(dispatch.dispatch(mock_request))
+    print("mock_request.mock_calls=", mock_request.mock_calls)
 
-    assert m.subtract.called
+    assert m.subtract.__wrapped__.called
 
     mock_request.respond.assert_called_with(-2)
 
 
-def test_dispatch_handles_in_function_exceptions(dispatch, mock_request):
+def test_dispatch_handles_in_function_exceptions(dispatch, mock_request, event_loop):
     m = Mock()
-    m.subtract = Mock(return_value=-2)
-
     class MockError(Exception):
         pass
-
-    m.subtract.side_effect = MockError('mock error')
+    exception = MockError('mock error')
+    future = create_failed_future(exception, event_loop)
+    #future.set_result(-2)
+    m.subtract = asyncio.coroutine(Mock(return_value=future))
 
     dispatch.add_method(m.subtract, 'subtract')
-    response = dispatch.dispatch(mock_request)
+    response = event_loop.run_until_complete(dispatch.dispatch(mock_request))
+    print("mock_request.mock_calls=", mock_request.mock_calls)
 
-    assert m.subtract.called
+    assert m.subtract.__wrapped__.called
+    mock_request.error_respond.assert_called_with(exception)
 
-    mock_request.error_respond.assert_called_with(m.subtract.side_effect)
 
-
-def test_batch_dispatch(dispatch):
-    method1 = Mock(return_value='rv1')
-    method2 = Mock(return_value=None)
+def test_batch_dispatch(dispatch, event_loop):
+    method1 = asyncio.coroutine(Mock(return_value=create_successful_future('rv1', event_loop)))
+    method2 = asyncio.coroutine(Mock(return_value=create_successful_future(None, event_loop)))
 
     dispatch.add_method(method1, 'method1')
     dispatch.add_method(method2, 'method2')
@@ -195,11 +230,12 @@ def test_batch_dispatch(dispatch):
 
     assert batch_request.error_respond.call_count == 0
 
-    response = dispatch.dispatch(batch_request)
+    response = event_loop.run_until_complete(dispatch.dispatch(batch_request))
+    print("list(response)=", list(response))
 
     # assert all methods are called
-    method1.assert_called_with(1, 2)
-    method2.assert_called_with(3, 4)
+    method1.__wrapped__.assert_called_with(1, 2)
+    method2.__wrapped__.assert_called_with(3, 4)
 
     # FIXME: could use better checking?
 
@@ -226,20 +262,23 @@ def test_dispatch_raises_key_error(dispatch):
 def invoke_with(request):
     return request.param
 
-def test_argument_error(dispatch, invoke_with):
+def test_argument_error(dispatch, invoke_with, event_loop):
     method, args, kwargs, result = invoke_with
 
     protocol = JSONRPCProtocol()
 
     @dispatch.public
+    @asyncio.coroutine
     def fn_a(a, b):
         return a-b
 
     @dispatch.public
+    @asyncio.coroutine
     def fn_b(*a):
         return a[0]-a[1]
 
     @dispatch.public
+    @asyncio.coroutine
     def fn_c(**a):
         return a['a']-a['b']
 
@@ -247,9 +286,9 @@ def test_argument_error(dispatch, invoke_with):
     mock_request.args = args
     mock_request.kwargs = kwargs
     mock_request.method = method
-    dispatch._dispatch(mock_request)
+    event_loop.run_until_complete(dispatch._dispatch(mock_request))
     if inspect.isclass(result) and issubclass(result, Exception):
-        assert type(mock_request.error_respond.call_args[0][0]) == result
+        assert type(mock_request.error_respond.call_args[0][0]) is result
     else:
         mock_request.respond.assert_called_with(result)
 

@@ -1,18 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 class ServerTransport(object):
-    """Base class for all server transports."""
+    """Abstract base class for all server transports.
+
+    The server side implementation of the transport component.
+    Requests and replies encoded by the protocol component are
+    exchanged between client and server using the :py:class:`ServerTransport`
+    and :py:class:`ClientTransport` classes.
+    """
 
     def receive_message(self):
         """Receive a message from the transport.
 
-        Blocks until another message has been received. May return a context
-        opaque to clients that should be passed on
+        Blocks until a message has been received.
+        May return an opaque context object to its caller that should be passed on to
         :py:func:`~tinyrpc.transport.ServerTransport.send_reply` to identify
-        the client later on.
+        the transport or requester later on.
+        Use and function of the context object are entirely controlled by the transport
+        instance.
+
+        The message must be treated as a binary entity as only the protocol
+        level will know how to interpret the message.
+
+        If the transport encodes the message in some way, the opposite end
+        is responsible for decoding it before it is passed to either client
+        or server.
 
         :return: A tuple consisting of ``(context, message)``.
+            Where ``context`` can be any valid Python type and
+            ``message`` must be a :py:class:`bytes` object.
         """
         raise NotImplementedError()
 
@@ -20,33 +38,47 @@ class ServerTransport(object):
         """Sends a reply to a client.
 
         The client is usually identified by passing ``context`` as returned
-        from the original
-        :py:func:`~tinyrpc.transport.Transport.receive_message` call.
+        from the original :py:meth:`receive_message` call.
 
-        Messages must be strings, it is up to the sender to convert the
-        beforehand. A non-string value raises a :py:exc:`TypeError`.
+        The reply must be a bytes object since only the protocol
+        level will know how to construct the reply.
 
-        :param context: A context returned by
-                        :py:func:`~tinyrpc.transport.ServerTransport.receive_message`.
-        :param reply: A string to send back as the reply.
+        :param any context: A context returned by :py:meth:`receive_message`.
+        :param bytes reply: The reply to return to the client.
         """
         raise NotImplementedError
 
 
 class ClientTransport(object):
-    """Base class for all client transports."""
+    """Abstract base class for all client transports.
+
+    The client side implementation of the transport component.
+    Requests and replies encoded by the protocol component are
+    exchanged between client and server using the :py:class:`ServerTransport`
+    and :py:class:`ClientTransport` classes.    """
 
     def send_message(self, message, expect_reply=True):
         """Send a message to the server and possibly receive a reply.
 
         Sends a message to the connected server.
 
-        Messages must be strings, it is up to the sender to convert the
-        beforehand. A non-string value raises a :py:exc:`TypeError`.
+        The message must be treated as a binary entity as only the protocol
+        level will know how to interpret the message.
 
-        This function will block until one reply has been received.
+        If the transport encodes the message in some way, the opposite end
+        is responsible for decoding it before it is passed to either client
+        or server.
 
-        :param message: A string to send.
-        :return: A string containing the server reply.
+        This function will block until the reply has been received.
+
+        :param bytes message: The request to send to the server.
+        :param bool expect_reply: Some protocols allow notifications for which a
+            reply is not expected. When this flag is ``False`` the transport may
+            not wait for a response from the server.
+            **Note** that it is still the responsibility of the transport layer how
+            to implement this. It is still possible that the server sends some form
+            of reply regardless the value of this flag.
+        :return: The servers reply to the request.
+        :rtype: bytes
         """
         raise NotImplementedError
