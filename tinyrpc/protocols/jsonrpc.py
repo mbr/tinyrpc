@@ -168,11 +168,12 @@ class JSONRPCError(FixedErrorMessageMixin, RPCError):
     ) -> None:
         if isinstance(error, JSONRPCErrorResponse):
             super(JSONRPCError, self).__init__(error.error)
+            self.message = error.error
             self._jsonrpc_error_code = error._jsonrpc_error_code
             if hasattr(error, 'data'):
                 self.data = error.data
         else:
-            super(JSONRPCError, self).__init__()
+            super(JSONRPCError, self).__init__(error.message)
             self.message = error['message']
             self._jsonrpc_error_code = error['code']
             if 'data' in error:
@@ -244,7 +245,7 @@ class JSONRPCErrorResponse(RPCErrorResponse):
 
         :type: Any type that can be serialized by the protocol.
 
-    .. py:attribute:: _json_rpc_error
+    .. py:attribute:: _jsonrpc_error_code
 
         The numeric error code.
 

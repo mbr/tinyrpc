@@ -129,7 +129,7 @@ def test_client_raises_error_replies(
         assert isinstance(args[0], RPCErrorResponse)
         assert args[0].error == 'foo'
         print(mock_protocol.mock_calls)
-#        mock_protocol.raise_error.assert_called_with('foo')
+        mock_protocol.raise_error.assert_called_with(error_response)
 
 
 def test_client_raises_indirect_error_replies(
