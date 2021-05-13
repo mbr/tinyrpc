@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import _compat
-from six.moves.mock import Mock, MagicMock
+from unittest.mock import Mock
 import pytest
 import inspect
 
@@ -21,7 +20,7 @@ def subdispatch():
     return RPCDispatcher()
 
 
-@pytest.fixture()
+
 def mock_request(method='subtract', args=None, kwargs=None):
     mock_request = Mock(RPCRequest)
     mock_request.method = method
@@ -30,6 +29,9 @@ def mock_request(method='subtract', args=None, kwargs=None):
 
     return mock_request
 
+@pytest.fixture(name="mock_request")
+def mock_request_fixture():
+    return mock_request()
 
 def test_function_decorating_without_paramters(dispatch):
     @dispatch.public

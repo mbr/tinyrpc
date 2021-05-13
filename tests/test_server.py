@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import _compat
-from six.moves.mock import Mock, call
+from unittest.mock import Mock, call
 
 from tinyrpc.server import RPCServer
 from tinyrpc.transports import ServerTransport
