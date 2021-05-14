@@ -3,8 +3,8 @@ tinyrpc: A small and modular way of handling web-related RPC
 
 .. image:: https://readthedocs.org/projects/tinyrpc/badge/?version=latest
     :target: https://tinyrpc.readthedocs.io/en/latest
-.. image:: https://travis-ci.org/mbr/tinyrpc.svg?branch=master
-    :target: https://travis-ci.org/mbr/tinyrpc
+.. image:: https://github.com/mbr/tinyrpc/actions/workflows/python-tox.yml/badge.svg
+    :target: https://github.com/mbr/tinyrpc/actions/workflows/python-tox.yml
 .. image:: https://badge.fury.io/py/tinyrpc.svg
     :target: https://pypi.org/project/tinyrpc/
 
