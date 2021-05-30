@@ -44,3 +44,11 @@ class InvalidParamsError(RPCError, ABC):
 
 class ServerError(RPCError, ABC):
     """An internal error in the RPC system occurred."""
+
+
+class TransportIncapableError(RPCError, ABC):
+    """The transport cannot carry the request.
+
+    Notification over a synchronous protocol (zmq.REQ) or RPC over a one-way
+    transport (zmq.PUB) may cause this error.
+    """

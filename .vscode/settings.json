@@ -1,3 +1,24 @@
 {
-    "restructuredtext.confPath": "${workspaceFolder}/docs"
+    "restructuredtext.confPath": "${workspaceFolder}/docs",
+    "files.watcherExclude": {
+        "**/__pycache__/**": true,
+        "**/.cache/**": true,
+        "**/.pytest_cache/**": true,
+        "**/.tox/**": true,
+        "**/*.pyc": true,
+        "**/docs/**": true
+    },
+    "python.formatting.provider": "yapf",
+    "python.formatting.yapfArgs": [
+        "-i"
+    ],
+    "editor.rulers": [
+    79
+    ],
+    "diffEditor.codeLens": true,
+    "editor.acceptSuggestionOnEnter": "off",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "workbench.settings.enableNaturalLanguageSearch": false
 }

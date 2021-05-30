@@ -3,11 +3,13 @@
 
 import sys
 from collections import namedtuple
-from typing import List, Any, Dict, Callable, Optional
+from typing import Any, Callable, Dict, List, Optional
 
-from .transports import ClientTransport
 from .exc import RPCError
-from .protocols import RPCErrorResponse, RPCProtocol, RPCRequest, RPCResponse, RPCBatchResponse
+from .protocols import (
+    RPCBatchResponse, RPCErrorResponse, RPCProtocol, RPCRequest, RPCResponse
+)
+from .transports import ClientTransport
 
 RPCCall = namedtuple('RPCCall', 'method args kwargs')
 """Defines the elements of an RPC call.
@@ -34,17 +36,17 @@ class RPCClient(object):
     :type transport: ClientTransport
     """
     def __init__(
-            self, protocol: RPCProtocol, transport: ClientTransport
+        self, protocol: RPCProtocol, transport: ClientTransport
     ) -> None:
         self.protocol = protocol
         self.transport = transport
 
     def _send_and_handle_reply(
-            self,
-            req: RPCRequest,
-            one_way: bool = False,
-            transport: ClientTransport = None,
-            no_exception: bool = False
+        self,
+        req: RPCRequest,
+        one_way: bool = False,
+        transport: ClientTransport = None,
+        no_exception: bool = False
     ) -> Optional[RPCResponse]:
         tport = self.transport if transport is None else transport
 
@@ -70,7 +72,11 @@ class RPCClient(object):
         return response
 
     def call(
-            self, method: str, args: List, kwargs: Dict, one_way: bool = False
+        self,
+        method: str,
+        args: List,
+        kwargs: Dict,
+        one_way: bool = False
     ) -> Any:
         """Calls the requested method and returns the result.
 
@@ -164,7 +170,10 @@ class RPCProxy(object):
                     :py:func:`~tinyrpc.client.call`.
     """
     def __init__(
-            self, client: RPCClient, prefix: str = '', one_way: bool = False
+        self,
+        client: RPCClient,
+        prefix: str = '',
+        one_way: bool = False
     ) -> None:
         self.client = client
         self.prefix = prefix

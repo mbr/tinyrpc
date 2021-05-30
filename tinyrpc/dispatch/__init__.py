@@ -68,7 +68,7 @@ class RPCDispatcher(object):
         self.method_map = {}
         self.subdispatchers = {}
 
-    
+
     def public(self, name: str = None) -> Callable:
         """Convenient decorator.
 
@@ -92,7 +92,7 @@ class RPCDispatcher(object):
 
         :param str name: Name to register callable with.
         """
-    
+
         if callable(name):
             self.add_method(name)
             return name
@@ -103,7 +103,7 @@ class RPCDispatcher(object):
 
         return _
 
-    
+
     def add_subdispatch(self, dispatcher: 'RPCDispatcher', prefix: str = ''):
         """Adds a subdispatcher, possibly in its own namespace.
 
@@ -112,10 +112,10 @@ class RPCDispatcher(object):
         :param str prefix: A prefix. All of the new subdispatchers methods will be
                        available as prefix + their original name.
         """
-    
+
         self.subdispatchers.setdefault(prefix, []).append(dispatcher)
 
-    
+
     def add_method(self, f: Callable, name: str = None) -> None:
         """Add a method to the dispatcher.
 
@@ -125,9 +125,9 @@ class RPCDispatcher(object):
                      be used.
         :raises ~tinyrpc.exc.RPCError: When the `name` is already registered.
         """
-    
+
         assert callable(f), "method argument must be callable"
-    
+
         # catches a few programming errors that are
         # commonly silently swallowed otherwise
         if not name:
@@ -296,7 +296,7 @@ class RPCDispatcher(object):
     """Dispatched function parameter validation.
 
     :type: callable
-    
+
     By default this attribute is set to :py:func:`validate_parameters`.
     The value can be set to any callable implementing the same interface
     as :py:func:`validate_parameters` or to `None` to disable validation
@@ -308,7 +308,7 @@ class RPCDispatcher(object):
 class AsyncioRPCDispatcher(RPCDispatcher):
     """Stores name-to-method mappings. Support async methods."""
 
-    async def dispatch(self, request):
+    async def dispatch(self, request, caller=None):
         """Fully handle request.
 
         The dispatch method determines which method to call, calls it and
@@ -342,17 +342,17 @@ class AsyncioRPCDispatcher(RPCDispatcher):
 
         if hasattr(request, 'create_batch_response'):
             # TODO: replace async comprehension with async loop to support older pythons?
-            results = [await self._dispatch(req) for req in request]
+            results = [await self._dispatch(req, caller) for req in request]
 
             response = request.create_batch_response()
             if response is not None:
                 response.extend(results)
-            
+
             return response
         else:
-            return await self._dispatch(request)
-        
-    async def _dispatch(self, request):
+            return await self._dispatch(request, caller)
+
+    async def _dispatch(self, request, caller=None):
         try:
             method = self.get_method(request.method)
         except exc.MethodNotFoundError as e:
@@ -365,15 +365,18 @@ class AsyncioRPCDispatcher(RPCDispatcher):
         try:
             if self.validator is not None:
                 self.validator(method, request.args, request.kwargs)
-            # # TODO: catch error caused by non-awaitable return value
-            # result = await method(*request.args, **request.kwargs)
-            result = method(*request.args, **request.kwargs)
+
+            if caller is not None:
+                result = caller(method, request.args, request.kwargs)
+            else:
+                result = method(*request.args, **request.kwargs)
+
             if inspect.isawaitable(result):
                 # in case `method` is async, wait on returned Future to complete
                 result = await result
         except Exception as e:
             # an error occurred within the method, return it
             return request.error_respond(e)
-        
+
         # respond with result
         return request.respond(result)
