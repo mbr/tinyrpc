@@ -160,18 +160,3 @@ def test_client_produces_good_proxy(client, prefix, one_way_setting):
     assert proxy.prefix == prefix
     assert proxy.one_way == one_way_setting
     assert callable(proxy.foobar)
-
-
-@pytest.mark.skip(
-    'no longer performs automatic conversion, serialize() always returns bytes'
-)
-def test_client_send_binary_message(
-        client, mock_protocol, method_name, method_args, method_kwargs,
-        one_way_setting, mock_transport
-):
-    req = Mock(RPCRequest)
-    req.serialize.return_value = u'unicode not acceptable'
-    mock_protocol.create_request.return_value = req
-    client.call(method_name, method_args, method_kwargs, one_way_setting)
-    assert mock_transport.send_message.called
-    assert isinstance(mock_transport.send_message.call_args[0][0], bytes)
