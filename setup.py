@@ -30,6 +30,7 @@ setup(
         'websocket': ['gevent-websocket'],
         'wsgi': ['werkzeug'],
         'zmq': ['pyzmq'],
-        'jsonext': ['jsonext']
+        'jsonext': ['jsonext'],
+        'rabbitmq': ['pika']
     }
 )

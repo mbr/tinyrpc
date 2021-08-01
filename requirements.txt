@@ -1,6 +1,7 @@
 gevent==21.1.2
 gevent-websocket==0.10.1
 msgpack==1.0.2
+pika==1.2.0
 pytest==6.2.4
 pytest-cov==2.11.1
 pyzmq==22.0.3
