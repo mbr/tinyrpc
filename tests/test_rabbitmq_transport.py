@@ -8,6 +8,7 @@ from tinyrpc.transports.rabbitmq import RabbitMQServerTransport, RabbitMQClientT
 
 FAKE_REQUEST_MSG = b'a fake request message'
 FAKE_RESPONSE_MSG = b'a fake response message'
+FAKE_MESSAGE_DATA = b'some fake message data'
 TEST_QUEUE = 'test_queue'
 TEST_ROUTE = 'test_route'
 
@@ -17,7 +18,9 @@ class DummyBlockingConnection:
             pass
 
         def __init__(self):
-            self.properties = "properties"
+            self.properties = self.GenericObject()
+            self.properties.reply_to = "reply_to"
+            self.properties.correlation_id = "correlation_id"
 
         def queue_declare(self, *args, **kwargs):
             result = self.GenericObject()
@@ -31,6 +34,8 @@ class DummyBlockingConnection:
         def basic_publish(self, properties, *args, **kwargs):
             self.properties = properties
 
+        def basic_ack(self, *args, **kwargs):
+            pass
 
     def __init__(self, *args, **kwargs):
         pass
@@ -40,8 +45,10 @@ class DummyBlockingConnection:
         return self.channel
 
     def process_data_events(self):
-        fake_response = FAKE_RESPONSE_MSG
-        self.channel.on_message_callback("channel", "method", self.channel.properties, fake_response)
+        fake_response = FAKE_MESSAGE_DATA
+        method = self.DummyChannel.GenericObject()
+        method.delivery_tag = "delivery_tag"
+        self.channel.on_message_callback(self.channel, method, self.channel.properties, fake_response)
 
 @pytest.fixture
 def dummy_blockingconnection():
@@ -66,7 +73,13 @@ def test_can_create_rabbitmq_client():
 def test_server_can_receive_message(rabbitmq_server):
     context, message = rabbitmq_server.receive_message()
     assert context
-    assert message == FAKE_RESPONSE_MSG
+    assert message == FAKE_MESSAGE_DATA
+
+def test_server_can_send_reply(rabbitmq_server):
+    context, message = rabbitmq_server.receive_message()
+    assert context
+    assert message == FAKE_MESSAGE_DATA
+    rabbitmq_server.send_reply(context, FAKE_RESPONSE_MSG)
 
 def test_client_can_send_message(rabbitmq_client):
     response = rabbitmq_client.send_message(FAKE_REQUEST_MSG, expect_reply=False)
@@ -74,4 +87,4 @@ def test_client_can_send_message(rabbitmq_client):
 
 def test_client_can_send_message_and_get_reply(rabbitmq_client):
     response = rabbitmq_client.send_message(FAKE_REQUEST_MSG, expect_reply=True)
-    assert response == FAKE_RESPONSE_MSG
+    assert response == FAKE_MESSAGE_DATA
