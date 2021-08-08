@@ -63,6 +63,8 @@ Available extras are:
 +------------+-------------------------------------------------------+
 | msgpack    | required by MSGPACKRPCProtocol                        |
 +------------+-------------------------------------------------------+
+| rabbitmq   | RabbitMQServerTransport, RabbitMQClientTransport      |
++------------+-------------------------------------------------------+
 | websocket  | WSServerTransport, HttpWebSocketClientTransport       |
 +------------+-------------------------------------------------------+
 | wsgi       | WsgiServerTransport                                   |

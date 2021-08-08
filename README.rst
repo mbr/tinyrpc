@@ -128,12 +128,19 @@ Available extras are:
 +------------+-------------------------------------------------------+
 | jsonext    | optional in JSONRPCProtocol                           |
 +------------+-------------------------------------------------------+
+| rabbitmq   | RabbitMQServerTransport, RabbitMQClientTransport      |
++------------+-------------------------------------------------------+
 | websocket  | WSServerTransport                                     |
 +------------+-------------------------------------------------------+
 | wsgi       | WsgiServerTransport                                   |
 +------------+-------------------------------------------------------+
 | zmq        | ZmqServerTransport, ZmqClientTransport                |
 +------------+-------------------------------------------------------+
+
+New in version 1.1.0
+--------------------
+
+Tinyrpc supports RabbitMQ has transport medium.
 
 New in version 1.0.4
 --------------------

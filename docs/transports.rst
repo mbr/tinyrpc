@@ -94,6 +94,21 @@ Callback
     :show-inheritance:
     :member-order: bysource
 
+RabbitMQ
+~~~~~~~~
+
+.. autoclass:: tinyrpc.transports.rabbitmq.RabbitMQServerTransport
+    :members:
+    :noindex:
+    :show-inheritance:
+    :member-order: bysource
+
+.. autoclass:: tinyrpc.transports.rabbitmq.RabbitMQClientTransport
+    :members:
+    :noindex:
+    :show-inheritance:
+    :member-order: bysource
+
 WebSocket
 ~~~~~~~~~
 
