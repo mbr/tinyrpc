@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+from tinyrpc.generators import decimal_generator
 
 import six
 import pytest
@@ -230,7 +231,8 @@ def test_request_generation(prot):
 
 def test_jsonrpc_spec_v2_example1(prot):
     # reset id counter
-    prot._id_counter = 0
+    from tinyrpc.generators import decimal_generator
+    prot._id_generator = decimal_generator(1)
 
     request = prot.create_request('subtract', [42, 23])
 
@@ -264,7 +266,8 @@ def test_jsonrpc_spec_v2_example1(prot):
 
 def test_jsonrpc_spec_v2_example2(prot):
     # reset id counter
-    prot._id_counter = 2
+    from tinyrpc.generators import decimal_generator
+    prot._id_generator = decimal_generator(3)
 
     request = prot.create_request('subtract',
                                   kwargs={'subtrahend': 23, 'minuend': 42})
