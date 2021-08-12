@@ -58,3 +58,10 @@ def test_parses_error_response(protocol):
     parsed = protocol.parse_reply(err_rep.serialize())
 
     assert hasattr(parsed, 'error')
+
+def test_default_id_generator():
+    from tinyrpc.protocols import default_id_generator
+    g = default_id_generator(1)
+    assert next(g) == 1
+    assert next(g) == 2
+    assert next(g) == 3

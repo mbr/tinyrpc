@@ -14,8 +14,7 @@ import json
 import sys
 from typing import Dict, Any, Union, Optional, List, Tuple, Callable, Generator
 
-from ..generators import decimal_generator
-
+from . import default_id_generator
 from .. import (
     RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,
     InvalidRequestError, MethodNotFoundError, InvalidReplyError, RPCError,
@@ -509,7 +508,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
     def __init__(
             self,
-            id_generator: Generator[object, None, None] = decimal_generator(),
+            id_generator: Generator[object, None, None] = default_id_generator(),
             *args,
             **kwargs
     ) -> None:

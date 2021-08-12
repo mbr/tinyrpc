@@ -23,7 +23,6 @@ Table of contents
     protocols
     jsonrpc
     msgpackrpc
-    generators
     transports
     client
     server
