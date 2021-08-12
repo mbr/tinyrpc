@@ -514,6 +514,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
     ) -> None:
         super(JSONRPCProtocol, self).__init__(*args, **kwargs)
         self._id_generator = id_generator
+        self._incomplete_requests = []
 
     def _get_unique_id(self) -> object:
         return next(self._id_generator)
@@ -573,6 +574,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
         if not one_way:
             request.unique_id = self._get_unique_id()
+            self._incomplete_requests.append(request.unique_id)
 
         request.method = method
         if args is not None:
@@ -634,6 +636,12 @@ class JSONRPCProtocol(RPCBatchProtocol):
             response.result = rep.get('result', None)
 
         response.unique_id = rep['id']
+        if response.unique_id not in self._incomplete_requests:
+            raise InvalidReplyError(
+                'Reply id does not correspond to any sent requests.'
+            )
+        else:
+            self._incomplete_requests.remove(response.unique_id)
 
         return response
 

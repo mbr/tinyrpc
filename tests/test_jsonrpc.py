@@ -107,11 +107,23 @@ def test_parsing_invalid_arguments(prot):
     ),
 ])
 def test_good_reply_samples(prot, data, id, result):
+    # assume the protocol is awaiting a response for
+    # a request with `id`
+    prot._incomplete_requests = [id]
+    
     reply = prot.parse_reply(data)
 
     assert reply.unique_id == id
     assert reply.result == result
 
+
+@pytest.mark.parametrize(('data'), [
+    """{"jsonrpc": "2.0", "result": 19, "id": 9001}"""
+])
+def test_unsolicited_reply_raises_error(prot, data):
+    prot._incomplete_requests = [4]
+    with pytest.raises(InvalidReplyError):
+        reply = prot.parse_reply(data)
 
 @pytest.mark.parametrize(('exc', 'code', 'message'), [
     (JSONRPCParseError, -32700, 'Parse error'),
