@@ -49,7 +49,7 @@ class RPCClient(object):
         tport = self.transport if transport is None else transport
 
         # sends ...
-        reply = tport.send_message(req.serialize())
+        reply = tport.send_message(req.serialize(), expect_reply=(not one_way))
 
         if one_way:
             # ... and be done
