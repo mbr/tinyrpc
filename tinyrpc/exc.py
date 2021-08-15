@@ -34,6 +34,10 @@ class InvalidReplyError(BadReplyError, ABC):
     could not be parsed into a response."""
 
 
+class UnexpectedIDError (InvalidReplyError, ABC):
+    """A reply received contained an invalid unique identifier."""
+
+
 class MethodNotFoundError(RPCError, ABC):
     """The desired method was not found."""
 
