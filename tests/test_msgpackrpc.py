@@ -210,7 +210,8 @@ def test_request_generation(prot):
 
 def test_jsonrpc_spec_v2_example1(prot):
     # reset id counter
-    prot._id_counter = 0
+    from tinyrpc.protocols import default_id_generator
+    prot._id_generator = default_id_generator(1)
 
     request = prot.create_request("subtract", [42, 23])
 

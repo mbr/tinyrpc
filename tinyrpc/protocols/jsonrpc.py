@@ -12,12 +12,13 @@ Tinyrpc will detect the presence of jsonext and use it automatically.
 
 import json
 import sys
-from typing import Dict, Any, Union, Optional, List, Tuple, Callable
+from typing import Dict, Any, Union, Optional, List, Tuple, Callable, Generator
 
+from . import default_id_generator
 from .. import (
     RPCBatchProtocol, RPCRequest, RPCResponse, RPCErrorResponse,
     InvalidRequestError, MethodNotFoundError, InvalidReplyError, RPCError,
-    RPCBatchRequest, RPCBatchResponse, InvalidParamsError
+    RPCBatchRequest, RPCBatchResponse, InvalidParamsError,
 )
 
 if 'jsonext' in sys.modules:
@@ -505,13 +506,17 @@ class JSONRPCProtocol(RPCBatchProtocol):
     _ALLOWED_REPLY_KEYS = sorted(['id', 'jsonrpc', 'error', 'result'])
     _ALLOWED_REQUEST_KEYS = sorted(['id', 'jsonrpc', 'method', 'params'])
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+            self,
+            id_generator: Generator[object, None, None] = default_id_generator(),
+            *args,
+            **kwargs
+    ) -> None:
         super(JSONRPCProtocol, self).__init__(*args, **kwargs)
-        self._id_counter = 0
+        self._id_generator = id_generator
 
-    def _get_unique_id(self) -> int:
-        self._id_counter += 1
-        return self._id_counter
+    def _get_unique_id(self) -> object:
+        return next(self._id_generator)
 
     def request_factory(self) -> 'JSONRPCRequest':
         """Factory for request objects.

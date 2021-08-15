@@ -5,7 +5,8 @@
 Defines the abstract base classes from which a protocol definition must be constructed.
 """
 from abc import ABC
-from typing import Any, List, Dict, Union, Optional
+from typing import Any, Generator, List, Dict, Union, Optional
+import itertools
 
 from tinyrpc import exc
 
@@ -324,3 +325,16 @@ class RPCBatchProtocol(RPCProtocol, ABC):
         :rtype: :py:class:`RPCBatchRequest`
         """
         raise NotImplementedError()
+
+
+def default_id_generator(start: int = 1) -> Generator[int, None, None]:
+    """Generates sequential integers from `start`.
+
+    e.g. 1, 2, 3, .. 9, 10, 11, ...
+
+    :param start: The first value to start with.`
+    :type start: int
+    :return: A generator that yields a sequence of integers.
+    :rtype: :py:class:`Generator[int, None, None]`
+    """
+    return itertools.count(start)

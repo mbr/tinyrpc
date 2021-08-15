@@ -88,6 +88,38 @@ API Reference
     :member-order: bysource
 
 
+ID Generators
+-------------
+
+By default, the :py:class:`~tinyrpc.protocols.jsonrpc.JSONRPCProtocol` 
+and :py:class:`~tinyrpc.protocols.msgpackrpc.MSGPACKRPCProtocol` classes
+generates ids as sequential integers starting at 1.
+If alternative id generation is needed, you may supply your own
+generator.
+
+Example
+-------
+
+The following example shows how to use alternative id generators in a protocol
+that supports them.
+
+.. code-block:: python
+
+    from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
+    
+    def collatz_generator():
+        """A sample generator for demonstration purposes ONLY."""
+        n = 27
+        while True:
+            if n % 2 != 0:
+                n = 3*n + 1
+            else:
+                n = n / 2
+            yield n
+
+    rpc = JSONRPCProtocol(id_generator=collatz_generator())
+
+
 Supported protocols
 -------------------
 

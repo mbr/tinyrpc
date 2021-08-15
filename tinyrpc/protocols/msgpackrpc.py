@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from . import default_id_generator
 from .. import (
     RPCError,
     RPCErrorResponse,
@@ -15,7 +16,7 @@ from .. import (
 import msgpack
 import six
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Generator
 
 
 class FixedErrorMessageMixin(object):
@@ -236,13 +237,17 @@ class MSGPACKRPCRequest(RPCRequest):
 class MSGPACKRPCProtocol(RPCProtocol):
     """MSGPACKRPC protocol implementation."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            id_generator: Generator[object, None, None] = default_id_generator(),
+            *args,
+            **kwargs
+    ) -> None:
         super(MSGPACKRPCProtocol, self).__init__(*args, **kwargs)
-        self._id_counter = 0
+        self._id_generator = id_generator
 
     def _get_unique_id(self):
-        self._id_counter += 1
-        return self._id_counter
+        return next(self._id_generator)
 
     def request_factory(self) -> "MSGPACKRPCRequest":
         """Factory for request objects.
