@@ -58,8 +58,12 @@ class ZmqClientTransport(ClientTransport):
     def send_message(self, message: bytes, expect_reply: bool = True) -> bytes:
         self.socket.send(message)
 
+        # zmq contains a state machine preventing a new request
+        # until the previous one is answered, so always receive
+        reply = self.socket.recv()
+
         if expect_reply:
-            return self.socket.recv()
+            return reply
 
     @classmethod
     def create(cls, zmq_context: zmq.Context, endpoint: str) -> 'ZmqClientTransport':
