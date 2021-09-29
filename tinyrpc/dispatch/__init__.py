@@ -27,7 +27,7 @@ def public(name: Callable[..., T]) -> Callable[..., T]:
 def public(name: Optional[str] = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
     ...
 
-def public(name):
+def public(name = None):
     # noinspection SpellCheckingInspection
     """Decorator. Mark a method as eligible for registration by a dispatcher.
 
@@ -86,7 +86,7 @@ class RPCDispatcher(object):
     def public(self, name: Optional[str] = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
         ...
 
-    def public(self, name):
+    def public(self, name = None):
         """Convenient decorator.
 
         Allows easy registering of functions to this dispatcher. Example:
