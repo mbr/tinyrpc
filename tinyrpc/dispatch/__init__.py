@@ -10,13 +10,24 @@ to the caller.
 """
 
 import inspect
-from typing import Callable, Any, Dict, List, Union
+from typing import Callable, Any, Dict, List, Optional, TypeVar, Union, overload
 
 from tinyrpc import RPCRequest, RPCResponse, RPCBatchRequest, RPCBatchResponse
 from .. import exc
 
 
-def public(name: str = None) -> Callable:
+T = TypeVar("T")
+
+
+@overload
+def public(name: Callable[..., T]) -> Callable[..., T]:
+    ...
+
+@overload
+def public(name: Optional[str] = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
+    ...
+
+def public(name = None):
     # noinspection SpellCheckingInspection
     """Decorator. Mark a method as eligible for registration by a dispatcher.
 
@@ -67,7 +78,15 @@ class RPCDispatcher(object):
         self.method_map = {}
         self.subdispatchers = {}
 
-    def public(self, name: str = None) -> Callable:
+    @overload
+    def public(self, name: Callable[..., T]) -> Callable[..., T]:
+        ...
+
+    @overload
+    def public(self, name: Optional[str] = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
+        ...
+
+    def public(self, name = None):
         """Convenient decorator.
 
         Allows easy registering of functions to this dispatcher. Example:
