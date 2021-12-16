@@ -239,12 +239,12 @@ class MSGPACKRPCProtocol(RPCProtocol):
 
     def __init__(
             self,
-            id_generator: Generator[object, None, None] = default_id_generator(),
+            id_generator: Optional[Generator[object, None, None]] = None,
             *args,
             **kwargs
     ) -> None:
         super(MSGPACKRPCProtocol, self).__init__(*args, **kwargs)
-        self._id_generator = id_generator
+        self._id_generator = id_generator or default_id_generator()
 
     def _get_unique_id(self):
         return next(self._id_generator)
