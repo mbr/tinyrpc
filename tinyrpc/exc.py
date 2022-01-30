@@ -48,3 +48,6 @@ class InvalidParamsError(RPCError, ABC):
 
 class ServerError(RPCError, ABC):
     """An internal error in the RPC system occurred."""
+
+class TimeoutError(Exception):
+    """No reply received within the timeout period."""
