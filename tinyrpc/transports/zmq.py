@@ -51,13 +51,13 @@ class ZmqClientTransport(ClientTransport):
 
     :param socket: A :py:const:`zmq.REQ` socket instance, connected to the
                    server socket.
-    :param timeout: An optional integer. When set it defines the time period
-                    in milliseconds to wait for a reply.
+    :param timeout: An optional float. When set it defines the time period
+                    in seconds to wait for a reply.
                     It will generate a :py:class:`exc.TimeoutError` exception
                     if no reply was received in time.
     """
 
-    def __init__(self, socket: zmq.Socket, timeout: int = None) -> None:
+    def __init__(self, socket: zmq.Socket, timeout: float = None) -> None:
         self.socket = socket
         self.timeout = timeout
 
@@ -71,7 +71,7 @@ class ZmqClientTransport(ClientTransport):
         else:
             poller = zmq.Poller()
             poller.register(self.socket, zmq.POLLIN)
-            ready = dict(poller.poll(self.timeout))
+            ready = dict(poller.poll(int(self.timeout * 1000)))
             if ready.get(self.socket) == zmq.POLLIN:
                 reply = self.socket.recv()
             else:
@@ -80,7 +80,7 @@ class ZmqClientTransport(ClientTransport):
             return reply
 
     @classmethod
-    def create(cls, zmq_context: zmq.Context, endpoint: str, timeout: int = None) -> 'ZmqClientTransport':
+    def create(cls, zmq_context: zmq.Context, endpoint: str, timeout: float = None) -> 'ZmqClientTransport':
         """Create new client transport.
 
         Instead of creating the socket yourself, you can call this function and
@@ -91,7 +91,7 @@ class ZmqClientTransport(ClientTransport):
 
         :param zmq_context: A 0mq context.
         :param endpoint: The endpoint the server is bound to.
-        :param timeout: Optional period in milliseconds to wait for reply
+        :param timeout: Optional period in seconds to wait for reply
         """
         socket = zmq_context.socket(zmq.REQ)
         socket.connect(endpoint)
