@@ -587,7 +587,7 @@ class JSONRPCProtocol(RPCBatchProtocol):
 
     def parse_reply(
             self, data: bytes
-    ) -> Union['JSONRPCSuccessResponse', 'JSONRPCErrorResponse']:
+    ) -> Union['JSONRPCSuccessResponse', 'JSONRPCErrorResponse', 'JSONRPCBatchResponse']:
         """De-serializes and validates a response.
 
         Called by the client to reconstruct the serialized :py:class:`JSONRPCResponse`.
@@ -607,6 +607,24 @@ class JSONRPCProtocol(RPCBatchProtocol):
         except Exception as e:
             raise InvalidReplyError(e)
 
+        if isinstance(rep, list):
+            # batch request
+            replies = JSONRPCBatchResponse()
+            for subrep in rep:
+                try:
+                    replies.append(self._parse_subreply(subrep))
+                except RPCError as e:
+                    replies.append(e)
+                except Exception as e:
+                    replies.append(InvalidReplyError(e))
+
+            if not replies:
+                raise InvalidReplyError("Empty batch response received.")
+            return replies
+        else:
+            return self._parse_subreply(rep)
+
+    def _parse_subreply(self, rep):
         for k in rep.keys():
             if k not in self._ALLOWED_REPLY_KEYS:
                 raise InvalidReplyError('Key not allowed: %s' % k)
