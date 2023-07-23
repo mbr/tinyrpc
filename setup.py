@@ -22,7 +22,6 @@ setup(
     maintainer_email='leo@noordergraaf.net',
     url='http://github.com/mbr/tinyrpc',
     license='MIT',
-    install_requires=['six'],
     extras_require={
         'gevent': ['gevent'],
         'httpclient': ['requests', 'websocket-client', 'gevent-websocket'],

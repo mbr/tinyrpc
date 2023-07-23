@@ -3,7 +3,6 @@
 
 import json
 
-import six
 import pytest
 
 from tinyrpc import MethodNotFoundError, InvalidRequestError, ServerError, \
@@ -65,7 +64,7 @@ def prot():
 def test_parsing_good_request_samples(prot, data, attrs):
     req = prot.parse_request(data)
 
-    for k, v in six.iteritems(attrs):
+    for k, v in attrs.items():
         assert getattr(req, k) == v
 
 

@@ -14,7 +14,6 @@ from .. import (
 )
 
 import msgpack
-import six
 
 from typing import Any, Dict, List, Optional, Tuple, Union, Generator
 
@@ -104,7 +103,7 @@ class MSGPACKRPCErrorResponse(RPCErrorResponse):
 
 
 def _get_code_and_message(error):
-    assert isinstance(error, (Exception, six.string_types))
+    assert isinstance(error, (Exception, str))
     if isinstance(error, Exception):
         if hasattr(error, "msgpackrpc_error_code"):
             code = error.msgpackrpc_error_code
@@ -390,7 +389,7 @@ class MSGPACKRPCProtocol(RPCProtocol):
             raise MSGPACKRPCInvalidRequestError()
 
     def _parse_notification(self, req):
-        if not isinstance(req[1], six.string_types):
+        if not isinstance(req[1], str):
             raise MSGPACKRPCInvalidRequestError()
 
         request = MSGPACKRPCRequest()
@@ -408,7 +407,7 @@ class MSGPACKRPCProtocol(RPCProtocol):
         return request
 
     def _parse_request(self, req):
-        if not isinstance(req[2], six.string_types):
+        if not isinstance(req[2], str):
             raise MSGPACKRPCInvalidRequestError(request_id=req[1])
 
         request = MSGPACKRPCRequest()
