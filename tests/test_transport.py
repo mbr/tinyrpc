@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import six
 
 import zmq
 import zmq.green
@@ -20,7 +19,7 @@ class DummyServerTransport(ServerTransport):
         return self.messages.pop()
 
     def send_reply(self, context, message):
-        if not isinstance(message, sid.string_types):
+        if not isinstance(message, str):
             raise TypeError('Message must be str().')
         self.clients[context].messages.append(message)
 
@@ -60,11 +59,9 @@ def zmq_green_context(request):
     return ctx
 
 
-if six.PY3:
-    # zmq and zmq.green fail on python3
-    SERVERS=['dummy']
-else:
-    SERVERS=['dummy', 'zmq', 'zmq.green']
+# zmq and zmq.green fail on python3
+SERVERS=['dummy']
+
 @pytest.fixture(params=SERVERS)
 def transport(request, zmq_context, zmq_green_context):
     if request.param == 'dummy':
@@ -86,11 +83,8 @@ def transport(request, zmq_context, zmq_green_context):
     return (client, server)
 
 SAMPLE_MESSAGES = ['asdf', 'loremipsum' * 1500, '', '\x00', 'b\x00a', '\r\n',
-                   '\n', u'\u1234'.encode('utf8')]
-if six.PY3:
-    BAD_MESSAGES = [b'asdf', b'', 1234, 1.2, None, True, False, ('foo',)]
-else:
-    BAD_MESSAGES = [u'asdf', u'', 1234, 1.2, None, True, False, ('foo',)]
+                   '\n', '\u1234'.encode('utf8')]
+BAD_MESSAGES = [b'asdf', b'', 1234, 1.2, None, True, False, ('foo',)]
 
 
 @pytest.fixture(scope='session',
