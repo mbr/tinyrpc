@@ -260,3 +260,5 @@ intersphinx_mapping = {
 }
 
 autoclass_content = "both"
+
+autodoc_mock_imports = ["msgpack", "zmq", "werkzeug", "pika", "geventwebsocket"]

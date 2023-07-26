@@ -4,12 +4,13 @@
 import pytest
 
 
-import six
 import gevent
 import gevent.queue
 import gevent.monkey
 from gevent.pywsgi import WSGIServer
 import requests
+
+from importlib import reload
 
 from tinyrpc.transports.wsgi import WsgiServerTransport
 from tinyrpc.transports.http import HttpPostClientTransport
@@ -33,7 +34,7 @@ def monkey_patches(request):
         aggressive=False)
 
     def fin():
-        six.moves.reload_module(socket)
+        reload(socket)
 
     request.addfinalizer(fin)
 
@@ -70,21 +71,21 @@ def test_server_supports_post_only(wsgi_server):
 
 
 @pytest.mark.parametrize(('msg',),
-    [(six.b('foo'),), (six.b(''),), (six.b('bar'),), (six.b('1234'),), (six.b('{}'),), (six.b('{'),), (six.b('\x00\r\n'),)])
+    [(b'foo',), (b'',), (b'bar',), (b'1234',), (b'{}',), (b'{',), (b'\x00\r\n',)])
 def test_server_receives_messages(wsgi_server, msg):
     transport, addr = wsgi_server
 
     def consumer():
         context, received_msg = transport.receive_message()
         assert received_msg == msg
-        reply = six.b('reply:') + msg
+        reply = b'reply:' + msg
         transport.send_reply(context, reply)
 
     gevent.spawn(consumer)
 
     r = requests.post(addr, data=msg)
 
-    assert r.content == six.b('reply:') + msg
+    assert r.content == b'reply:' + msg
 
 
 @pytest.fixture
@@ -106,20 +107,20 @@ def non_sessioned_client():
 
 
 @pytest.mark.parametrize(('msg',),
-    [(six.b('foo'),), (six.b(''),), (six.b('bar'),), (six.b('1234'),), (six.b('{}'),), (six.b('{'),), (six.b('\x00\r\n'),)])
+    [(b'foo',), (b'',), (b'bar',), (b'1234',), (b'{}',), (b'{',), (b'\x00\r\n',)])
 def test_sessioned_http_sessioned_client(wsgi_server, sessioned_client, msg):
     transport, addr = wsgi_server
 
     def consumer():
         context, received_msg = transport.receive_message()
         assert received_msg == msg
-        reply = six.b('reply:') + msg
+        reply = b'reply:' + msg
         transport.send_reply(context, reply)
 
     gevent.spawn(consumer)
 
     result = sessioned_client.send_message(msg)
-    assert result == six.b('reply:') + msg
+    assert result == b'reply:' + msg
 
 
 @pytest.mark.skip('somehow fails on travis')
@@ -137,22 +138,22 @@ def test_exhaust_ports(wsgi_server, non_sessioned_client):
 
     def consumer():
         context, received_msg = transport.receive_message()
-        reply = six.b('reply:') + received_msg
+        reply = b'reply:' + received_msg
         transport.send_reply(context, reply)
 
     def send_and_receive(i):
         try:
             gevent.spawn(consumer)
-            msg = six.b('msg_%s' % i)
+            msg = b'msg_%s' % i
             result = non_sessioned_client.send_message(msg)
-            return result == six.b('reply:') + msg
+            return result == b'reply:' + msg
         except Exception as e:
             return e
 
     pool = gevent.pool.Pool(500)
 
     with pytest.raises(requests.ConnectionError):
-        for result in pool.imap_unordered(send_and_receive, six.moves.xrange(55000)):
+        for result in pool.imap_unordered(send_and_receive, range(55000)):
             assert result
             if isinstance(result, Exception):
                 raise result
