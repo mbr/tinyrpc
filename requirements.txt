@@ -5,5 +5,5 @@ pika==1.2.0
 pytest==6.2.4
 pytest-cov==2.11.1
 pyzmq==23.2.1
-requests==2.25.1
+requests==2.31.0
 Werkzeug==2.2.3
