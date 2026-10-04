@@ -175,11 +175,12 @@ class JSONRPCError(FixedErrorMessageMixin, RPCError):
             if hasattr(error, 'data'):
                 self.data = error.data
         else:
-            super(JSONRPCError, self).__init__(error.message)
+            super(JSONRPCError, self).__init__(error['message'])
             self.message = error['message']
             self._jsonrpc_error_code = error['code']
             if 'data' in error:
                 self.data = error['data']
+        self.jsonrpc_error_code = self._jsonrpc_error_code
 
 
 class JSONRPCSuccessResponse(RPCResponse):
