@@ -12,7 +12,7 @@ from tinyrpc.protocols.jsonrpc import JSONRPCParseError, \
                                       JSONRPCMethodNotFoundError, \
                                       JSONRPCInvalidParamsError, \
                                       JSONRPCInternalError,\
-                                      JSONRPCErrorResponse
+                                      JSONRPCErrorResponse, JSONRPCError
 
 
 def _json_equal(a, b):
@@ -562,6 +562,7 @@ def test_pass_error_data_with_standard_exception(prot):
     assert serialized_reply == jmsg
     assert decoded_reply == decoded
 
+
 def test_pass_error_data_with_custom_exception(prot):
     # type: (JSONRPCProtocol) -> None
     request = prot.create_request('foo')
@@ -590,3 +591,82 @@ def test_pass_error_data_with_custom_exception(prot):
     assert hasattr(parsed_reply, "data")
     assert serialized_reply == jmsg
     assert decoded_reply == decoded
+
+@pytest.mark.parametrize('from_response', [False, True])
+@pytest.mark.parametrize('error_spec', [
+    {'code': -32601, 'message': 'Method not found'},
+    {'code': 42, 'message': ''},
+    {'code': -32001, 'message': 'Remote failure', 'data': None},
+    {'code': -32002, 'message': 'Remote failure', 'data': 0},
+    {'code': -32003, 'message': 'Remote failure',
+     'data': {'retry': False, 'details': ['offline']}},
+])
+def test_reconstructed_error_responds(prot, from_response, error_spec):
+    original = error_spec
+    if from_response:
+        prot._pending_replies = [7]
+        original = prot.parse_reply(json.dumps({
+            'jsonrpc': '2.0', 'id': 7, 'error': error_spec,
+        }))
+
+    error = JSONRPCError(original)
+    error.request_id = 0
+    response = json.loads(error.error_respond().serialize())
+
+    assert str(error) == error_spec['message']
+    assert error.args == (error_spec['message'],)
+    assert error.message == error_spec['message']
+    assert error.jsonrpc_error_code == error_spec['code']
+    assert error._jsonrpc_error_code == error_spec['code']
+    assert hasattr(error, 'data') == ('data' in error_spec)
+    assert response == {
+        'jsonrpc': '2.0', 'id': 0, 'error': error_spec,
+    }
+
+
+@pytest.mark.parametrize('raises_errors', [False, True])
+def test_protocol_reconstructs_dictionary_error(prot, raises_errors):
+    error_spec = {'code': -32042, 'message': 'Remote failure',
+                  'data': {'reason': 'offline'}}
+    prot.raises_errors = raises_errors
+    if raises_errors:
+        with pytest.raises(JSONRPCError) as caught:
+            prot.raise_error(error_spec)
+        error = caught.value
+    else:
+        error = prot.raise_error(error_spec)
+
+    assert json.loads(error.error_respond().serialize()) == {
+        'jsonrpc': '2.0', 'id': None, 'error': error_spec,
+    }
+
+
+def test_dispatcher_forwards_remote_error(prot):
+    from tinyrpc.client import RPCClient
+    from tinyrpc.dispatch import RPCDispatcher
+    from tinyrpc.transports import ClientTransport
+
+    error_spec = {'code': -32042, 'message': 'Remote failure',
+                  'data': {'reason': 'offline'}}
+
+    class RemoteErrorTransport(ClientTransport):
+        def send_message(self, message, expect_reply=True):
+            request = json.loads(message)
+            return json.dumps({
+                'jsonrpc': '2.0', 'id': request['id'], 'error': error_spec,
+            }).encode()
+
+    client = RPCClient(prot, RemoteErrorTransport())
+    dispatcher = RPCDispatcher()
+
+    @dispatcher.public
+    def forward():
+        return client.call('remote', [], {})
+
+    request = prot.parse_request(
+        '{"jsonrpc": "2.0", "method": "forward", "id": "outer"}'
+    )
+    response = dispatcher.dispatch(request)
+    assert json.loads(response.serialize()) == {
+        'jsonrpc': '2.0', 'id': 'outer', 'error': error_spec,
+    }
